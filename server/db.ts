@@ -1137,3 +1137,76 @@ export async function getBillsDueForReminder() {
     )
   );
 }
+
+export async function getBillsMetrics() {
+  const db = await getDb();
+  if (!db) return null;
+
+  const all = await db.select().from(recurringBills);
+
+  const now = new Date();
+  const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+  // KPI totals (using USD as base, keep original amounts grouped by currency)
+  const active = all.filter(b => b.status !== "disabled");
+  const overdue = all.filter(b => b.status === "overdue");
+  const paidThisMonth = all.filter(b => {
+    if (b.status !== "paid" || !b.lastPaidDate) return false;
+    const paid = new Date(b.lastPaidDate);
+    return paid.getMonth() === now.getMonth() && paid.getFullYear() === now.getFullYear();
+  });
+  const upcoming7Days = all.filter(b => {
+    if (b.status === "disabled" || b.status === "paid") return false;
+    const due = new Date(b.nextDueDate);
+    return due >= now && due <= in7Days;
+  });
+
+  // Group by category (sum amounts, keep USD only for simplicity)
+  const byCategory: Record<string, number> = {};
+  for (const b of active) {
+    const cat = b.category || "other";
+    const amt = Number(b.amount) || 0;
+    byCategory[cat] = (byCategory[cat] || 0) + amt;
+  }
+
+  // Group by campus
+  const byCampus: Record<string, number> = {};
+  for (const b of active) {
+    const campus = b.campus || "all";
+    const amt = Number(b.amount) || 0;
+    byCampus[campus] = (byCampus[campus] || 0) + amt;
+  }
+
+  // Group by currency for totals
+  const byCurrency: Record<string, { total: number; pending: number; paid: number; overdue: number }> = {};
+  for (const b of all) {
+    const cur = b.currency || "USD";
+    if (!byCurrency[cur]) byCurrency[cur] = { total: 0, pending: 0, paid: 0, overdue: 0 };
+    const amt = Number(b.amount) || 0;
+    if (b.status !== "disabled") {
+      byCurrency[cur].total += amt;
+      if (b.status === "paid") byCurrency[cur].paid += amt;
+      else if (b.status === "overdue") byCurrency[cur].overdue += amt;
+      else byCurrency[cur].pending += amt;
+    }
+  }
+
+  return {
+    totalActive: active.length,
+    totalOverdue: overdue.length,
+    totalPaidThisMonth: paidThisMonth.length,
+    totalUpcoming7Days: upcoming7Days.length,
+    byCategory: Object.entries(byCategory).map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 })),
+    byCampus: Object.entries(byCampus).map(([name, value]) => ({ name, value: Math.round(value * 100) / 100 })),
+    byCurrency,
+    upcoming7Days: upcoming7Days.slice(0, 5).map(b => ({
+      id: b.id,
+      name: b.name,
+      amount: b.amount,
+      currency: b.currency,
+      nextDueDate: b.nextDueDate,
+      campus: b.campus,
+      category: b.category,
+    })),
+  };
+}

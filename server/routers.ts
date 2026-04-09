@@ -91,6 +91,7 @@ import {
   getSystemStats,
   // Bills
   getRecurringBills,
+  getBillsMetrics,
   createRecurringBill,
   updateRecurringBill,
   markBillPaid,
@@ -1059,6 +1060,8 @@ GUIDELINES:
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => { await deleteRecurringBill(input.id); return { success: true }; }),
 
+    getMetrics: protectedProcedure
+      .query(async () => getBillsMetrics()),
     checkReminders: protectedProcedure
       .mutation(async () => {
         const { notifyOwner } = await import("./_core/notification");

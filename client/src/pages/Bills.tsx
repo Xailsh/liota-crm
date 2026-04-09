@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -104,6 +105,7 @@ export default function Bills() {
     notes: "", vendor: "",
   });
 
+  const { data: metrics, refetch: refetchMetrics } = trpc.bills.getMetrics.useQuery();
   const { data: bills = [], refetch, isLoading } = trpc.bills.list.useQuery({
     status: statusFilter !== "all" ? statusFilter : undefined,
     campus: campusFilter !== "all" ? campusFilter : undefined,
@@ -190,28 +192,152 @@ export default function Bills() {
           </div>
         </div>
 
-        {/* Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="bg-card border rounded-xl p-4">
-            <p className="text-xs text-muted-foreground uppercase tracking-wide">Active Bills</p>
-            <p className="text-3xl font-bold mt-1">{activeBills.length}</p>
-            <p className="text-xs text-muted-foreground">{bills.length} total</p>
+        {/* ── Financial Dashboard Panel ── */}
+        <div className="space-y-4">
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-card border rounded-xl p-4 flex flex-col gap-1">
+              <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">Active Bills</p>
+              <p className="text-3xl font-bold">{metrics?.totalActive ?? activeBills.length}</p>
+              <p className="text-xs text-muted-foreground">{bills.length} total registered</p>
+            </div>
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-4 flex flex-col gap-1">
+              <p className="text-xs text-red-600 uppercase tracking-wide font-medium">Overdue</p>
+              <p className="text-3xl font-bold text-red-600">{metrics?.totalOverdue ?? overdueBills.length}</p>
+              <p className="text-xs text-red-500">Requires immediate attention</p>
+            </div>
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 flex flex-col gap-1">
+              <p className="text-xs text-amber-700 uppercase tracking-wide font-medium">Due in 7 Days</p>
+              <p className="text-3xl font-bold text-amber-700">{metrics?.totalUpcoming7Days ?? dueSoonBills.length}</p>
+              <p className="text-xs text-amber-600">Upcoming payments</p>
+            </div>
+            <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-xl p-4 flex flex-col gap-1">
+              <p className="text-xs text-green-700 uppercase tracking-wide font-medium">Paid This Month</p>
+              <p className="text-3xl font-bold text-green-700">{metrics?.totalPaidThisMonth ?? 0}</p>
+              <p className="text-xs text-green-600">Completed payments</p>
+            </div>
           </div>
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-            <p className="text-xs text-red-600 uppercase tracking-wide font-medium">Overdue</p>
-            <p className="text-3xl font-bold text-red-600 mt-1">{overdueBills.length}</p>
-            <p className="text-xs text-red-500">Needs attention</p>
-          </div>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
-            <p className="text-xs text-yellow-700 uppercase tracking-wide font-medium">Due in 7 Days</p>
-            <p className="text-3xl font-bold text-yellow-700 mt-1">{dueSoonBills.length}</p>
-            <p className="text-xs text-yellow-600">Upcoming</p>
-          </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-            <p className="text-xs text-blue-600 uppercase tracking-wide font-medium">Monthly USD Total</p>
-            <p className="text-2xl font-bold text-blue-700 mt-1">${totalMonthly.toLocaleString()}</p>
-            <p className="text-xs text-blue-500">USD bills only</p>
-          </div>
+
+          {/* Currency Totals */}
+          {metrics?.byCurrency && Object.keys(metrics.byCurrency).length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {Object.entries(metrics.byCurrency).map(([cur, vals]) => (
+                <div key={cur} className="bg-card border rounded-xl p-4">
+                  <p className="text-xs text-muted-foreground uppercase font-medium mb-2">{cur} Monthly Commitment</p>
+                  <p className="text-xl font-bold">{cur === "USD" ? "$" : cur === "EUR" ? "€" : cur === "GBP" ? "£" : ""}{(vals as any).total?.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })} <span className="text-sm font-normal text-muted-foreground">{cur}</span></p>
+                  <div className="mt-2 space-y-0.5">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-amber-600">Pending</span>
+                      <span className="font-medium">{cur === "USD" ? "$" : cur === "EUR" ? "€" : cur === "GBP" ? "£" : ""}{(vals as any).pending?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-green-600">Paid</span>
+                      <span className="font-medium">{cur === "USD" ? "$" : cur === "EUR" ? "€" : cur === "GBP" ? "£" : ""}{(vals as any).paid?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                    </div>
+                    {(vals as any).overdue > 0 && (
+                      <div className="flex justify-between text-xs">
+                        <span className="text-red-600">Overdue</span>
+                        <span className="font-medium text-red-600">{cur === "USD" ? "$" : cur === "EUR" ? "€" : cur === "GBP" ? "£" : ""}{(vals as any).overdue?.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Charts Row */}
+          {metrics && (
+            <div className="grid md:grid-cols-2 gap-4">
+              {/* Donut Chart — By Category */}
+              <div className="bg-card border rounded-xl p-5">
+                <h3 className="font-semibold text-sm mb-4">Expenses by Category</h3>
+                {metrics.byCategory.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={metrics.byCategory}
+                        cx="50%" cy="50%"
+                        innerRadius={55} outerRadius={85}
+                        paddingAngle={3}
+                        dataKey="value"
+                        nameKey="name"
+                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        labelLine={false}
+                      >
+                        {metrics.byCategory.map((_, i) => (
+                          <Cell key={i} fill={[
+                            "#3b82f6","#f59e0b","#10b981","#8b5cf6",
+                            "#ef4444","#06b6d4","#f97316","#84cc16",
+                            "#ec4899","#6366f1","#14b8a6","#a78bfa"
+                          ][i % 12]} />
+                        ))}
+                      </Pie>
+                      <Tooltip formatter={(v: any) => [`$${Number(v).toLocaleString()}`, "Amount"]} />
+                      <Legend formatter={(v) => {
+                        const icons: Record<string,string> = { rent:"🏢",utilities:"💡",software:"💻",payroll:"👥",insurance:"🛡️",marketing:"📣",supplies:"📦",taxes:"🏛️",subscriptions:"🔄",maintenance:"🔧",other:"📌" };
+                        return `${icons[v] || ""} ${v}`;
+                      }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : <p className="text-sm text-muted-foreground text-center py-10">No data available</p>}
+              </div>
+
+              {/* Bar Chart — By Campus */}
+              <div className="bg-card border rounded-xl p-5">
+                <h3 className="font-semibold text-sm mb-4">Expenses by Campus (USD)</h3>
+                {metrics.byCampus.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={metrics.byCampus} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                      <XAxis dataKey="name" tick={{ fontSize: 11 }} tickFormatter={(v) => v === "all" ? "Shared" : v.charAt(0).toUpperCase() + v.slice(1)} />
+                      <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => `$${(v/1000).toFixed(0)}k`} />
+                      <Tooltip formatter={(v: any) => [`$${Number(v).toLocaleString()}`, "Total"]} labelFormatter={(l) => l === "all" ? "Shared (All Campuses)" : l.charAt(0).toUpperCase() + l.slice(1)} />
+                      <Bar dataKey="value" radius={[4,4,0,0]}>
+                        {metrics.byCampus.map((_, i) => (
+                          <Cell key={i} fill={[
+                            "#3b82f6","#10b981","#f59e0b","#8b5cf6","#ef4444","#06b6d4","#f97316"
+                          ][i % 7]} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : <p className="text-sm text-muted-foreground text-center py-10">No data available</p>}
+              </div>
+            </div>
+          )}
+
+          {/* Upcoming Bills in 7 Days */}
+          {metrics && metrics.upcoming7Days.length > 0 && (
+            <div className="bg-card border rounded-xl p-5">
+              <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-amber-500" />
+                Upcoming Bills — Next 7 Days
+              </h3>
+              <div className="divide-y">
+                {metrics.upcoming7Days.map(b => {
+                  const days = getDaysUntilDue(b.nextDueDate);
+                  const sym = b.currency === "USD" ? "$" : b.currency === "EUR" ? "€" : b.currency === "GBP" ? "£" : "";
+                  return (
+                    <div key={b.id} className="flex items-center justify-between py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{getCategoryIcon(b.category || "")}</span>
+                        <div>
+                          <p className="text-sm font-medium">{b.name}</p>
+                          <p className="text-xs text-muted-foreground">{b.campus === "all" ? "All Campuses" : b.campus} · Due {new Date(b.nextDueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-bold">{sym}{Number(b.amount).toLocaleString()} {b.currency}</p>
+                        <p className={`text-xs font-medium ${days <= 1 ? "text-orange-600" : days <= 3 ? "text-yellow-600" : "text-blue-600"}`}>
+                          {days === 0 ? "Due today" : days === 1 ? "Due tomorrow" : `In ${days} days`}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Filters */}

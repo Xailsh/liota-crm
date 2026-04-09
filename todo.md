@@ -187,3 +187,22 @@
 - [x] Build Bills page UI with preset LIOTA bills loaded
 - [x] Add Bills to sidebar navigation under Finance
 - [x] Seed preset bills for language institute (rent, utilities, software, etc.)
+
+## Panel de Control Finanzas (Bills)
+- [x] Procedimiento backend: bills.getMetrics (totales, pendientes, pagados, vencidos, por categoría, por campus)
+- [x] KPI cards: Total mensual comprometido, Pendiente de pago, Pagado este mes, Vencido
+- [x] Gráfica donut: gastos por categoría (rent, utilities, software, marketing, etc.)
+- [x] Gráfica de barras: gastos por campus (Mérida, Dallas, Denver, Vienna, Nottingham, All)
+- [x] Lista de próximas facturas (7 días) en el panel
+- [x] Totales por moneda (USD/EUR/GBP/MXN) con desglose pendiente/pagado/vencido
+
+## Sistema de Invitaciones (Admin Panel)
+- [ ] Tabla invitations en DB (id, email, role, token, status, invitedBy, expiresAt, acceptedAt)
+- [ ] Backend: admin.createInvitation (genera token único, envía email con link)
+- [ ] Backend: admin.listInvitations (pendientes, aceptadas, expiradas)
+- [ ] Backend: admin.revokeInvitation
+- [ ] Backend: public.acceptInvitation (valida token, crea/actualiza usuario)
+- [ ] Frontend: botón "Invite User" en Admin Panel → Users & Roles
+- [ ] Frontend: modal con campo email + selector de rol (admin/user/instructor/coordinator/receptionist)
+- [ ] Frontend: tabla de invitaciones pendientes con estado y opción de revocar/reenviar
+- [ ] Página pública /invite/:token para que el invitado acepte y acceda al CRM
