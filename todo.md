@@ -206,3 +206,14 @@
 - [x] Frontend: modal con campo email + selector de rol (admin/user/instructor/coordinator/receptionist)
 - [x] Frontend: tabla de invitaciones pendientes con estado y opción de revocar/reenviar
 - [x] Página pública /invite/:token para que el invitado acepte y acceda al CRM
+
+## Resend Email Setup
+- [ ] Log into Resend and retrieve API key
+- [ ] Add sending domain (languageinstituteoftheamericas.com) in Resend
+- [ ] Configure DNS records in Namecheap for Resend domain verification
+- [ ] Install Resend SDK (npm package)
+- [ ] Add RESEND_API_KEY to project secrets
+- [ ] Wire Resend into invitation email sending (admin.createInvitation)
+- [ ] Wire Resend into bulk email sending procedure
+- [ ] Test invitation email end-to-end
+- [ ] Save checkpoint

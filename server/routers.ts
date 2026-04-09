@@ -1144,12 +1144,27 @@ GUIDELINES:
           expiresAt,
         });
         const inviteUrl = `${input.origin}/invite/${token}`;
+        // Send invitation email via Resend
+        const { sendEmail, buildInvitationEmail } = await import("./email");
+        const emailHtml = buildInvitationEmail({
+          inviteeName: input.email.split("@")[0],
+          inviterName: ctx.user.name ?? "LIOTA Admin",
+          role: input.role,
+          inviteUrl,
+          message: input.message,
+        });
+        const emailResult = await sendEmail({
+          to: input.email,
+          subject: `You're invited to LIOTA CRM as ${input.role.charAt(0).toUpperCase() + input.role.slice(1)}`,
+          html: emailHtml,
+          replyTo: ctx.user.email ?? undefined,
+        });
         // Notify owner about the invitation sent
         await notifyOwner({
           title: `📧 Invitation Sent to ${input.email}`,
-          content: `An invitation was sent to ${input.email} with role: ${input.role}\nInvited by: ${ctx.user.name} (${ctx.user.email})\nExpires: ${expiresAt.toLocaleDateString()}\nLink: ${inviteUrl}`,
+          content: `An invitation was sent to ${input.email} with role: ${input.role}\nInvited by: ${ctx.user.name} (${ctx.user.email})\nExpires: ${expiresAt.toLocaleDateString()}\nEmail sent: ${emailResult.success ? "✅ Yes" : "⚠️ Failed - " + emailResult.error}\nLink: ${inviteUrl}`,
         });
-        return { success: true, inviteUrl, token };
+        return { success: true, inviteUrl, token, emailSent: emailResult.success };
       }),
 
     revokeInvitation: adminProcedure
