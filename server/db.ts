@@ -20,6 +20,12 @@ import {
   specialEvents,
   students,
   users,
+  whatsappTemplates,
+  voiceTemplates,
+  webhookEvents,
+  syncJobs,
+  errorLogs,
+  inboundWebhooks,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -826,4 +832,186 @@ export async function deleteSpecialEvent(id: number) {
   const db = await getDb();
   if (!db) return;
   await db.delete(specialEvents).where(eq(specialEvents.id, id));
+}
+
+// ─── WhatsApp Templates ──────────────────────────────────────────────────────
+export async function getWhatsappTemplates(filters?: { category?: string; language?: string; status?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  const q = db.select().from(whatsappTemplates);
+  const conditions = [];
+  if (filters?.category && filters.category !== "all") conditions.push(eq(whatsappTemplates.category, filters.category as any));
+  if (filters?.language && filters.language !== "all") conditions.push(eq(whatsappTemplates.language, filters.language as any));
+  if (filters?.status && filters.status !== "all") conditions.push(eq(whatsappTemplates.status, filters.status as any));
+  if (conditions.length > 0) return (q as any).where(and(...conditions)).orderBy(desc(whatsappTemplates.createdAt));
+  return q.orderBy(desc(whatsappTemplates.createdAt));
+}
+export async function createWhatsappTemplate(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(whatsappTemplates).values(data);
+}
+export async function updateWhatsappTemplate(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(whatsappTemplates).set({ ...data, updatedAt: new Date() }).where(eq(whatsappTemplates.id, id));
+}
+export async function deleteWhatsappTemplate(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(whatsappTemplates).where(eq(whatsappTemplates.id, id));
+}
+
+// ─── Voice Templates ─────────────────────────────────────────────────────────
+export async function getVoiceTemplates(filters?: { category?: string; language?: string; status?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  const q = db.select().from(voiceTemplates);
+  const conditions = [];
+  if (filters?.category && filters.category !== "all") conditions.push(eq(voiceTemplates.category, filters.category as any));
+  if (filters?.language && filters.language !== "all") conditions.push(eq(voiceTemplates.language, filters.language as any));
+  if (filters?.status && filters.status !== "all") conditions.push(eq(voiceTemplates.status, filters.status as any));
+  if (conditions.length > 0) return (q as any).where(and(...conditions)).orderBy(desc(voiceTemplates.createdAt));
+  return q.orderBy(desc(voiceTemplates.createdAt));
+}
+export async function createVoiceTemplate(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(voiceTemplates).values(data);
+}
+export async function updateVoiceTemplate(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(voiceTemplates).set({ ...data, updatedAt: new Date() }).where(eq(voiceTemplates.id, id));
+}
+export async function deleteVoiceTemplate(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(voiceTemplates).where(eq(voiceTemplates.id, id));
+}
+
+// ─── Webhook Events ───────────────────────────────────────────────────────────
+export async function getWebhookEvents(filters?: { source?: string; status?: string; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  const q = db.select().from(webhookEvents);
+  const conditions = [];
+  if (filters?.source && filters.source !== "all") conditions.push(eq(webhookEvents.source, filters.source));
+  if (filters?.status && filters.status !== "all") conditions.push(eq(webhookEvents.status, filters.status as any));
+  const query = conditions.length > 0 ? (q as any).where(and(...conditions)) : q;
+  return query.orderBy(desc(webhookEvents.createdAt)).limit(filters?.limit ?? 100);
+}
+export async function createWebhookEvent(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(webhookEvents).values(data);
+}
+export async function updateWebhookEvent(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(webhookEvents).set(data).where(eq(webhookEvents.id, id));
+}
+
+// ─── Sync Jobs ────────────────────────────────────────────────────────────────
+export async function getSyncJobs() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(syncJobs).orderBy(syncJobs.name);
+}
+export async function createSyncJob(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(syncJobs).values(data);
+}
+export async function updateSyncJob(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(syncJobs).set({ ...data, updatedAt: new Date() }).where(eq(syncJobs.id, id));
+}
+export async function deleteSyncJob(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(syncJobs).where(eq(syncJobs.id, id));
+}
+
+// ─── Error Logs ───────────────────────────────────────────────────────────────
+export async function getErrorLogs(filters?: { level?: string; source?: string; resolved?: boolean; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  const q = db.select().from(errorLogs);
+  const conditions = [];
+  if (filters?.level && filters.level !== "all") conditions.push(eq(errorLogs.level, filters.level as any));
+  if (filters?.source) conditions.push(like(errorLogs.source, `%${filters.source}%`));
+  if (filters?.resolved !== undefined) conditions.push(eq(errorLogs.resolved, filters.resolved));
+  const query = conditions.length > 0 ? (q as any).where(and(...conditions)) : q;
+  return query.orderBy(desc(errorLogs.createdAt)).limit(filters?.limit ?? 200);
+}
+export async function createErrorLog(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(errorLogs).values(data);
+}
+export async function resolveErrorLog(id: number, resolvedBy: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(errorLogs).set({ resolved: true, resolvedAt: new Date(), resolvedBy }).where(eq(errorLogs.id, id));
+}
+export async function deleteErrorLog(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(errorLogs).where(eq(errorLogs.id, id));
+}
+
+// ─── Inbound Webhooks ─────────────────────────────────────────────────────────
+export async function getInboundWebhooks() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(inboundWebhooks).orderBy(desc(inboundWebhooks.createdAt));
+}
+export async function createInboundWebhook(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(inboundWebhooks).values(data);
+}
+export async function updateInboundWebhook(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(inboundWebhooks).set({ ...data, updatedAt: new Date() }).where(eq(inboundWebhooks.id, id));
+}
+export async function deleteInboundWebhook(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(inboundWebhooks).where(eq(inboundWebhooks.id, id));
+}
+
+// ─── Admin Helpers ────────────────────────────────────────────────────────────
+export async function getAllUsers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(users).orderBy(users.createdAt);
+}
+
+export async function updateUserRole(userId: number, role: "user" | "editor" | "admin") {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(users).set({ role: role as any, updatedAt: new Date() }).where(eq(users.id, userId));
+}
+
+export async function getSystemStats() {
+  const db = await getDb();
+  if (!db) return { totalUsers: 0, totalStudents: 0, totalLeads: 0, totalPayments: 0, totalCampaigns: 0, totalClasses: 0 };
+  const [userCount] = await db.select({ count: sql`COUNT(*)` }).from(users);
+  const [studentCount] = await db.select({ count: sql`COUNT(*)` }).from(students);
+  const [leadCount] = await db.select({ count: sql`COUNT(*)` }).from(leads);
+  const [paymentCount] = await db.select({ count: sql`COUNT(*)` }).from(payments);
+  const [campaignCount] = await db.select({ count: sql`COUNT(*)` }).from(campaigns);
+  const [classCount] = await db.select({ count: sql`COUNT(*)` }).from(classes);
+  return {
+    totalUsers: Number(userCount?.count ?? 0),
+    totalStudents: Number(studentCount?.count ?? 0),
+    totalLeads: Number(leadCount?.count ?? 0),
+    totalPayments: Number(paymentCount?.count ?? 0),
+    totalCampaigns: Number(campaignCount?.count ?? 0),
+    totalClasses: Number(classCount?.count ?? 0),
+  };
 }

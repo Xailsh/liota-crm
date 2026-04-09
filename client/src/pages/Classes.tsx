@@ -217,11 +217,11 @@ export default function Classes() {
               <Input value={form.schedule} onChange={(e) => setForm({ ...form, schedule: e.target.value })} placeholder="Lun-Mié 9:00-10:30 AM" />
             </div>
             <div className="space-y-1.5">
-              <Label>Fecha Inicio</Label>
+              <Label>Start Date</Label>
               <Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Fecha Fin</Label>
+              <Label>End Date</Label>
               <Input type="date" value={form.endDate} onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
             </div>
           </div>

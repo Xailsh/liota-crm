@@ -70,3 +70,18 @@
 - [x] Frontend: Seasonal Camps page (Winter, Spring, Summer, Fall)
 - [x] Frontend: Special Events page
 - [x] Add all new modules to sidebar navigation
+
+## Phase 4 - Templates, Meta Leads, Integrations & Admin
+- [ ] Language toggle button (EN/ES) in sidebar/header
+- [ ] Admin-only black blur on finance income figures (not for editor role)
+- [ ] Email Templates standalone management page
+- [ ] WhatsApp Templates module with response templates
+- [ ] Voice Templates module
+- [ ] Meta Leads: Setup Guide page
+- [ ] Meta Leads: Webhook Events page
+- [ ] Meta Leads: Sync Jobs page
+- [ ] Meta Leads: Error Logs page
+- [ ] Integrations: Inbound Webhook page
+- [ ] Admin panel section
+- [ ] Update sidebar navigation with all new sections (Templates, Meta Leads, Integrations, Admin)
+- [ ] DB tables: whatsapp_templates, voice_templates, webhook_events, sync_jobs, error_logs, inbound_webhooks

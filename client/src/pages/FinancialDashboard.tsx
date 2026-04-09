@@ -40,7 +40,7 @@ function PinInput({ onSubmit, onClose }: { onSubmit: (pin: string) => void; onCl
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
           <Shield className="w-8 h-8 text-primary" />
         </div>
-        <p className="text-sm text-muted-foreground">Enter the 4-digit PIN para acceder a los datos financieros sensibles</p>
+        <p className="text-sm text-muted-foreground">Enter the 4-digit PIN to access sensitive financial data</p>
       </div>
       <div className="flex gap-3 justify-center">
         {Array.from({ length: PIN_LENGTH }).map((_, i) => (
@@ -68,7 +68,7 @@ function PinInput({ onSubmit, onClose }: { onSubmit: (pin: string) => void; onCl
       {error && (
         <div className="flex items-center gap-2 text-red-600 text-sm justify-center">
           <AlertCircle className="w-4 h-4" />
-          <span>Incorrect PIN. Inténtalo de nuevo.</span>
+          <span>Incorrect PIN. Please try again.</span>
         </div>
       )}
       <div className="flex gap-3">
@@ -78,7 +78,7 @@ function PinInput({ onSubmit, onClose }: { onSubmit: (pin: string) => void; onCl
           disabled={pin.length < PIN_LENGTH}
           onClick={() => onSubmit(pin)}
         >
-          Verificar PIN
+          Verify PIN
         </Button>
       </div>
     </div>
@@ -88,14 +88,14 @@ function PinInput({ onSubmit, onClose }: { onSubmit: (pin: string) => void; onCl
 function BlurredValue({ value, revealed, onClick }: { value: string; revealed: boolean; onClick: () => void }) {
   return (
     <div className="relative inline-block cursor-pointer group" onClick={onClick}>
-      <span className={`text-2xl font-bold transition-all duration-300 ${revealed ? "" : "blur-md select-none pointer-events-none"}`}>
+      <span className={`text-2xl font-bold transition-all duration-300 ${revealed ? "" : "blur-xl select-none pointer-events-none opacity-30"}`}>
         {value}
       </span>
       {!revealed && (
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="bg-foreground/10 backdrop-blur-sm rounded-lg px-3 py-1 flex items-center gap-1.5 border border-border/50">
-            <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground font-medium">Click para ver</span>
+          <div className="bg-black/80 rounded-lg px-3 py-1.5 flex items-center gap-1.5 shadow-lg border border-black/20">
+            <Lock className="w-3.5 h-3.5 text-white" />
+            <span className="text-xs text-white font-semibold">Click to unlock</span>
           </div>
         </div>
       )}
@@ -120,7 +120,7 @@ export default function FinancialDashboard() {
       setRevealed(true);
       setShowPinDialog(false);
       setPinError(false);
-      toast.success("Acceso concedido — datos financieros visibles");
+      toast.success("Access granted — financial data is now visible");
     },
     onError: () => {
       setPinError(true);
@@ -141,7 +141,7 @@ export default function FinancialDashboard() {
   const handleLock = () => {
     setRevealed(false);
     setPin("");
-    toast.info("Dashboard financiero bloqueado");
+    toast.info("Financial dashboard locked");
   };
 
   if (user?.role !== "admin") {
@@ -150,8 +150,8 @@ export default function FinancialDashboard() {
         <Card className="max-w-sm w-full border border-red-200 bg-red-50">
           <CardContent className="py-12 text-center">
             <Shield className="w-12 h-12 text-red-400 mx-auto mb-3" />
-            <p className="font-semibold text-red-700">Acceso Restringido</p>
-            <p className="text-sm text-red-600 mt-1">Solo los administradores pueden acceder al dashboard financiero.</p>
+            <p className="font-semibold text-red-700">Access Restricted</p>
+            <p className="text-sm text-red-600 mt-1">Only administrators can access the Financial Dashboard. Editors and regular users do not have access.</p>
           </CardContent>
         </Card>
       </div>
@@ -168,11 +168,11 @@ export default function FinancialDashboard() {
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Shield className="w-6 h-6 text-primary" /> Financial Dashboard
             <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 ml-1">
-              <Lock className="w-3 h-3 mr-1" /> Solo Administradores
+              <Lock className="w-3 h-3 mr-1" /> Admins Only
             </Badge>
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Datos financieros sensibles protegidos con PIN · Click any figure para desbloquear
+            Sensitive financial data protected by PIN · Click any figure to unlock
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -181,7 +181,7 @@ export default function FinancialDashboard() {
           </Button>
           {revealed && (
             <Button variant="outline" size="sm" onClick={handleLock} className="gap-2 text-xs text-amber-600 border-amber-300 hover:bg-amber-50">
-              <Lock className="w-3.5 h-3.5" /> Bloquear
+              <Lock className="w-3.5 h-3.5" /> Lock
             </Button>
           )}
         </div>
@@ -196,10 +196,10 @@ export default function FinancialDashboard() {
             </div>
             <div className="flex-1">
               <p className="text-sm font-semibold text-amber-800">Protected financial data</p>
-              <p className="text-xs text-amber-700">Haz clic sobre cualquier cifra bloqueada to enter the PIN y revelar los datos.</p>
+              <p className="text-xs text-amber-700">Click on any blurred figure to enter the 4-digit PIN and reveal the data. Only admins have access.</p>
             </div>
             <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white gap-2 flex-shrink-0" onClick={() => setShowPinDialog(true)}>
-              <Eye className="w-4 h-4" /> Desbloquear Todo
+              <Eye className="w-4 h-4" /> Unlock All
             </Button>
           </CardContent>
         </Card>
@@ -211,16 +211,16 @@ export default function FinancialDashboard() {
           {
             label: "Estimated Revenue",
             value: revealed && fd ? `$${fd.estimatedRevenue.toLocaleString("en-US")}` : "$●●●●●",
-            sub: "Total cobrado + pendiente",
+            sub: "Total collected + pending",
             icon: TrendingUp,
             color: "text-emerald-600",
             bg: "bg-emerald-50",
             border: "border-emerald-100",
           },
           {
-            label: "Revenue Cobrados",
+            label: "Collected Revenue",
             value: revealed && fd ? `$${fd.collectedRevenue.toLocaleString("en-US")}` : "$●●●●●",
-            sub: "Payments completados",
+            sub: "Completed payments",
             icon: DollarSign,
             color: "text-blue-600",
             bg: "bg-blue-50",
@@ -229,7 +229,7 @@ export default function FinancialDashboard() {
           {
             label: "Receivables",
             value: revealed && fd ? `$${fd.pendingRevenue.toLocaleString("en-US")}` : "$●●●●●",
-            sub: "Payments pendientes",
+            sub: "Pending payments",
             icon: AlertCircle,
             color: "text-amber-600",
             bg: "bg-amber-50",
@@ -273,7 +273,7 @@ export default function FinancialDashboard() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Net Profit del Período</p>
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Net Profit for Period</p>
               <div className="mt-2">
                 <BlurredValue
                   value={fd ? `$${(fd.collectedRevenue - fd.totalExpenses).toLocaleString("en-US")} USD` : "$●●●●●"}

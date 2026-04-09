@@ -363,3 +363,101 @@ export const specialEvents = mysqlTable("specialEvents", {
 });
 export type SpecialEvent = typeof specialEvents.$inferSelect;
 export type InsertSpecialEvent = typeof specialEvents.$inferInsert;
+
+// ─── WhatsApp Templates ──────────────────────────────────────────────────────
+export const whatsappTemplates = mysqlTable("whatsappTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  category: mysqlEnum("category", ["marketing", "utility", "authentication", "reminder", "welcome", "follow_up", "payment", "progress_report"]).notNull(),
+  language: mysqlEnum("language", ["en", "es", "both"]).default("en").notNull(),
+  headerText: varchar("headerText", { length: 256 }),
+  bodyText: text("bodyText").notNull(),
+  footerText: varchar("footerText", { length: 256 }),
+  buttonType: mysqlEnum("buttonType", ["none", "quick_reply", "call_to_action"]).default("none"),
+  buttons: text("buttons"),
+  variables: text("variables"),
+  status: mysqlEnum("status", ["draft", "pending_review", "approved", "rejected"]).default("draft").notNull(),
+  usageCount: int("usageCount").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type WhatsappTemplate = typeof whatsappTemplates.$inferSelect;
+export type InsertWhatsappTemplate = typeof whatsappTemplates.$inferInsert;
+
+// ─── Voice Templates ─────────────────────────────────────────────────────────
+export const voiceTemplates = mysqlTable("voiceTemplates", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  category: mysqlEnum("category", ["reminder", "welcome", "payment_due", "class_cancelled", "promotion", "follow_up", "emergency", "other"]).notNull(),
+  language: mysqlEnum("language", ["en", "es", "both"]).default("en").notNull(),
+  scriptText: text("scriptText").notNull(),
+  duration: int("duration"),
+  voiceType: mysqlEnum("voiceType", ["male", "female", "neutral"]).default("neutral"),
+  status: mysqlEnum("status", ["draft", "active", "archived"]).default("draft").notNull(),
+  usageCount: int("usageCount").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type VoiceTemplate = typeof voiceTemplates.$inferSelect;
+export type InsertVoiceTemplate = typeof voiceTemplates.$inferInsert;
+
+// ─── Webhook Events ───────────────────────────────────────────────────────────
+export const webhookEvents = mysqlTable("webhookEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  source: varchar("source", { length: 64 }).notNull(),
+  eventType: varchar("eventType", { length: 128 }).notNull(),
+  payload: text("payload"),
+  status: mysqlEnum("status", ["received", "processing", "processed", "failed", "ignored"]).default("received").notNull(),
+  errorMessage: text("errorMessage"),
+  processedAt: timestamp("processedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type WebhookEvent = typeof webhookEvents.$inferSelect;
+
+// ─── Sync Jobs ────────────────────────────────────────────────────────────────
+export const syncJobs = mysqlTable("syncJobs", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  type: mysqlEnum("type", ["meta_leads", "email_sync", "payment_sync", "student_sync", "calendar_sync", "whatsapp_sync"]).notNull(),
+  status: mysqlEnum("status", ["idle", "running", "completed", "failed", "paused"]).default("idle").notNull(),
+  lastRunAt: timestamp("lastRunAt"),
+  nextRunAt: timestamp("nextRunAt"),
+  recordsProcessed: int("recordsProcessed").default(0),
+  recordsFailed: int("recordsFailed").default(0),
+  errorMessage: text("errorMessage"),
+  config: text("config"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SyncJob = typeof syncJobs.$inferSelect;
+
+// ─── Error Logs ───────────────────────────────────────────────────────────────
+export const errorLogs = mysqlTable("errorLogs", {
+  id: int("id").autoincrement().primaryKey(),
+  level: mysqlEnum("level", ["info", "warning", "error", "critical"]).default("error").notNull(),
+  source: varchar("source", { length: 128 }).notNull(),
+  message: text("message").notNull(),
+  stackTrace: text("stackTrace"),
+  context: text("context"),
+  resolved: boolean("resolved").default(false),
+  resolvedAt: timestamp("resolvedAt"),
+  resolvedBy: varchar("resolvedBy", { length: 128 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type ErrorLog = typeof errorLogs.$inferSelect;
+
+// ─── Inbound Webhooks ─────────────────────────────────────────────────────────
+export const inboundWebhooks = mysqlTable("inboundWebhooks", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  source: mysqlEnum("source", ["meta", "whatsapp", "stripe", "zapier", "make", "custom"]).notNull(),
+  endpointToken: varchar("endpointToken", { length: 128 }).notNull().unique(),
+  isActive: boolean("isActive").default(true),
+  description: text("description"),
+  lastReceivedAt: timestamp("lastReceivedAt"),
+  totalReceived: int("totalReceived").default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type InboundWebhook = typeof inboundWebhooks.$inferSelect;
+export type InsertInboundWebhook = typeof inboundWebhooks.$inferInsert;
