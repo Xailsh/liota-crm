@@ -4,6 +4,7 @@ import {
   assessments,
   attendance,
   campaigns,
+  camps,
   classEnrollments,
   classes,
   communications,
@@ -11,9 +12,12 @@ import {
   expenses,
   instructors,
   InsertUser,
+  languagePackages,
   leads,
   payments,
   programs,
+  scholarships,
+  specialEvents,
   students,
   users,
 } from "../drizzle/schema";
@@ -697,4 +701,129 @@ export async function seedDemoData() {
   ]).onDuplicateKeyUpdate({ set: { firstName: sql`firstName` } });
 
   return { success: true, message: "Demo data seeded successfully" };
+}
+
+// ─── Scholarships ─────────────────────────────────────────────────────────────
+
+export async function getScholarships(filters: { studentId?: number; status?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  let q = db.select().from(scholarships).$dynamic();
+  const conditions = [];
+  if (filters.studentId) conditions.push(eq(scholarships.studentId, filters.studentId));
+  if (filters.status) conditions.push(eq(scholarships.status, filters.status as any));
+  if (conditions.length > 0) q = q.where(and(...conditions));
+  return q.orderBy(desc(scholarships.createdAt));
+}
+
+export async function createScholarship(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(scholarships).values(data);
+}
+
+export async function updateScholarship(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(scholarships).set(data).where(eq(scholarships.id, id));
+}
+
+export async function deleteScholarship(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(scholarships).where(eq(scholarships.id, id));
+}
+
+// ─── Language Packages ────────────────────────────────────────────────────────
+export async function getLanguagePackages(filters: { type?: string; campus?: string; isActive?: boolean }) {
+  const db = await getDb();
+  if (!db) return [];
+  let q = db.select().from(languagePackages).$dynamic();
+  const conditions = [];
+  if (filters.type) conditions.push(eq(languagePackages.type, filters.type as any));
+  if (filters.campus) conditions.push(eq(languagePackages.campus, filters.campus as any));
+  if (filters.isActive !== undefined) conditions.push(eq(languagePackages.isActive, filters.isActive));
+  if (conditions.length > 0) q = q.where(and(...conditions));
+  return q.orderBy(languagePackages.name);
+}
+
+export async function createLanguagePackage(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(languagePackages).values(data);
+}
+
+export async function updateLanguagePackage(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(languagePackages).set(data).where(eq(languagePackages.id, id));
+}
+
+export async function deleteLanguagePackage(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(languagePackages).where(eq(languagePackages.id, id));
+}
+
+// ─── Camps ────────────────────────────────────────────────────────────────────
+export async function getCamps(filters: { season?: string; year?: number; campus?: string; status?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  let q = db.select().from(camps).$dynamic();
+  const conditions = [];
+  if (filters.season) conditions.push(eq(camps.season, filters.season as any));
+  if (filters.year) conditions.push(eq(camps.year, filters.year));
+  if (filters.campus) conditions.push(eq(camps.campus, filters.campus as any));
+  if (filters.status) conditions.push(eq(camps.status, filters.status as any));
+  if (conditions.length > 0) q = q.where(and(...conditions));
+  return q.orderBy(camps.startDate);
+}
+
+export async function createCamp(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(camps).values(data);
+}
+
+export async function updateCamp(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(camps).set(data).where(eq(camps.id, id));
+}
+
+export async function deleteCamp(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(camps).where(eq(camps.id, id));
+}
+
+// ─── Special Events ───────────────────────────────────────────────────────────
+export async function getSpecialEvents(filters: { type?: string; campus?: string; status?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  let q = db.select().from(specialEvents).$dynamic();
+  const conditions = [];
+  if (filters.type) conditions.push(eq(specialEvents.type, filters.type as any));
+  if (filters.campus) conditions.push(eq(specialEvents.campus, filters.campus as any));
+  if (filters.status) conditions.push(eq(specialEvents.status, filters.status as any));
+  if (conditions.length > 0) q = q.where(and(...conditions));
+  return q.orderBy(specialEvents.date);
+}
+
+export async function createSpecialEvent(data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(specialEvents).values(data);
+}
+
+export async function updateSpecialEvent(id: number, data: any) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(specialEvents).set(data).where(eq(specialEvents.id, id));
+}
+
+export async function deleteSpecialEvent(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(specialEvents).where(eq(specialEvents.id, id));
 }

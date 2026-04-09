@@ -44,3 +44,29 @@
 - [x] Role-based access control tests
 - [x] Input validation tests for all major list procedures
 - [x] Analytics overview test
+
+## Localization & Rebranding
+- [x] Upload LIOTA logo to CDN and add to sidebar/header
+- [x] Translate all UI text to English across all 10 pages + layout
+- [x] Remove Walter Bernard references — rebranded as LIOTA Institute
+- [x] Update app title to "LIOTA CRM"
+
+## Payment Methods
+- [x] Add Stripe, Zelle, and Dolla App (Mexico) to DB payment method enum
+- [x] Update Accounting page: Stripe/Zelle/Dolla in payment forms and labels
+- [x] Payment method icons for all methods
+
+## New Features
+- [x] DB: scholarships table
+- [x] DB: language packages table (hourly rates: 200 MXN/hr, $20 USD/hr)
+- [x] DB: camps table (Winter, Spring, Summer, Fall)
+- [x] DB: special_events table
+- [x] Backend: scholarships CRUD router
+- [x] Backend: language packages router
+- [x] Backend: camps router
+- [x] Backend: special events router
+- [x] Frontend: Scholarships page
+- [x] Frontend: Language Packages & Rates page (ESL, SSL, 1-lang, 2-lang, Polyglot, Full)
+- [x] Frontend: Seasonal Camps page (Winter, Spring, Summer, Fall)
+- [x] Frontend: Special Events page
+- [x] Add all new modules to sidebar navigation

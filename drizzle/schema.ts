@@ -152,7 +152,7 @@ export const payments = mysqlTable("payments", {
   programId: int("programId"),
   amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
   currency: varchar("currency", { length: 8 }).default("USD"),
-  method: mysqlEnum("method", ["paypal", "card", "cash", "transfer"]).notNull(),
+  method: mysqlEnum("method", ["paypal", "card", "cash", "transfer", "stripe", "zelle", "dolla"]).notNull(),
   status: mysqlEnum("status", ["pending", "completed", "failed", "refunded"]).default("pending").notNull(),
   description: text("description"),
   invoiceNumber: varchar("invoiceNumber", { length: 32 }),
@@ -251,3 +251,115 @@ export const communications = mysqlTable("communications", {
 });
 
 export type Communication = typeof communications.$inferSelect;
+
+// ─── Scholarships ────────────────────────────────────────────────────────────
+export const scholarships = mysqlTable("scholarships", {
+  id: int("id").autoincrement().primaryKey(),
+  studentId: int("studentId").notNull(),
+  name: varchar("name", { length: 128 }).notNull(),
+  type: mysqlEnum("type", ["full", "partial", "merit", "need_based", "community", "referral", "staff"]).notNull(),
+  discountPercent: decimal("discountPercent", { precision: 5, scale: 2 }),
+  discountAmount: decimal("discountAmount", { precision: 10, scale: 2 }),
+  currency: varchar("currency", { length: 8 }).default("USD"),
+  startDate: date("startDate"),
+  endDate: date("endDate"),
+  status: mysqlEnum("status", ["active", "pending", "expired", "revoked"]).default("pending").notNull(),
+  notes: text("notes"),
+  approvedBy: varchar("approvedBy", { length: 128 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Scholarship = typeof scholarships.$inferSelect;
+export type InsertScholarship = typeof scholarships.$inferInsert;
+
+// ─── Language Packages ───────────────────────────────────────────────────────
+export const languagePackages = mysqlTable("languagePackages", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  type: mysqlEnum("type", [
+    "esl",
+    "ssl",
+    "one_language",
+    "two_language",
+    "polyglot",
+    "full_package",
+    "business_english",
+    "kids_package",
+    "teens_package",
+    "custom"
+  ]).notNull(),
+  languages: varchar("languages", { length: 256 }),
+  totalHours: int("totalHours").notNull(),
+  sessionsPerWeek: int("sessionsPerWeek").default(2),
+  sessionDurationMin: int("sessionDurationMin").default(60),
+  priceUSD: decimal("priceUSD", { precision: 10, scale: 2 }).notNull(),
+  priceMXN: decimal("priceMXN", { precision: 10, scale: 2 }),
+  hourlyRateUSD: decimal("hourlyRateUSD", { precision: 8, scale: 2 }).default("20.00"),
+  hourlyRateMXN: decimal("hourlyRateMXN", { precision: 8, scale: 2 }).default("200.00"),
+  description: text("description"),
+  features: text("features"),
+  isActive: boolean("isActive").default(true).notNull(),
+  maxStudents: int("maxStudents").default(6),
+  campus: mysqlEnum("campus", ["merida", "dallas", "denver", "vienna", "online", "all"]).default("all"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type LanguagePackage = typeof languagePackages.$inferSelect;
+export type InsertLanguagePackage = typeof languagePackages.$inferInsert;
+
+// ─── Camps ───────────────────────────────────────────────────────────────────
+export const camps = mysqlTable("camps", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  season: mysqlEnum("season", ["winter", "spring", "summer", "fall"]).notNull(),
+  year: int("year").notNull(),
+  startDate: date("startDate").notNull(),
+  endDate: date("endDate").notNull(),
+  campus: mysqlEnum("campus", ["merida", "dallas", "denver", "vienna", "online", "all"]).notNull(),
+  ageGroup: mysqlEnum("ageGroup", ["kids", "teens", "adults", "mixed"]).default("mixed"),
+  capacity: int("capacity").default(20),
+  enrolled: int("enrolled").default(0),
+  priceUSD: decimal("priceUSD", { precision: 10, scale: 2 }),
+  priceMXN: decimal("priceMXN", { precision: 10, scale: 2 }),
+  description: text("description"),
+  highlights: text("highlights"),
+  status: mysqlEnum("status", ["upcoming", "open", "full", "in_progress", "completed", "cancelled"]).default("upcoming").notNull(),
+  instructorId: int("instructorId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Camp = typeof camps.$inferSelect;
+export type InsertCamp = typeof camps.$inferInsert;
+
+// ─── Special Events ──────────────────────────────────────────────────────────
+export const specialEvents = mysqlTable("specialEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 128 }).notNull(),
+  type: mysqlEnum("type", [
+    "cultural",
+    "competition",
+    "graduation",
+    "open_house",
+    "workshop",
+    "webinar",
+    "parent_meeting",
+    "holiday",
+    "fundraiser",
+    "other"
+  ]).notNull(),
+  date: date("date").notNull(),
+  startTime: varchar("startTime", { length: 8 }),
+  endTime: varchar("endTime", { length: 8 }),
+  campus: mysqlEnum("campus", ["merida", "dallas", "denver", "vienna", "online", "all"]).notNull(),
+  capacity: int("capacity"),
+  registrations: int("registrations").default(0),
+  priceUSD: decimal("priceUSD", { precision: 10, scale: 2 }).default("0.00"),
+  priceMXN: decimal("priceMXN", { precision: 10, scale: 2 }).default("0.00"),
+  isFree: boolean("isFree").default(true),
+  description: text("description"),
+  status: mysqlEnum("status", ["upcoming", "open", "full", "in_progress", "completed", "cancelled"]).default("upcoming").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SpecialEvent = typeof specialEvents.$inferSelect;
+export type InsertSpecialEvent = typeof specialEvents.$inferInsert;

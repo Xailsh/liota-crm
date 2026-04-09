@@ -10,14 +10,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { BookOpen, Plus, Users, MapPin, Monitor, Building, Loader2, Edit2, Calendar } from "lucide-react";
 
-const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Viena", online: "Online" };
+const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", online: "Online" };
 const statusColors: Record<string, string> = {
   scheduled: "bg-blue-100 text-blue-700 border-blue-200",
   active: "bg-emerald-100 text-emerald-700 border-emerald-200",
   completed: "bg-gray-100 text-gray-600 border-gray-200",
   cancelled: "bg-red-100 text-red-700 border-red-200",
 };
-const statusLabels: Record<string, string> = { scheduled: "Programada", active: "Activa", completed: "Completada", cancelled: "Cancelada" };
+const statusLabels: Record<string, string> = { scheduled: "Programda", active: "Active", completed: "Completed", cancelled: "Cancelled" };
 
 const emptyForm = {
   name: "", programId: undefined as number | undefined, instructorId: undefined as number | undefined,
@@ -69,12 +69,12 @@ export default function Classes() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <BookOpen className="w-6 h-6 text-primary" /> Clases y Programas
+            <BookOpen className="w-6 h-6 text-primary" /> Classes y Programs
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Gestión de grupos, horarios e instructores</p>
         </div>
         <Button onClick={() => { setForm({ ...emptyForm }); setEditId(null); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> Nueva Clase
+          <Plus className="w-4 h-4" /> New Class
         </Button>
       </div>
 
@@ -83,16 +83,16 @@ export default function Classes() {
         <CardContent className="p-4">
           <div className="flex flex-wrap gap-3">
             <Select value={campus} onValueChange={setCampus}>
-              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Sede" /></SelectTrigger>
+              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Campus" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las sedes</SelectItem>
+                <SelectItem value="all">All campuses</SelectItem>
                 {Object.entries(campusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Estado" /></SelectTrigger>
+              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -133,7 +133,7 @@ export default function Classes() {
                   </Badge>
                   <Badge variant="outline" className="text-xs bg-slate-50 text-slate-600 border-slate-200">
                     {c.modality === "online" ? <Monitor className="w-3 h-3 inline mr-1" /> : <Building className="w-3 h-3 inline mr-1" />}
-                    {c.modality === "online" ? "Online" : "Presencial"}
+                    {c.modality === "online" ? "Online" : "On-Site"}
                   </Badge>
                 </div>
 
@@ -171,45 +171,45 @@ export default function Classes() {
       {/* Form Dialog */}
       <Dialog open={showForm} onOpenChange={(o) => { if (!o) { setShowForm(false); setEditId(null); } }}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{editId ? "Editar Clase" : "Nueva Clase"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? "Edit Clase" : "New Class"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 space-y-1.5">
-              <Label>Nombre de la Clase *</Label>
-              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ej: Inglés Niños A1 - Mañana" />
+              <Label>Class Name *</Label>
+              <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ej: Inglés Children A1 - Mañana" />
             </div>
             <div className="space-y-1.5">
-              <Label>Programa</Label>
+              <Label>Program</Label>
               <Select value={form.programId?.toString() ?? ""} onValueChange={(v) => setForm({ ...form, programId: v ? Number(v) : undefined })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{programs.map((p: any) => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
               <Label>Instructor</Label>
               <Select value={form.instructorId?.toString() ?? ""} onValueChange={(v) => setForm({ ...form, instructorId: v ? Number(v) : undefined })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{instructors.map((i: any) => <SelectItem key={i.id} value={i.id.toString()}>{i.name}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Sede *</Label>
+              <Label>Campus *</Label>
               <Select value={form.campus} onValueChange={(v: any) => setForm({ ...form, campus: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(campusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Modalidad</Label>
+              <Label>Mode</Label>
               <Select value={form.modality} onValueChange={(v: any) => setForm({ ...form, modality: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="onsite">Presencial</SelectItem>
+                  <SelectItem value="onsite">On-Site</SelectItem>
                   <SelectItem value="online">Online</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Máx. Estudiantes</Label>
+              <Label>Máx. Students</Label>
               <Input type="number" value={form.maxStudents} onChange={(e) => setForm({ ...form, maxStudents: Number(e.target.value) })} min={1} max={6} />
             </div>
             <div className="space-y-1.5">
@@ -226,10 +226,10 @@ export default function Classes() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
             <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
               {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {editId ? "Guardar" : "Crear Clase"}
+              {editId ? "Save" : "Create Class"}
             </Button>
           </DialogFooter>
         </DialogContent>

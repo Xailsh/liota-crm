@@ -24,7 +24,7 @@ const campusLabels: Record<string, string> = {
   merida: "Mérida",
   dallas: "Dallas",
   denver: "Denver",
-  vienna: "Viena",
+  vienna: "Vienna",
   online: "Online",
 };
 
@@ -37,19 +37,19 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  active: "Activo",
-  trial: "Prueba",
-  inactive: "Inactivo",
-  graduated: "Graduado",
-  suspended: "Suspendido",
+  active: "Active",
+  trial: "Trial",
+  inactive: "Inactive",
+  graduated: "Graduated",
+  suspended: "Suspended",
 };
 
 const stageLabels: Record<string, string> = {
-  new_lead: "Nuevo Lead",
+  new_lead: "New Lead",
   contacted: "Contactado",
-  trial_scheduled: "Prueba Agendada",
-  trial_done: "Prueba Realizada",
-  proposal_sent: "Propuesta Enviada",
+  trial_scheduled: "Trial Agendada",
+  trial_done: "Trial Realizada",
+  proposal_sent: "Propuesta Sent",
   enrolled: "Inscrito",
   lost: "Perdido",
 };
@@ -78,7 +78,7 @@ export default function Dashboard() {
 
   const kpiCards = [
     {
-      title: "Total Estudiantes",
+      title: "Total Students",
       value: metrics?.totalStudents ?? 0,
       sub: `${metrics?.activeStudents ?? 0} activos · ${metrics?.trialStudents ?? 0} en prueba`,
       icon: GraduationCap,
@@ -87,16 +87,16 @@ export default function Dashboard() {
       border: "border-blue-100",
     },
     {
-      title: "Ingresos del Mes",
+      title: "Monthly Revenue",
       value: `$${(metrics?.monthlyRevenue ?? 0).toLocaleString("en-US", { minimumFractionDigits: 0 })}`,
-      sub: "USD · Pagos completados",
+      sub: "USD · Completed payments",
       icon: DollarSign,
       color: "text-emerald-600",
       bg: "bg-emerald-50",
       border: "border-emerald-100",
     },
     {
-      title: "Campañas Activas",
+      title: "Active Campaigns",
       value: metrics?.activeCampaigns ?? 0,
       sub: "En borrador o programadas",
       icon: Mail,
@@ -105,16 +105,16 @@ export default function Dashboard() {
       border: "border-amber-100",
     },
     {
-      title: "Clases Programadas",
+      title: "Scheduled Classes",
       value: metrics?.scheduledClasses ?? 0,
-      sub: "Activas y por iniciar",
+      sub: "Actives y por iniciar",
       icon: BookOpen,
       color: "text-violet-600",
       bg: "bg-violet-50",
       border: "border-violet-100",
     },
     {
-      title: "Leads Activos",
+      title: "Active Leads",
       value: metrics?.totalLeads ?? 0,
       sub: "En el pipeline de ventas",
       icon: Users,
@@ -123,7 +123,7 @@ export default function Dashboard() {
       border: "border-rose-100",
     },
     {
-      title: "Tasa de Satisfacción",
+      title: "Satisfaction Rate",
       value: `${metrics?.satisfactionRate ?? 95}%`,
       sub: "Basado en evaluaciones",
       icon: Star,
@@ -167,7 +167,7 @@ export default function Dashboard() {
               ) : (
                 <TrendingUp className="w-3.5 h-3.5" />
               )}
-              Cargar Datos Demo
+              Load Demo Data
             </Button>
           )}
         </div>
@@ -204,10 +204,10 @@ export default function Dashboard() {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { label: "Ingresos Totales", value: metrics?.totalRevenue ?? 0, color: "text-emerald-600" },
-              { label: "Pendiente por Cobrar", value: metrics?.pendingRevenue ?? 0, color: "text-amber-600" },
-              { label: "Gastos Totales", value: metrics?.totalExpenses ?? 0, color: "text-red-500" },
-              { label: "Ganancia Neta", value: (metrics?.totalRevenue ?? 0) - (metrics?.totalExpenses ?? 0), color: "text-blue-600" },
+              { label: "Total Revenue", value: metrics?.totalRevenue ?? 0, color: "text-emerald-600" },
+              { label: "Pending por Cobrar", value: metrics?.pendingRevenue ?? 0, color: "text-amber-600" },
+              { label: "Total Expenses", value: metrics?.totalExpenses ?? 0, color: "text-red-500" },
+              { label: "Net Profit", value: (metrics?.totalRevenue ?? 0) - (metrics?.totalExpenses ?? 0), color: "text-blue-600" },
             ].map((item) => (
               <div key={item.label} className="space-y-1">
                 <p className="text-xs text-muted-foreground">{item.label}</p>
@@ -228,10 +228,10 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-primary" />
-                Estudiantes Recientes
+                Recent Students
               </CardTitle>
               <Button variant="ghost" size="sm" className="text-xs text-primary gap-1 h-7" asChild>
-                <a href="/students">Ver todos <ArrowUpRight className="w-3 h-3" /></a>
+                <a href="/students">View all <ArrowUpRight className="w-3 h-3" /></a>
               </Button>
             </div>
           </CardHeader>
@@ -313,7 +313,7 @@ export default function Dashboard() {
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <MapPin className="w-4 h-4 text-primary" />
-            Sedes LIOTA
+            LIOTA Campuses
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -322,7 +322,7 @@ export default function Dashboard() {
               { key: "merida", label: "Mérida", country: "México 🇲🇽", color: "border-blue-200 bg-blue-50" },
               { key: "dallas", label: "Dallas", country: "Texas, EE.UU. 🇺🇸", color: "border-green-200 bg-green-50" },
               { key: "denver", label: "Denver", country: "Colorado, EE.UU. 🇺🇸", color: "border-purple-200 bg-purple-50" },
-              { key: "vienna", label: "Viena", country: "Austria 🇦🇹", color: "border-rose-200 bg-rose-50" },
+              { key: "vienna", label: "Vienna", country: "Austria 🇦🇹", color: "border-rose-200 bg-rose-50" },
               { key: "online", label: "Online", country: "Global 🌐", color: "border-amber-200 bg-amber-50" },
             ].map((campus) => (
               <div key={campus.key} className={`border rounded-xl p-3 ${campus.color} text-center`}>

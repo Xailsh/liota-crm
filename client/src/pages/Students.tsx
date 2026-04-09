@@ -15,9 +15,9 @@ import {
   Edit2, Trash2, Loader2, User, BookOpen, X
 } from "lucide-react";
 
-const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Viena", online: "Online" };
-const ageGroupLabels: Record<string, string> = { children: "Niños", teens: "Adolescentes", adults: "Adultos" };
-const statusLabels: Record<string, string> = { active: "Activo", trial: "Prueba", inactive: "Inactivo", graduated: "Graduado", suspended: "Suspendido" };
+const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", online: "Online" };
+const ageGroupLabels: Record<string, string> = { children: "Children", teens: "Teens", adults: "Adults" };
+const statusLabels: Record<string, string> = { active: "Active", trial: "Trial", inactive: "Inactive", graduated: "Graduated", suspended: "Suspended" };
 const statusColors: Record<string, string> = {
   active: "bg-emerald-100 text-emerald-700 border-emerald-200",
   trial: "bg-blue-100 text-blue-700 border-blue-200",
@@ -55,15 +55,15 @@ export default function Students() {
   const { data: programs = [] } = trpc.programs.list.useQuery();
 
   const createMutation = trpc.students.create.useMutation({
-    onSuccess: () => { toast.success("Estudiante creado"); setShowForm(false); setForm({ ...emptyForm }); refetch(); },
+    onSuccess: () => { toast.success("Student created"); setShowForm(false); setForm({ ...emptyForm }); refetch(); },
     onError: (e) => toast.error(e.message),
   });
   const updateMutation = trpc.students.update.useMutation({
-    onSuccess: () => { toast.success("Estudiante actualizado"); setShowForm(false); setEditId(null); refetch(); },
+    onSuccess: () => { toast.success("Student updated"); setShowForm(false); setEditId(null); refetch(); },
     onError: (e) => toast.error(e.message),
   });
   const deleteMutation = trpc.students.delete.useMutation({
-    onSuccess: () => { toast.success("Estudiante eliminado"); setDeleteId(null); refetch(); },
+    onSuccess: () => { toast.success("Student deleted"); setDeleteId(null); refetch(); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -95,12 +95,12 @@ export default function Students() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <GraduationCap className="w-6 h-6 text-primary" /> Estudiantes
+            <GraduationCap className="w-6 h-6 text-primary" /> Students
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">{students.length} estudiante{students.length !== 1 ? "s" : ""} encontrado{students.length !== 1 ? "s" : ""}</p>
+          <p className="text-sm text-muted-foreground mt-0.5">{students.length} student{students.length !== 1 ? "s" : ""} found</p>
         </div>
         <Button onClick={() => { setForm({ ...emptyForm }); setEditId(null); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> Nuevo Estudiante
+          <Plus className="w-4 h-4" /> New Student
         </Button>
       </div>
 
@@ -110,32 +110,32 @@ export default function Students() {
           <div className="flex flex-wrap gap-3 items-center">
             <div className="relative flex-1 min-w-48">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Buscar por nombre o email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
+              <Input placeholder="Search by name or email..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
             </div>
             <Select value={campus} onValueChange={setCampus}>
-              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Sede" /></SelectTrigger>
+              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Campus" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas las sedes</SelectItem>
+                <SelectItem value="all">All campuses</SelectItem>
                 {Object.entries(campusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={ageGroup} onValueChange={setAgeGroup}>
-              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Grupo" /></SelectTrigger>
+              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Group" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los grupos</SelectItem>
+                <SelectItem value="all">All groups</SelectItem>
                 {Object.entries(ageGroupLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
             <Select value={status} onValueChange={setStatus}>
-              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Estado" /></SelectTrigger>
+              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estados</SelectItem>
+                <SelectItem value="all">All statuses</SelectItem>
                 {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
             {(search || campus !== "all" || ageGroup !== "all" || status !== "all") && (
               <Button variant="ghost" size="sm" onClick={() => { setSearch(""); setCampus("all"); setAgeGroup("all"); setStatus("all"); }} className="gap-1 h-9 text-muted-foreground">
-                <X className="w-3.5 h-3.5" /> Limpiar
+                <X className="w-3.5 h-3.5" /> Clear
               </Button>
             )}
           </div>
@@ -151,8 +151,8 @@ export default function Students() {
         <Card className="border border-dashed border-border">
           <CardContent className="py-16 text-center">
             <GraduationCap className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-muted-foreground font-medium">No se encontraron estudiantes</p>
-            <p className="text-sm text-muted-foreground/70 mt-1">Ajusta los filtros o agrega un nuevo estudiante</p>
+            <p className="text-muted-foreground font-medium">No students found</p>
+            <p className="text-sm text-muted-foreground/70 mt-1">Adjust filters or add a new student</p>
           </CardContent>
         </Card>
       ) : (
@@ -213,7 +213,7 @@ export default function Students() {
                   {s.parentName && (
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <User className="w-3 h-3 flex-shrink-0" />
-                      <span className="truncate">Padre/Madre: {s.parentName}</span>
+                      <span className="truncate">Parent: {s.parentName}</span>
                     </div>
                   )}
                 </div>
@@ -227,38 +227,38 @@ export default function Students() {
       <Dialog open={showForm} onOpenChange={(o) => { if (!o) { setShowForm(false); setEditId(null); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editId ? "Editar Estudiante" : "Nuevo Estudiante"}</DialogTitle>
+            <DialogTitle>{editId ? "Edit Student" : "New Student"}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Nombre *</Label>
-              <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="Nombre" />
+              <Label>First Name *</Label>
+              <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" />
             </div>
             <div className="space-y-1.5">
-              <Label>Apellido *</Label>
-              <Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Apellido" />
+              <Label>Last Name *</Label>
+              <Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" />
             </div>
             <div className="space-y-1.5">
               <Label>Email</Label>
               <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@ejemplo.com" />
             </div>
             <div className="space-y-1.5">
-              <Label>Teléfono</Label>
+              <Label>Phone</Label>
               <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+52 999 123 4567" />
             </div>
             <div className="space-y-1.5">
-              <Label>Grupo de Edad *</Label>
+              <Label>Age Group *</Label>
               <Select value={form.ageGroup} onValueChange={(v: any) => setForm({ ...form, ageGroup: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="children">Niños (5-12)</SelectItem>
-                  <SelectItem value="teens">Adolescentes (13-17)</SelectItem>
-                  <SelectItem value="adults">Adultos (18+)</SelectItem>
+                  <SelectItem value="children">Children (5-12)</SelectItem>
+                  <SelectItem value="teens">Teens (13-17)</SelectItem>
+                  <SelectItem value="adults">Adults (18+)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Sede *</Label>
+              <Label>Campus *</Label>
               <Select value={form.campus} onValueChange={(v: any) => setForm({ ...form, campus: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -267,25 +267,25 @@ export default function Students() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Programa</Label>
+              <Label>Program</Label>
               <Select value={form.programId?.toString() ?? ""} onValueChange={(v) => setForm({ ...form, programId: v ? Number(v) : undefined })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar programa" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select program" /></SelectTrigger>
                 <SelectContent>
                   {programs.map((p: any) => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Nivel MCER</Label>
+              <Label>CEFR Level</Label>
               <Select value={form.mcerLevel ?? ""} onValueChange={(v) => setForm({ ...form, mcerLevel: v || undefined })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar nivel" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
                 <SelectContent>
                   {["A1", "A2", "B1", "B2", "C1", "C2"].map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Estado de Matrícula</Label>
+              <Label>Enrollment Status</Label>
               <Select value={form.enrollmentStatus} onValueChange={(v: any) => setForm({ ...form, enrollmentStatus: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -294,31 +294,31 @@ export default function Students() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Nombre del Padre/Madre</Label>
-              <Input value={form.parentName} onChange={(e) => setForm({ ...form, parentName: e.target.value })} placeholder="Para estudiantes menores" />
+              <Label>Parent Name</Label>
+              <Input value={form.parentName} onChange={(e) => setForm({ ...form, parentName: e.target.value })} placeholder="For minor students" />
             </div>
             <div className="space-y-1.5">
-              <Label>Email del Padre/Madre</Label>
+              <Label>Parent Email</Label>
               <Input value={form.parentEmail} onChange={(e) => setForm({ ...form, parentEmail: e.target.value })} placeholder="padre@email.com" />
             </div>
             <div className="space-y-1.5">
-              <Label>Teléfono del Padre/Madre</Label>
+              <Label>Parent Phone</Label>
               <Input value={form.parentPhone} onChange={(e) => setForm({ ...form, parentPhone: e.target.value })} placeholder="+52 999 000 0000" />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Notas</Label>
-              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Notas adicionales sobre el estudiante..." rows={3} />
+              <Label>Notes</Label>
+              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Additional notes about the student..." rows={3} />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Etiquetas</Label>
-              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="activo,niños,online (separadas por comas)" />
+              <Label>Tags</Label>
+              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="active,children,online (comma separated)" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
             <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
               {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {editId ? "Guardar Cambios" : "Crear Estudiante"}
+              {editId ? "Save Changes" : "Create Student"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -327,13 +327,13 @@ export default function Students() {
       {/* Delete Confirm */}
       <Dialog open={!!deleteId} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>¿Eliminar estudiante?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
+          <DialogHeader><DialogTitle>Delete Student?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteMutation.mutate({ id: deleteId! })} disabled={deleteMutation.isPending}>
               {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Eliminar
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

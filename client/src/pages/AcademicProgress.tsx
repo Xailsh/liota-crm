@@ -39,7 +39,7 @@ export default function AcademicProgress() {
   const { data: students = [] } = trpc.students.list.useQuery({});
 
   const createMutation = trpc.assessments.create.useMutation({
-    onSuccess: () => { toast.success("Evaluación registrada"); setShowForm(false); setForm({ ...emptyForm }); refetch(); },
+    onSuccess: () => { toast.success("Assessment registrada"); setShowForm(false); setForm({ ...emptyForm }); refetch(); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -73,12 +73,12 @@ export default function AcademicProgress() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <TrendingUp className="w-6 h-6 text-primary" /> Progreso Académico
+            <TrendingUp className="w-6 h-6 text-primary" /> Academic Progress
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Evaluaciones MCER, avance por nivel y reportes académicos</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Assessments MCER, avance por nivel y reportes académicos</p>
         </div>
         <Button onClick={() => { setForm({ ...emptyForm }); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> Nueva Evaluación
+          <Plus className="w-4 h-4" /> New Assessment
         </Button>
       </div>
 
@@ -88,9 +88,9 @@ export default function AcademicProgress() {
           <div className="flex gap-3 items-center">
             <Label className="text-sm flex-shrink-0">Filtrar por estudiante:</Label>
             <Select value={selectedStudent} onValueChange={setSelectedStudent}>
-              <SelectTrigger className="w-64 h-9"><SelectValue placeholder="Todos los estudiantes" /></SelectTrigger>
+              <SelectTrigger className="w-64 h-9"><SelectValue placeholder="All Students" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los estudiantes</SelectItem>
+                <SelectItem value="all">All Students</SelectItem>
                 {students.map((s: any) => <SelectItem key={s.id} value={s.id.toString()}>{s.firstName} {s.lastName}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -191,7 +191,7 @@ export default function AcademicProgress() {
                 )}
 
                 {a.notes && <p className="mt-3 text-sm text-muted-foreground bg-muted rounded-lg p-2">{a.notes}</p>}
-                {a.assessedBy && <p className="mt-1.5 text-xs text-muted-foreground">Evaluado por: {a.assessedBy}</p>}
+                {a.assessedBy && <p className="mt-1.5 text-xs text-muted-foreground">Assessed by: {a.assessedBy}</p>}
               </CardContent>
             </Card>
           ))}
@@ -201,37 +201,37 @@ export default function AcademicProgress() {
       {/* Create Form Dialog */}
       <Dialog open={showForm} onOpenChange={(o) => { if (!o) setShowForm(false); }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Nueva Evaluación</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>New Assessment</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 space-y-1.5">
-              <Label>Estudiante *</Label>
+              <Label>Student *</Label>
               <Select value={form.studentId} onValueChange={(v) => setForm({ ...form, studentId: v })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar estudiante" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select estudiante" /></SelectTrigger>
                 <SelectContent>{students.map((s: any) => <SelectItem key={s.id} value={s.id.toString()}>{s.firstName} {s.lastName}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Tipo de Evaluación</Label>
+              <Label>Assessment Type</Label>
               <Select value={form.assessmentType} onValueChange={(v: any) => setForm({ ...form, assessmentType: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(assessmentTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Fecha de Evaluación</Label>
+              <Label>Assessment Date</Label>
               <Input type="date" value={form.assessmentDate} onChange={(e) => setForm({ ...form, assessmentDate: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <Label>Nivel MCER Antes</Label>
+              <Label>CEFR Level Antes</Label>
               <Select value={form.mcerLevelBefore} onValueChange={(v) => setForm({ ...form, mcerLevelBefore: v })}>
-                <SelectTrigger><SelectValue placeholder="Nivel anterior" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Previous level" /></SelectTrigger>
                 <SelectContent>{MCER_LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Nivel MCER Después</Label>
+              <Label>CEFR Level Después</Label>
               <Select value={form.mcerLevelAfter} onValueChange={(v) => setForm({ ...form, mcerLevelAfter: v })}>
-                <SelectTrigger><SelectValue placeholder="Nivel alcanzado" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Level achieved" /></SelectTrigger>
                 <SelectContent>{MCER_LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -240,14 +240,14 @@ export default function AcademicProgress() {
             <div className="space-y-1.5"><Label>Reading (0-100)</Label><Input type="number" min={0} max={100} value={form.readingScore} onChange={(e) => setForm({ ...form, readingScore: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Writing (0-100)</Label><Input type="number" min={0} max={100} value={form.writingScore} onChange={(e) => setForm({ ...form, writingScore: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Puntaje General (0-100)</Label><Input type="number" min={0} max={100} value={form.overallScore} onChange={(e) => setForm({ ...form, overallScore: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Evaluado por</Label><Input value={form.assessedBy} onChange={(e) => setForm({ ...form, assessedBy: e.target.value })} placeholder="Nombre del instructor" /></div>
+            <div className="space-y-1.5"><Label>Assessed by</Label><Input value={form.assessedBy} onChange={(e) => setForm({ ...form, assessedBy: e.target.value })} placeholder="Instructor name" /></div>
             <div className="col-span-2 space-y-1.5"><Label>Notas</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} placeholder="Observaciones sobre el desempeño del estudiante..." /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
             <Button onClick={handleSubmit} disabled={createMutation.isPending}>
               {createMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Registrar Evaluación
+              Registrar Assessment
             </Button>
           </DialogFooter>
         </DialogContent>

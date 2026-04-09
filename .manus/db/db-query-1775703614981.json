@@ -1,0 +1,9 @@
+{
+  "query": "ALTER TABLE `payments` MODIFY COLUMN `method` enum('paypal','card','cash','transfer','stripe','zelle','dolla') NOT NULL;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2HkwpY45f9QmLg9.469c1175074f --database YzZjuTcos3se78oWJYxJkp --execute ALTER TABLE `payments` MODIFY COLUMN `method` enum('paypal','card','cash','transfer','stripe','zelle','dolla') NOT NULL;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 453
+}

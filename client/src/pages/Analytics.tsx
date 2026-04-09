@@ -1,39 +1,21 @@
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Loader2, BarChart3, TrendingUp, Users, Mail, DollarSign, MapPin } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, Legend
+  PieChart, Pie, Cell, LineChart, Line,
 } from "recharts";
 
 const CAMPUS_COLORS: Record<string, string> = {
-  merida: "#6366f1",
-  dallas: "#10b981",
-  denver: "#f59e0b",
-  vienna: "#ec4899",
-  online: "#3b82f6",
+  merida: "#6366f1", dallas: "#10b981", denver: "#f59e0b", vienna: "#ec4899", online: "#3b82f6",
 };
-
 const MCER_COLORS: Record<string, string> = {
-  A1: "#94a3b8",
-  A2: "#60a5fa",
-  B1: "#2dd4bf",
-  B2: "#4ade80",
-  C1: "#fbbf24",
-  C2: "#a78bfa",
+  A1: "#94a3b8", A2: "#60a5fa", B1: "#2dd4bf", B2: "#4ade80", C1: "#fbbf24", C2: "#a78bfa",
 };
-
 const PIE_COLORS = ["#6366f1", "#10b981", "#f59e0b", "#ec4899", "#3b82f6", "#ef4444"];
-
 const stageShortLabels: Record<string, string> = {
-  new_lead: "Nuevo",
-  contacted: "Contactado",
-  trial_scheduled: "Prueba Ag.",
-  trial_done: "Prueba OK",
-  proposal_sent: "Propuesta",
-  enrolled: "Inscrito",
-  lost: "Perdido",
+  new_lead: "New Lead", contacted: "Contacted", trial_scheduled: "Trial Sched.",
+  trial_done: "Trial Done", proposal_sent: "Proposal", enrolled: "Enrolled", lost: "Lost",
 };
 
 export default function Analytics() {
@@ -44,40 +26,45 @@ export default function Analytics() {
       <div className="flex items-center justify-center h-full min-h-96">
         <div className="text-center space-y-3">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground text-sm">Cargando analíticas...</p>
+          <p className="text-muted-foreground text-sm">Loading analytics...</p>
         </div>
       </div>
     );
   }
 
-  const campusData = analytics?.studentsByCampus ?? [];
-  const programData = (analytics?.studentsByProgram ?? []).map((p: any) => ({ ...p, program: p.ageGroup }));
+  const campusData = (analytics?.studentsByCampus ?? []);
+  const programData = (analytics?.studentsByProgram ?? []).map((p: any) => ({
+    program: (p.ageGroup ?? p.program ?? "").charAt(0).toUpperCase() + (p.ageGroup ?? p.program ?? "").slice(1),
+    count: p.count,
+  }));
   const mcerData: any[] = [];
   const revenueByProgram: any[] = [];
-  const leadsByStage = (analytics?.leadsByStage ?? []).map((l: any) => ({ ...l, stage: stageShortLabels[l.stage] ?? l.stage }));
+  const leadsByStage = (analytics?.leadsByStage ?? []).map((l: any) => ({
+    ...l, stage: stageShortLabels[l.stage] ?? l.stage,
+  }));
   const campaignStats = analytics?.campaignStats;
-  const monthlyRevenue = (analytics?.revenueByMonth ?? []).map((m: any) => ({ month: m.month, revenue: m.total }));
-  const totalStudents = (analytics?.studentsByCampus ?? []).reduce((s: number, c: any) => s + c.count, 0);
-  const retentionRate = 87;
+  const monthlyRevenue = (analytics?.revenueByMonth ?? []).map((m: any) => ({
+    month: m.month, revenue: Number(m.total),
+  }));
+  const totalStudents = campusData.reduce((s: number, c: any) => s + c.count, 0);
   const sentCampaigns = campaignStats?.sent ?? 0;
-  const totalRevenue = campaignStats?.totalRecipients ?? 0;
 
   return (
     <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
       <div>
         <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-          <BarChart3 className="w-6 h-6 text-primary" /> Reportes y Analíticas
+          <BarChart3 className="w-6 h-6 text-primary" /> Reports &amp; Analytics
         </h1>
-        <p className="text-sm text-muted-foreground mt-0.5">Métricas de retención, ingresos, campañas y matrículas</p>
+        <p className="text-sm text-muted-foreground mt-0.5">Retention, revenue, campaigns, and enrollment statistics</p>
       </div>
 
       {/* KPI Summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Tasa de Retención", value: `${retentionRate}%`, icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Total Estudiantes", value: totalStudents, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Campañas Enviadas", value: sentCampaigns, icon: Mail, color: "text-violet-600", bg: "bg-violet-50" },
-          { label: "Destinatarios Totales", value: (campaignStats?.totalRecipients ?? 0).toLocaleString(), icon: DollarSign, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Retention Rate", value: "87%", icon: TrendingUp, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Total Students", value: totalStudents, icon: Users, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Campaigns Sent", value: sentCampaigns, icon: Mail, color: "text-violet-600", bg: "bg-violet-50" },
+          { label: "Total Recipients", value: (campaignStats?.totalRecipients ?? 0).toLocaleString(), icon: DollarSign, color: "text-amber-600", bg: "bg-amber-50" },
         ].map((kpi) => (
           <Card key={kpi.label} className="border border-border card-shadow">
             <CardContent className="p-4 flex items-center gap-3">
@@ -98,12 +85,12 @@ export default function Analytics() {
         <Card className="border border-border card-shadow">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-primary" /> Estudiantes por Sede
+              <MapPin className="w-4 h-4 text-primary" /> Students by Campus
             </CardTitle>
           </CardHeader>
           <CardContent>
             {campusData.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Sin datos</div>
+              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No data yet. Load demo data from the Dashboard.</div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={campusData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
@@ -124,11 +111,11 @@ export default function Analytics() {
 
         <Card className="border border-border card-shadow">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">Distribución por Programa</CardTitle>
+            <CardTitle className="text-base font-semibold">Distribution by Program</CardTitle>
           </CardHeader>
           <CardContent>
             {programData.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Sin datos</div>
+              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No data</div>
             ) : (
               <div className="flex items-center gap-4">
                 <ResponsiveContainer width="60%" height={200}>
@@ -156,24 +143,24 @@ export default function Analytics() {
         </Card>
       </div>
 
-      {/* Row 2: Monthly Revenue + MCER Distribution */}
+      {/* Row 2: Monthly Revenue + CEFR Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="border border-border card-shadow">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-primary" /> Ingresos Mensuales
+              <DollarSign className="w-4 h-4 text-primary" /> Monthly Revenue
             </CardTitle>
           </CardHeader>
           <CardContent>
             {monthlyRevenue.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Sin datos de ingresos</div>
+              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No revenue data</div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <LineChart data={monthlyRevenue} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, "Ingresos"]} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, "Revenue"]} />
                   <Line type="monotone" dataKey="revenue" stroke="#6366f1" strokeWidth={2} dot={{ fill: "#6366f1", r: 4 }} />
                 </LineChart>
               </ResponsiveContainer>
@@ -183,11 +170,11 @@ export default function Analytics() {
 
         <Card className="border border-border card-shadow">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">Distribución por Nivel MCER</CardTitle>
+            <CardTitle className="text-base font-semibold">CEFR Level Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             {mcerData.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Sin datos de niveles</div>
+              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No level data</div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={mcerData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
@@ -207,17 +194,17 @@ export default function Analytics() {
         </Card>
       </div>
 
-      {/* Row 3: Leads Pipeline + Revenue by Program */}
+      {/* Row 3: Leads Funnel + Revenue by Program */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card className="border border-border card-shadow">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Users className="w-4 h-4 text-primary" /> Embudo de Leads
+              <Users className="w-4 h-4 text-primary" /> Leads Funnel
             </CardTitle>
           </CardHeader>
           <CardContent>
             {leadsByStage.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Sin datos de leads</div>
+              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No lead data</div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={leadsByStage} layout="vertical" margin={{ top: 5, right: 30, left: 60, bottom: 5 }}>
@@ -235,19 +222,19 @@ export default function Analytics() {
         <Card className="border border-border card-shadow">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <DollarSign className="w-4 h-4 text-primary" /> Ingresos por Programa
+              <DollarSign className="w-4 h-4 text-primary" /> Revenue by Program
             </CardTitle>
           </CardHeader>
           <CardContent>
             {revenueByProgram.length === 0 ? (
-              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">Sin datos financieros</div>
+              <div className="h-48 flex items-center justify-center text-muted-foreground text-sm">No financial data</div>
             ) : (
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={revenueByProgram} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="program" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 11 }} />
-                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, "Ingresos"]} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8, fontSize: 12 }} formatter={(v: any) => [`$${Number(v).toLocaleString()}`, "Revenue"]} />
                   <Bar dataKey="revenue" fill="#10b981" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -261,16 +248,16 @@ export default function Analytics() {
         <Card className="border border-border card-shadow">
           <CardHeader className="pb-3">
             <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Mail className="w-4 h-4 text-primary" /> Resumen de Campañas de Email
+              <Mail className="w-4 h-4 text-primary" /> Email Campaign Summary
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {[
-                { label: "Total Campañas", value: campaignStats?.total ?? 0 },
-                { label: "Enviadas", value: campaignStats?.sent ?? 0 },
-                { label: "Total Destinatarios", value: (campaignStats?.totalRecipients ?? 0).toLocaleString() },
-                { label: "Total Aperturas", value: (campaignStats?.totalOpens ?? 0).toLocaleString() },
+                { label: "Total Campaigns", value: campaignStats?.total ?? 0 },
+                { label: "Sent", value: campaignStats?.sent ?? 0 },
+                { label: "Total Recipients", value: (campaignStats?.totalRecipients ?? 0).toLocaleString() },
+                { label: "Total Opens", value: (campaignStats?.totalOpens ?? 0).toLocaleString() },
               ].map((stat) => (
                 <div key={stat.label} className="bg-muted rounded-xl p-4 text-center">
                   <p className="text-2xl font-bold text-foreground">{stat.value}</p>
@@ -279,11 +266,22 @@ export default function Analytics() {
               ))}
             </div>
             <div className="mt-4">
-              <p className="text-xs text-muted-foreground mb-2">Tasa de apertura global</p>
+              <p className="text-xs text-muted-foreground mb-2">Global open rate</p>
               <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                <div className="h-full bg-primary rounded-full" style={{ width: `${campaignStats && campaignStats.totalRecipients > 0 ? Math.round((campaignStats.totalOpens / campaignStats.totalRecipients) * 100) : 0}%` }} />
+                <div
+                  className="h-full bg-primary rounded-full"
+                  style={{
+                    width: `${campaignStats && campaignStats.totalRecipients > 0
+                      ? Math.round((campaignStats.totalOpens / campaignStats.totalRecipients) * 100)
+                      : 0}%`,
+                  }}
+                />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{campaignStats && campaignStats.totalRecipients > 0 ? Math.round((campaignStats.totalOpens / campaignStats.totalRecipients) * 100) : 0}% de tasa de apertura</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {campaignStats && campaignStats.totalRecipients > 0
+                  ? Math.round((campaignStats.totalOpens / campaignStats.totalRecipients) * 100)
+                  : 0}% open rate
+              </p>
             </div>
           </CardContent>
         </Card>

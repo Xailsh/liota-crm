@@ -43,6 +43,23 @@ import {
   updatePayment,
   updateProgram,
   updateStudent,
+  // New modules
+  getScholarships,
+  createScholarship,
+  updateScholarship,
+  deleteScholarship,
+  getLanguagePackages,
+  createLanguagePackage,
+  updateLanguagePackage,
+  deleteLanguagePackage,
+  getCamps,
+  createCamp,
+  updateCamp,
+  deleteCamp,
+  getSpecialEvents,
+  createSpecialEvent,
+  updateSpecialEvent,
+  deleteSpecialEvent,
 } from "./db";
 
 // Admin guard middleware
@@ -551,6 +568,126 @@ export const appRouter = router({
     overview: protectedProcedure.query(async () => {
       return await getAnalytics();
     }),
+  }),
+
+  // ─── Scholarships ───────────────────────────────────────────────────────────
+  scholarships: router({
+    list: protectedProcedure
+      .input(z.object({ studentId: z.number().optional(), status: z.string().optional() }))
+      .query(async ({ input }) => getScholarships(input)),
+    create: protectedProcedure
+      .input(z.object({
+        studentId: z.number(),
+        name: z.string(),
+        type: z.enum(["full","partial","merit","need_based","community","referral","staff"]),
+        discountPercent: z.number().optional(),
+        discountAmount: z.number().optional(),
+        currency: z.string().default("USD"),
+        startDate: z.string().optional(),
+        endDate: z.string().optional(),
+        status: z.enum(["active","pending","expired","revoked"]).default("pending"),
+        notes: z.string().optional(),
+        approvedBy: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => { await createScholarship(input as any); return { success: true }; }),
+    update: protectedProcedure
+      .input(z.object({ id: z.number(), data: z.record(z.string(), z.any()) }))
+      .mutation(async ({ input }) => { await updateScholarship(input.id, input.data); return { success: true }; }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await deleteScholarship(input.id); return { success: true }; }),
+  }),
+
+  // ─── Language Packages ──────────────────────────────────────────────────────
+  packages: router({
+    list: protectedProcedure
+      .input(z.object({ type: z.string().optional(), campus: z.string().optional(), isActive: z.boolean().optional() }))
+      .query(async ({ input }) => getLanguagePackages(input)),
+    create: adminProcedure
+      .input(z.object({
+        name: z.string(),
+        type: z.enum(["esl","ssl","one_language","two_language","polyglot","full_package","business_english","kids_package","teens_package","custom"]),
+        languages: z.string().optional(),
+        totalHours: z.number(),
+        sessionsPerWeek: z.number().default(2),
+        sessionDurationMin: z.number().default(60),
+        priceUSD: z.number(),
+        priceMXN: z.number().optional(),
+        hourlyRateUSD: z.number().default(20),
+        hourlyRateMXN: z.number().default(200),
+        description: z.string().optional(),
+        features: z.string().optional(),
+        isActive: z.boolean().default(true),
+        maxStudents: z.number().default(6),
+        campus: z.enum(["merida","dallas","denver","vienna","online","all"]).default("all"),
+      }))
+      .mutation(async ({ input }) => { await createLanguagePackage(input as any); return { success: true }; }),
+    update: adminProcedure
+      .input(z.object({ id: z.number(), data: z.record(z.string(), z.any()) }))
+      .mutation(async ({ input }) => { await updateLanguagePackage(input.id, input.data); return { success: true }; }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await deleteLanguagePackage(input.id); return { success: true }; }),
+  }),
+
+  // ─── Camps ──────────────────────────────────────────────────────────────────
+  camps: router({
+    list: protectedProcedure
+      .input(z.object({ season: z.string().optional(), year: z.number().optional(), campus: z.string().optional(), status: z.string().optional() }))
+      .query(async ({ input }) => getCamps(input)),
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        season: z.enum(["winter","spring","summer","fall"]),
+        year: z.number(),
+        startDate: z.string(),
+        endDate: z.string(),
+        campus: z.enum(["merida","dallas","denver","vienna","online","all"]),
+        ageGroup: z.enum(["kids","teens","adults","mixed"]).default("mixed"),
+        capacity: z.number().default(20),
+        priceUSD: z.number().optional(),
+        priceMXN: z.number().optional(),
+        description: z.string().optional(),
+        highlights: z.string().optional(),
+        status: z.enum(["upcoming","open","full","in_progress","completed","cancelled"]).default("upcoming"),
+        instructorId: z.number().optional(),
+      }))
+      .mutation(async ({ input }) => { await createCamp(input as any); return { success: true }; }),
+    update: protectedProcedure
+      .input(z.object({ id: z.number(), data: z.record(z.string(), z.any()) }))
+      .mutation(async ({ input }) => { await updateCamp(input.id, input.data); return { success: true }; }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await deleteCamp(input.id); return { success: true }; }),
+  }),
+
+  // ─── Special Events ─────────────────────────────────────────────────────────
+  events: router({
+    list: protectedProcedure
+      .input(z.object({ type: z.string().optional(), campus: z.string().optional(), status: z.string().optional() }))
+      .query(async ({ input }) => getSpecialEvents(input)),
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string(),
+        type: z.enum(["cultural","competition","graduation","open_house","workshop","webinar","parent_meeting","holiday","fundraiser","other"]),
+        date: z.string(),
+        startTime: z.string().optional(),
+        endTime: z.string().optional(),
+        campus: z.enum(["merida","dallas","denver","vienna","online","all"]),
+        capacity: z.number().optional(),
+        priceUSD: z.number().default(0),
+        priceMXN: z.number().default(0),
+        isFree: z.boolean().default(true),
+        description: z.string().optional(),
+        status: z.enum(["upcoming","open","full","in_progress","completed","cancelled"]).default("upcoming"),
+      }))
+      .mutation(async ({ input }) => { await createSpecialEvent(input as any); return { success: true }; }),
+    update: protectedProcedure
+      .input(z.object({ id: z.number(), data: z.record(z.string(), z.any()) }))
+      .mutation(async ({ input }) => { await updateSpecialEvent(input.id, input.data); return { success: true }; }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await deleteSpecialEvent(input.id); return { success: true }; }),
   }),
 
   // ─── Financial Dashboard (Admin Only + PIN) ─────────────────────────────────

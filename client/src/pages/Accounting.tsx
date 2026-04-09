@@ -18,12 +18,12 @@ const paymentStatusColors: Record<string, string> = {
   failed: "bg-red-100 text-red-700 border-red-200",
   refunded: "bg-gray-100 text-gray-600 border-gray-200",
 };
-const paymentStatusLabels: Record<string, string> = { pending: "Pendiente", completed: "Completado", failed: "Fallido", refunded: "Reembolsado" };
-const methodLabels: Record<string, string> = { paypal: "PayPal", card: "Tarjeta", cash: "Efectivo", transfer: "Transferencia" };
-const methodIcons: Record<string, string> = { paypal: "🅿️", card: "💳", cash: "💵", transfer: "🏦" };
-const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Viena", online: "Online", general: "General" };
+const paymentStatusLabels: Record<string, string> = { pending: "Pending", completed: "Completed", failed: "Failed", refunded: "Refunded" };
+const methodLabels: Record<string, string> = { paypal: "PayPal", card: "Credit/Debit Card", cash: "Cash", transfer: "Bank Transfer", stripe: "Stripe", zelle: "Zelle", dolla: "Dolla App (MX)" };
+const methodIcons: Record<string, string> = { paypal: "🅿️", card: "💳", cash: "💵", transfer: "🏦", stripe: "⚡", zelle: "💜", dolla: "🇲🇽" };
+const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", online: "Online", general: "General" };
 
-const emptyPaymentForm = { studentId: "", programId: "", amount: "", currency: "USD", method: "paypal" as const, status: "pending" as const, description: "", invoiceNumber: "", dueDate: "" };
+const emptyPaymentForm = { studentId: "", programId: "", amount: "", currency: "USD", method: "stripe" as const, status: "pending" as const, description: "", invoiceNumber: "", dueDate: "" };
 const emptyExpenseForm = { category: "", description: "", amount: "", currency: "USD", campus: "general" as const, date: new Date().toISOString().split("T")[0] };
 
 export default function Accounting() {
@@ -40,15 +40,15 @@ export default function Accounting() {
   const { data: programs = [] } = trpc.programs.list.useQuery();
 
   const createPaymentMutation = trpc.payments.create.useMutation({
-    onSuccess: () => { toast.success("Pago registrado"); setShowPaymentForm(false); setPaymentForm({ ...emptyPaymentForm }); refetchPayments(); },
+    onSuccess: () => { toast.success("Payment recorded"); setShowPaymentForm(false); setPaymentForm({ ...emptyPaymentForm }); refetchPayments(); },
     onError: (e) => toast.error(e.message),
   });
   const updatePaymentMutation = trpc.payments.update.useMutation({
-    onSuccess: () => { toast.success("Pago actualizado"); refetchPayments(); },
+    onSuccess: () => { toast.success("Payment updated"); refetchPayments(); },
     onError: (e) => toast.error(e.message),
   });
   const createExpenseMutation = trpc.expenses.create.useMutation({
-    onSuccess: () => { toast.success("Gasto registrado"); setShowExpenseForm(false); setExpenseForm({ ...emptyExpenseForm }); refetchExpenses(); },
+    onSuccess: () => { toast.success("Expense recorded"); setShowExpenseForm(false); setExpenseForm({ ...emptyExpenseForm }); refetchExpenses(); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -63,16 +63,16 @@ export default function Accounting() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <CreditCard className="w-6 h-6 text-primary" /> Contabilidad
+            <CreditCard className="w-6 h-6 text-primary" /> Accounting
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Pagos, facturas, gastos y reportes financieros</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Payments, invoices, expenses, and financial reports</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => setShowExpenseForm(true)} className="gap-2">
-            <TrendingDown className="w-4 h-4" /> Registrar Gasto
+            <TrendingDown className="w-4 h-4" /> Record Expense
           </Button>
           <Button onClick={() => setShowPaymentForm(true)} className="gap-2">
-            <Plus className="w-4 h-4" /> Registrar Pago
+            <Plus className="w-4 h-4" /> Record Payment
           </Button>
         </div>
       </div>
@@ -80,10 +80,10 @@ export default function Accounting() {
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Ingresos Cobrados", value: totalRevenue, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Pendiente por Cobrar", value: pendingRevenue, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
-          { label: "Total Gastos", value: totalExpenses, icon: TrendingDown, color: "text-red-500", bg: "bg-red-50" },
-          { label: "Ganancia Neta", value: totalRevenue - totalExpenses, icon: DollarSign, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Collected Revenue", value: totalRevenue, icon: CheckCircle, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Pending Receivables", value: pendingRevenue, icon: Clock, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Total Expenses", value: totalExpenses, icon: TrendingDown, color: "text-red-500", bg: "bg-red-50" },
+          { label: "Net Profit", value: totalRevenue - totalExpenses, icon: DollarSign, color: "text-blue-600", bg: "bg-blue-50" },
         ].map((s) => (
           <Card key={s.label} className="border border-border card-shadow">
             <CardContent className="p-4 flex items-center gap-3">
@@ -103,14 +103,14 @@ export default function Accounting() {
       <Tabs value={tab} onValueChange={setTab}>
         <div className="flex items-center justify-between gap-4">
           <TabsList>
-            <TabsTrigger value="payments">Pagos ({payments.length})</TabsTrigger>
-            <TabsTrigger value="expenses">Gastos ({expenses.length})</TabsTrigger>
+            <TabsTrigger value="payments">Payments ({payments.length})</TabsTrigger>
+            <TabsTrigger value="expenses">Expenses ({expenses.length})</TabsTrigger>
           </TabsList>
           {tab === "payments" && (
             <Select value={paymentStatus} onValueChange={setPaymentStatus}>
-              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Estado" /></SelectTrigger>
+              <SelectTrigger className="w-36 h-9"><SelectValue placeholder="Status" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="all">All</SelectItem>
                 {Object.entries(paymentStatusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -124,7 +124,7 @@ export default function Accounting() {
             <Card className="border border-dashed border-border">
               <CardContent className="py-12 text-center">
                 <Receipt className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
-                <p className="text-muted-foreground">No hay pagos registrados</p>
+                <p className="text-muted-foreground">No payments recorded yet</p>
               </CardContent>
             </Card>
           ) : (
@@ -137,7 +137,7 @@ export default function Accounting() {
                         {methodIcons[p.method] ?? "💰"}
                       </div>
                       <div className="min-w-0">
-                        <p className="font-medium text-foreground text-sm truncate">{p.description ?? `Pago #${p.id}`}</p>
+                        <p className="font-medium text-foreground text-sm truncate">{p.description ?? `Payment #${p.id}`}</p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <p className="text-xs text-muted-foreground">{getStudentName(p.studentId)}</p>
                           {p.invoiceNumber && <span className="text-xs text-muted-foreground">· {p.invoiceNumber}</span>}
@@ -154,7 +154,7 @@ export default function Accounting() {
                       </Badge>
                       {p.status === "pending" && (
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => updatePaymentMutation.mutate({ id: p.id, status: "completed", paidAt: new Date().toISOString() })}>
-                          <CheckCircle className="w-3 h-3" /> Marcar Pagado
+                          <CheckCircle className="w-3 h-3" /> Mark Paid
                         </Button>
                       )}
                     </div>
@@ -172,7 +172,7 @@ export default function Accounting() {
             <Card className="border border-dashed border-border">
               <CardContent className="py-12 text-center">
                 <TrendingDown className="w-10 h-10 text-muted-foreground/40 mx-auto mb-2" />
-                <p className="text-muted-foreground">No hay gastos registrados</p>
+                <p className="text-muted-foreground">No expenses recorded yet</p>
               </CardContent>
             </Card>
           ) : (
@@ -194,7 +194,7 @@ export default function Accounting() {
                     </div>
                     <div className="text-right flex-shrink-0">
                       <p className="font-bold text-red-600">-${Number(e.amount).toLocaleString("en-US", { minimumFractionDigits: 2 })}</p>
-                      <p className="text-xs text-muted-foreground">{e.currency} · {new Date(e.date).toLocaleDateString("es-MX")}</p>
+                        <p className="text-xs text-muted-foreground">{e.currency} · {new Date(e.date).toLocaleDateString("en-US")}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -207,59 +207,62 @@ export default function Accounting() {
       {/* Payment Form */}
       <Dialog open={showPaymentForm} onOpenChange={(o) => { if (!o) setShowPaymentForm(false); }}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Registrar Pago</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Record Payment</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="col-span-2 space-y-1.5">
-              <Label>Estudiante *</Label>
+              <Label>Student *</Label>
               <Select value={paymentForm.studentId} onValueChange={(v) => setPaymentForm({ ...paymentForm, studentId: v })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar estudiante" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select student" /></SelectTrigger>
                 <SelectContent>{students.map((s: any) => <SelectItem key={s.id} value={s.id.toString()}>{s.firstName} {s.lastName}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Monto *</Label>
+              <Label>Amount *</Label>
               <Input type="number" value={paymentForm.amount} onChange={(e) => setPaymentForm({ ...paymentForm, amount: e.target.value })} placeholder="299.00" />
             </div>
             <div className="space-y-1.5">
-              <Label>Método de Pago *</Label>
+              <Label>Payment Method *</Label>
               <Select value={paymentForm.method} onValueChange={(v: any) => setPaymentForm({ ...paymentForm, method: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="paypal">PayPal</SelectItem>
-                  <SelectItem value="card">Tarjeta</SelectItem>
-                  <SelectItem value="cash">Efectivo</SelectItem>
-                  <SelectItem value="transfer">Transferencia</SelectItem>
+                  <SelectItem value="stripe">⚡ Stripe</SelectItem>
+                  <SelectItem value="zelle">💜 Zelle</SelectItem>
+                  <SelectItem value="dolla">🇲🇽 Dolla App (Mexico)</SelectItem>
+                  <SelectItem value="paypal">🅿️ PayPal</SelectItem>
+                  <SelectItem value="card">💳 Credit/Debit Card</SelectItem>
+                  <SelectItem value="cash">💵 Cash</SelectItem>
+                  <SelectItem value="transfer">🏦 Bank Transfer</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Estado</Label>
+              <Label>Status</Label>
               <Select value={paymentForm.status} onValueChange={(v: any) => setPaymentForm({ ...paymentForm, status: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pending">Pendiente</SelectItem>
-                  <SelectItem value="completed">Completado</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>N° de Factura</Label>
+              <Label>Invoice #</Label>
               <Input value={paymentForm.invoiceNumber} onChange={(e) => setPaymentForm({ ...paymentForm, invoiceNumber: e.target.value })} placeholder="INV-2026-001" />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Descripción</Label>
-              <Input value={paymentForm.description} onChange={(e) => setPaymentForm({ ...paymentForm, description: e.target.value })} placeholder="Ej: Pago programa Inglés Adultos" />
+              <Label>Description</Label>
+              <Input value={paymentForm.description} onChange={(e) => setPaymentForm({ ...paymentForm, description: e.target.value })} placeholder="e.g. Adult English Program - April 2026" />
             </div>
             <div className="space-y-1.5">
-              <Label>Fecha de Vencimiento</Label>
+              <Label>Due Date</Label>
               <Input type="date" value={paymentForm.dueDate} onChange={(e) => setPaymentForm({ ...paymentForm, dueDate: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowPaymentForm(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowPaymentForm(false)}>Cancel</Button>
             <Button onClick={() => createPaymentMutation.mutate({ ...paymentForm, studentId: Number(paymentForm.studentId) } as any)} disabled={createPaymentMutation.isPending}>
               {createPaymentMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Registrar Pago
+              Record Payment
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -268,18 +271,18 @@ export default function Accounting() {
       {/* Expense Form */}
       <Dialog open={showExpenseForm} onOpenChange={(o) => { if (!o) setShowExpenseForm(false); }}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>Registrar Gasto</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Record Expense</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
             <div className="space-y-1.5">
-              <Label>Categoría *</Label>
-              <Input value={expenseForm.category} onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })} placeholder="Renta, Salarios, Marketing..." />
+              <Label>Category *</Label>
+              <Input value={expenseForm.category} onChange={(e) => setExpenseForm({ ...expenseForm, category: e.target.value })} placeholder="Rent, Salaries, Marketing..." />
             </div>
             <div className="space-y-1.5">
-              <Label>Monto *</Label>
+              <Label>Amount *</Label>
               <Input type="number" value={expenseForm.amount} onChange={(e) => setExpenseForm({ ...expenseForm, amount: e.target.value })} placeholder="1200.00" />
             </div>
             <div className="space-y-1.5">
-              <Label>Sede</Label>
+              <Label>Campus</Label>
               <Select value={expenseForm.campus} onValueChange={(v: any) => setExpenseForm({ ...expenseForm, campus: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -288,19 +291,19 @@ export default function Accounting() {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Fecha *</Label>
+              <Label>Date *</Label>
               <Input type="date" value={expenseForm.date} onChange={(e) => setExpenseForm({ ...expenseForm, date: e.target.value })} />
             </div>
             <div className="col-span-2 space-y-1.5">
-              <Label>Descripción</Label>
-              <Input value={expenseForm.description} onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })} placeholder="Descripción del gasto" />
+              <Label>Description</Label>
+              <Input value={expenseForm.description} onChange={(e) => setExpenseForm({ ...expenseForm, description: e.target.value })} placeholder="Expense description" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowExpenseForm(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowExpenseForm(false)}>Cancel</Button>
             <Button onClick={() => createExpenseMutation.mutate(expenseForm as any)} disabled={createExpenseMutation.isPending}>
               {createExpenseMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Registrar Gasto
+              Record Expense
             </Button>
           </DialogFooter>
         </DialogContent>

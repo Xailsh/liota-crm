@@ -40,7 +40,7 @@ function PinInput({ onSubmit, onClose }: { onSubmit: (pin: string) => void; onCl
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
           <Shield className="w-8 h-8 text-primary" />
         </div>
-        <p className="text-sm text-muted-foreground">Ingresa el PIN de 4 dígitos para acceder a los datos financieros sensibles</p>
+        <p className="text-sm text-muted-foreground">Enter the 4-digit PIN para acceder a los datos financieros sensibles</p>
       </div>
       <div className="flex gap-3 justify-center">
         {Array.from({ length: PIN_LENGTH }).map((_, i) => (
@@ -68,11 +68,11 @@ function PinInput({ onSubmit, onClose }: { onSubmit: (pin: string) => void; onCl
       {error && (
         <div className="flex items-center gap-2 text-red-600 text-sm justify-center">
           <AlertCircle className="w-4 h-4" />
-          <span>PIN incorrecto. Inténtalo de nuevo.</span>
+          <span>Incorrect PIN. Inténtalo de nuevo.</span>
         </div>
       )}
       <div className="flex gap-3">
-        <Button variant="outline" className="flex-1" onClick={onClose}>Cancelar</Button>
+        <Button variant="outline" className="flex-1" onClick={onClose}>Cancel</Button>
         <Button
           className="flex-1"
           disabled={pin.length < PIN_LENGTH}
@@ -124,7 +124,7 @@ export default function FinancialDashboard() {
     },
     onError: () => {
       setPinError(true);
-      toast.error("PIN incorrecto");
+      toast.error("Incorrect PIN");
     },
   });
 
@@ -166,13 +166,13 @@ export default function FinancialDashboard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Shield className="w-6 h-6 text-primary" /> Dashboard Financiero
+            <Shield className="w-6 h-6 text-primary" /> Financial Dashboard
             <Badge variant="outline" className="text-xs bg-amber-50 text-amber-700 border-amber-200 ml-1">
               <Lock className="w-3 h-3 mr-1" /> Solo Administradores
             </Badge>
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Datos financieros sensibles protegidos con PIN · Haz clic en cualquier cifra para desbloquear
+            Datos financieros sensibles protegidos con PIN · Click any figure para desbloquear
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -195,8 +195,8 @@ export default function FinancialDashboard() {
               <Shield className="w-5 h-5 text-amber-600" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-800">Datos financieros protegidos</p>
-              <p className="text-xs text-amber-700">Haz clic sobre cualquier cifra bloqueada para ingresar el PIN y revelar los datos.</p>
+              <p className="text-sm font-semibold text-amber-800">Protected financial data</p>
+              <p className="text-xs text-amber-700">Haz clic sobre cualquier cifra bloqueada to enter the PIN y revelar los datos.</p>
             </div>
             <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white gap-2 flex-shrink-0" onClick={() => setShowPinDialog(true)}>
               <Eye className="w-4 h-4" /> Desbloquear Todo
@@ -209,7 +209,7 @@ export default function FinancialDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           {
-            label: "Ingresos Estimados",
+            label: "Revenue Estimados",
             value: revealed && fd ? `$${fd.estimatedRevenue.toLocaleString("en-US")}` : "$●●●●●",
             sub: "Total cobrado + pendiente",
             icon: TrendingUp,
@@ -218,27 +218,27 @@ export default function FinancialDashboard() {
             border: "border-emerald-100",
           },
           {
-            label: "Ingresos Cobrados",
+            label: "Revenue Cobrados",
             value: revealed && fd ? `$${fd.collectedRevenue.toLocaleString("en-US")}` : "$●●●●●",
-            sub: "Pagos completados",
+            sub: "Payments completados",
             icon: DollarSign,
             color: "text-blue-600",
             bg: "bg-blue-50",
             border: "border-blue-100",
           },
           {
-            label: "Por Cobrar",
+            label: "Receivables",
             value: revealed && fd ? `$${fd.pendingRevenue.toLocaleString("en-US")}` : "$●●●●●",
-            sub: "Pagos pendientes",
+            sub: "Payments pendientes",
             icon: AlertCircle,
             color: "text-amber-600",
             bg: "bg-amber-50",
             border: "border-amber-100",
           },
           {
-            label: "Gastos Totales",
+            label: "Total Expenses",
             value: revealed && fd ? `$${fd.totalExpenses.toLocaleString("en-US")}` : "$●●●●●",
-            sub: "Todos los gastos registrados",
+            sub: "All recorded expenses",
             icon: TrendingDown,
             color: "text-red-500",
             bg: "bg-red-50",
@@ -273,7 +273,7 @@ export default function FinancialDashboard() {
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Ganancia Neta del Período</p>
+              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">Net Profit del Período</p>
               <div className="mt-2">
                 <BlurredValue
                   value={fd ? `$${(fd.collectedRevenue - fd.totalExpenses).toLocaleString("en-US")} USD` : "$●●●●●"}
@@ -281,7 +281,7 @@ export default function FinancialDashboard() {
                   onClick={handleRevealClick}
                 />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Ingresos cobrados − Gastos totales</p>
+              <p className="text-xs text-muted-foreground mt-1">Revenue cobrados − Expenses totales</p>
             </div>
             {revealed && fd && (
               <div className="text-right">
@@ -299,7 +299,7 @@ export default function FinancialDashboard() {
       {revealed && fd?.expensesByCategory && fd.expensesByCategory.length > 0 && (
         <Card className="border border-border card-shadow">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">Gastos por Categoría</CardTitle>
+            <CardTitle className="text-base font-semibold">Expenses by Category</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -318,7 +318,7 @@ export default function FinancialDashboard() {
       {revealed && fd?.revenueByMethod && fd.revenueByMethod.length > 0 && (
         <Card className="border border-border card-shadow">
           <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold">Ingresos por Método de Pago</CardTitle>
+            <CardTitle className="text-base font-semibold">Revenue por Método de Pago</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

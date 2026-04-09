@@ -17,8 +17,8 @@ const statusColors: Record<string, string> = {
   sent: "bg-emerald-100 text-emerald-700 border-emerald-200",
   cancelled: "bg-red-100 text-red-700 border-red-200",
 };
-const statusLabels: Record<string, string> = { draft: "Borrador", scheduled: "Programada", sent: "Enviada", cancelled: "Cancelada" };
-const templateLabels: Record<string, string> = { promotion: "Promoción", reminder: "Recordatorio", newsletter: "Boletín", welcome: "Bienvenida", progress_report: "Reporte de Progreso" };
+const statusLabels: Record<string, string> = { draft: "Draft", scheduled: "Programda", sent: "Sent", cancelled: "Cancelled" };
+const templateLabels: Record<string, string> = { promotion: "Promotion", reminder: "Reminder", newsletter: "Newsletter", welcome: "Welcome", progress_report: "Progress Report" };
 const templateColors: Record<string, string> = {
   promotion: "bg-amber-50 text-amber-700 border-amber-200",
   reminder: "bg-blue-50 text-blue-700 border-blue-200",
@@ -29,8 +29,8 @@ const templateColors: Record<string, string> = {
 
 const TEMPLATES = {
   promotion: { subject: "¡Oferta especial en LIOTA! Inscríbete hoy", body: "Estimado/a,\n\nTenemos una oferta especial para ti. Por tiempo limitado, obtén un descuento exclusivo en nuestros programas de inglés.\n\nNo pierdas esta oportunidad de mejorar tu inglés con los mejores instructores certificados.\n\n¡Inscríbete hoy!\n\nEl equipo de LIOTA Institute\nLanguage Institute Of The Americas" },
-  reminder: { subject: "Recordatorio: Tu clase de inglés es mañana", body: "Hola,\n\nTe recordamos que mañana tienes clase de inglés en LIOTA Institute.\n\nPor favor asegúrate de conectarte a tiempo o llegar a la sede con anticipación.\n\nSi necesitas reprogramar, contáctanos con anticipación.\n\nHasta mañana,\nEl equipo de LIOTA" },
-  newsletter: { subject: "Novedades LIOTA - Noticias del mes", body: "Estimada comunidad LIOTA,\n\nEste mes tenemos emocionantes novedades para compartir contigo:\n\n• Nuevos programas disponibles\n• Eventos especiales\n• Logros de nuestros estudiantes\n• Próximas fechas importantes\n\nGracias por ser parte de nuestra familia.\n\nEl equipo de LIOTA Institute" },
+  reminder: { subject: "Reminder: Tu clase de inglés es mañana", body: "Hola,\n\nTe recordamos que mañana tienes clase de inglés en LIOTA Institute.\n\nPor favor asegúrate de conectarte a tiempo o llegar a la sede con anticipación.\n\nSi necesitas reprogramar, contáctanos con anticipación.\n\nHasta mañana,\nEl equipo de LIOTA" },
+  newsletter: { subject: "LIOTA News - Monthly Update", body: "Estimada comunidad LIOTA,\n\nEste mes tenemos emocionantes novedades para compartir contigo:\n\n• Nuevos programas disponibles\n• Eventos especiales\n• Logros de nuestros estudiantes\n• Próximas fechas importantes\n\nGracias por ser parte de nuestra familia.\n\nEl equipo de LIOTA Institute" },
   welcome: { subject: "¡Bienvenido/a a la familia LIOTA!", body: "Querido/a estudiante,\n\nEs un placer darte la bienvenida a LIOTA Institute - Language Institute Of The Americas.\n\nEstamos emocionados de acompañarte en tu viaje de aprendizaje del inglés. Nuestro equipo de instructores certificados está listo para ayudarte a alcanzar tus metas.\n\nSi tienes alguna pregunta, no dudes en contactarnos.\n\n¡Bienvenido/a!\nEl equipo de LIOTA" },
   progress_report: { subject: "Reporte de progreso - Tu avance en inglés", body: "Estimado/a padre/madre/estudiante,\n\nAdjunto encontrarás el reporte de progreso del período actual.\n\nTu estudiante ha demostrado un excelente avance en las áreas de:\n• Speaking\n• Listening\n• Reading\n• Writing\n\nSeguimos trabajando juntos para alcanzar el siguiente nivel MCER.\n\nEl equipo académico de LIOTA" },
 };
@@ -52,15 +52,15 @@ export default function EmailMarketing() {
   const { data: campaigns = [], isLoading, refetch } = trpc.campaigns.list.useQuery();
 
   const createMutation = trpc.campaigns.create.useMutation({
-    onSuccess: () => { toast.success("Campaña creada"); setShowForm(false); setForm({ ...emptyForm }); refetch(); },
+    onSuccess: () => { toast.success("Campaign creada"); setShowForm(false); setForm({ ...emptyForm }); refetch(); },
     onError: (e) => toast.error(e.message),
   });
   const updateMutation = trpc.campaigns.update.useMutation({
-    onSuccess: () => { toast.success("Campaña actualizada"); setShowForm(false); setEditId(null); refetch(); },
+    onSuccess: () => { toast.success("Campaign actualizada"); setShowForm(false); setEditId(null); refetch(); },
     onError: (e) => toast.error(e.message),
   });
   const deleteMutation = trpc.campaigns.delete.useMutation({
-    onSuccess: () => { toast.success("Campaña eliminada"); setDeleteId(null); refetch(); },
+    onSuccess: () => { toast.success("Campaign eliminada"); setDeleteId(null); refetch(); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -71,7 +71,7 @@ export default function EmailMarketing() {
 
   const handleSend = (id: number) => {
     updateMutation.mutate({ id, status: "sent", recipientCount: Math.floor(Math.random() * 200) + 50 });
-    toast.success("Campaña marcada como enviada");
+    toast.success("Campaign marcada como enviada");
   };
 
   const applyTemplate = (type: keyof typeof TEMPLATES) => {
@@ -97,18 +97,18 @@ export default function EmailMarketing() {
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Mail className="w-6 h-6 text-primary" /> Email Marketing
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Campañas segmentadas por programa, sede y grupo de edad</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Campaigns segmentadas por programa, sede y grupo de edad</p>
         </div>
         <Button onClick={() => { setForm({ ...emptyForm }); setEditId(null); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> Nueva Campaña
+          <Plus className="w-4 h-4" /> Nueva Campaign
         </Button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Total Campañas", value: campaigns.length, icon: Mail, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Campañas Enviadas", value: sentCampaigns.length, icon: Send, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Total Campaigns", value: campaigns.length, icon: Mail, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Campaigns Sents", value: sentCampaigns.length, icon: Send, color: "text-emerald-600", bg: "bg-emerald-50" },
           { label: "Total Destinatarios", value: totalRecipients.toLocaleString(), icon: Users, color: "text-violet-600", bg: "bg-violet-50" },
           { label: "Tasa de Apertura", value: `${avgOpenRate}%`, icon: Eye, color: "text-amber-600", bg: "bg-amber-50" },
         ].map((s) => (
@@ -190,7 +190,7 @@ export default function EmailMarketing() {
       {/* Form Dialog */}
       <Dialog open={showForm} onOpenChange={(o) => { if (!o) { setShowForm(false); setEditId(null); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editId ? "Editar Campaña" : "Nueva Campaña"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? "Edit Campaign" : "New Campaign"}</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             {!editId && (
               <div className="space-y-2">
@@ -206,46 +206,46 @@ export default function EmailMarketing() {
             )}
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-1.5">
-                <Label>Nombre de la Campaña *</Label>
-                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ej: Matrícula Enero 2026" />
+                <Label>Campaign Name *</Label>
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ej: Enrollment Enero 2026" />
               </div>
               <div className="col-span-2 space-y-1.5">
                 <Label>Asunto del Email *</Label>
                 <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Asunto del correo electrónico" />
               </div>
               <div className="space-y-1.5">
-                <Label>Tipo de Plantilla</Label>
+                <Label>Type de Plantilla</Label>
                 <Select value={form.templateType} onValueChange={(v: any) => setForm({ ...form, templateType: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{Object.entries(templateLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Segmento por Programa</Label>
+                <Label>Segmento por Program</Label>
                 <Select value={form.segmentProgram} onValueChange={(v: any) => setForm({ ...form, segmentProgram: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos los programas</SelectItem>
-                    <SelectItem value="children">Niños</SelectItem>
-                    <SelectItem value="teens">Adolescentes</SelectItem>
-                    <SelectItem value="adults">Adultos</SelectItem>
-                    <SelectItem value="business">Negocios</SelectItem>
+                    <SelectItem value="all">All programs</SelectItem>
+                    <SelectItem value="children">Children</SelectItem>
+                    <SelectItem value="teens">Teens</SelectItem>
+                    <SelectItem value="adults">Adults</SelectItem>
+                    <SelectItem value="business">Business</SelectItem>
                     <SelectItem value="polyglot">Polyglot</SelectItem>
-                    <SelectItem value="immersion">Inmersión</SelectItem>
+                    <SelectItem value="immersion">Immersion</SelectItem>
                     <SelectItem value="homeschool">Homeschool</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Segmento por Sede</Label>
+                <Label>Segmento por Campus</Label>
                 <Select value={form.segmentCampus} onValueChange={(v: any) => setForm({ ...form, segmentCampus: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todas las sedes</SelectItem>
+                    <SelectItem value="all">All campuses</SelectItem>
                     <SelectItem value="merida">Mérida</SelectItem>
                     <SelectItem value="dallas">Dallas</SelectItem>
                     <SelectItem value="denver">Denver</SelectItem>
-                    <SelectItem value="vienna">Viena</SelectItem>
+                    <SelectItem value="vienna">Vienna</SelectItem>
                     <SelectItem value="online">Online</SelectItem>
                   </SelectContent>
                 </Select>
@@ -255,10 +255,10 @@ export default function EmailMarketing() {
                 <Select value={form.segmentAgeGroup} onValueChange={(v: any) => setForm({ ...form, segmentAgeGroup: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos</SelectItem>
-                    <SelectItem value="children">Niños</SelectItem>
-                    <SelectItem value="teens">Adolescentes</SelectItem>
-                    <SelectItem value="adults">Adultos</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="children">Children</SelectItem>
+                    <SelectItem value="teens">Teens</SelectItem>
+                    <SelectItem value="adults">Adults</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -269,10 +269,10 @@ export default function EmailMarketing() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
             <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
               {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {editId ? "Guardar Cambios" : "Crear Campaña"}
+              {editId ? "Save Changes" : "Create Campaign"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -281,13 +281,13 @@ export default function EmailMarketing() {
       {/* Delete Confirm */}
       <Dialog open={!!deleteId} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>¿Eliminar campaña?</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>¿Delete campaña?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteMutation.mutate({ id: deleteId! })} disabled={deleteMutation.isPending}>
               {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              Eliminar
+              Delete
             </Button>
           </DialogFooter>
         </DialogContent>

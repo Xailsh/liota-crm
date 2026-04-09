@@ -14,6 +14,10 @@ import AcademicProgress from "./pages/AcademicProgress";
 import Contacts from "./pages/Contacts";
 import Analytics from "./pages/Analytics";
 import FinancialDashboard from "./pages/FinancialDashboard";
+import Scholarships from "./pages/Scholarships";
+import LanguagePackages from "./pages/LanguagePackages";
+import Camps from "./pages/Camps";
+import SpecialEvents from "./pages/SpecialEvents";
 import LiotaLayout from "./components/LiotaLayout";
 
 function Router() {
@@ -30,6 +34,10 @@ function Router() {
         <Route path="/contacts" component={Contacts} />
         <Route path="/analytics" component={Analytics} />
         <Route path="/financial" component={FinancialDashboard} />
+        <Route path="/scholarships" component={Scholarships} />
+        <Route path="/packages" component={LanguagePackages} />
+        <Route path="/camps" component={Camps} />
+        <Route path="/events" component={SpecialEvents} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

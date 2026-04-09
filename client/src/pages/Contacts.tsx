@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Contact, Plus, Search, Mail, Phone, Tag, MessageSquare, Loader2, Edit2, Trash2, User, X } from "lucide-react";
 
-const contactTypeLabels: Record<string, string> = { parent: "Padre/Madre", student: "Estudiante", lead: "Prospecto", other: "Otro" };
+const contactTypeLabels: Record<string, string> = { parent: "Parent", student: "Student", lead: "Lead", other: "Otro" };
 const contactTypeColors: Record<string, string> = {
   parent: "bg-blue-100 text-blue-700 border-blue-200",
   student: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -67,12 +67,12 @@ export default function Contacts() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Contact className="w-6 h-6 text-primary" /> Contactos
+            <Contact className="w-6 h-6 text-primary" /> Contacts
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Padres, estudiantes y prospectos — historial de comunicaciones</p>
         </div>
         <Button onClick={() => { setForm({ ...emptyForm }); setEditId(null); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> Nuevo Contacto
+          <Plus className="w-4 h-4" /> New Contact
         </Button>
       </div>
 
@@ -82,12 +82,12 @@ export default function Contacts() {
           <div className="flex flex-wrap gap-3 items-center">
             <div className="relative flex-1 min-w-48">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input placeholder="Buscar contacto..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
+              <Input placeholder="Search contact..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9 h-9" />
             </div>
             <Select value={contactType} onValueChange={setContactType}>
-              <SelectTrigger className="w-40 h-9"><SelectValue placeholder="Tipo" /></SelectTrigger>
+              <SelectTrigger className="w-40 h-9"><SelectValue placeholder="Type" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todos los tipos</SelectItem>
+                <SelectItem value="all">All types</SelectItem>
                 {Object.entries(contactTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
               </SelectContent>
             </Select>
@@ -190,7 +190,7 @@ export default function Contacts() {
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-sm font-semibold">Historial de Comunicaciones</p>
                   <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => { setCommForm({ ...emptyCommForm, contactId: selectedContact.id }); setShowCommForm(true); }}>
-                    <Plus className="w-3 h-3" /> Agregar
+                    <Plus className="w-3 h-3" /> Add
                   </Button>
                 </div>
                 {communications.length === 0 ? (
@@ -213,7 +213,7 @@ export default function Contacts() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setSelectedContact(null)}>Cerrar</Button>
-              <Button onClick={() => { openEdit(selectedContact); setSelectedContact(null); }}>Editar</Button>
+              <Button onClick={() => { openEdit(selectedContact); setSelectedContact(null); }}>Edit</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -225,14 +225,14 @@ export default function Contacts() {
           <DialogHeader><DialogTitle>Registrar Comunicación</DialogTitle></DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-1.5">
-              <Label>Tipo</Label>
+              <Label>Type</Label>
               <Select value={commForm.type} onValueChange={(v: any) => setCommForm({ ...commForm, type: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="phone">Teléfono</SelectItem>
+                  <SelectItem value="phone">Phone</SelectItem>
                   <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                  <SelectItem value="in_person">Presencial</SelectItem>
+                  <SelectItem value="in_person">On-Site</SelectItem>
                   <SelectItem value="note">Nota</SelectItem>
                 </SelectContent>
               </Select>
@@ -241,7 +241,7 @@ export default function Contacts() {
             <div className="space-y-1.5"><Label>Contenido</Label><Textarea value={commForm.body} onChange={(e) => setCommForm({ ...commForm, body: e.target.value })} rows={4} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCommForm(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowCommForm(false)}>Cancel</Button>
             <Button onClick={() => createCommMutation.mutate(commForm as any)} disabled={createCommMutation.isPending}>
               {createCommMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
               Registrar
@@ -253,14 +253,14 @@ export default function Contacts() {
       {/* Create/Edit Form */}
       <Dialog open={showForm} onOpenChange={(o) => { if (!o) { setShowForm(false); setEditId(null); } }}>
         <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>{editId ? "Editar Contacto" : "Nuevo Contacto"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? "Edit Contacto" : "New Contact"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
-            <div className="space-y-1.5"><Label>Nombre *</Label><Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Apellido *</Label><Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>First Name *</Label><Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>Last Name *</Label><Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Teléfono</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
             <div className="space-y-1.5">
-              <Label>Tipo de Contacto</Label>
+              <Label>Contact Type</Label>
               <Select value={form.contactType} onValueChange={(v: any) => setForm({ ...form, contactType: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>{Object.entries(contactTypeLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
@@ -271,10 +271,10 @@ export default function Contacts() {
             <div className="col-span-2 space-y-1.5"><Label>Notas</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
             <Button onClick={() => editId ? updateMutation.mutate({ id: editId, ...form }) : createMutation.mutate(form as any)} disabled={createMutation.isPending || updateMutation.isPending}>
               {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {editId ? "Guardar" : "Crear Contacto"}
+              {editId ? "Save" : "Create Contact"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -283,12 +283,12 @@ export default function Contacts() {
       {/* Delete Confirm */}
       <Dialog open={!!deleteId} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>¿Eliminar contacto?</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>¿Delete Contact?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteMutation.mutate({ id: deleteId! })} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Eliminar
+              {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Delete
             </Button>
           </DialogFooter>
         </DialogContent>

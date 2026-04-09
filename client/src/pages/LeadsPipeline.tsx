@@ -12,17 +12,17 @@ import { toast } from "sonner";
 import { Users2, Plus, Mail, Phone, MapPin, Calendar, ArrowRight, Loader2, Edit2, Trash2, ChevronRight } from "lucide-react";
 
 const STAGES = [
-  { key: "new_lead", label: "Nuevo Lead", color: "bg-slate-100 border-slate-300", badge: "bg-slate-100 text-slate-700 border-slate-300", dot: "bg-slate-400" },
+  { key: "new_lead", label: "New Lead", color: "bg-slate-100 border-slate-300", badge: "bg-slate-100 text-slate-700 border-slate-300", dot: "bg-slate-400" },
   { key: "contacted", label: "Contactado", color: "bg-blue-50 border-blue-200", badge: "bg-blue-100 text-blue-700 border-blue-200", dot: "bg-blue-500" },
-  { key: "trial_scheduled", label: "Prueba Agendada", color: "bg-violet-50 border-violet-200", badge: "bg-violet-100 text-violet-700 border-violet-200", dot: "bg-violet-500" },
-  { key: "trial_done", label: "Prueba Realizada", color: "bg-amber-50 border-amber-200", badge: "bg-amber-100 text-amber-700 border-amber-200", dot: "bg-amber-500" },
-  { key: "proposal_sent", label: "Propuesta Enviada", color: "bg-orange-50 border-orange-200", badge: "bg-orange-100 text-orange-700 border-orange-200", dot: "bg-orange-500" },
+  { key: "trial_scheduled", label: "Trial Agendada", color: "bg-violet-50 border-violet-200", badge: "bg-violet-100 text-violet-700 border-violet-200", dot: "bg-violet-500" },
+  { key: "trial_done", label: "Trial Realizada", color: "bg-amber-50 border-amber-200", badge: "bg-amber-100 text-amber-700 border-amber-200", dot: "bg-amber-500" },
+  { key: "proposal_sent", label: "Propuesta Sent", color: "bg-orange-50 border-orange-200", badge: "bg-orange-100 text-orange-700 border-orange-200", dot: "bg-orange-500" },
   { key: "enrolled", label: "Inscrito", color: "bg-emerald-50 border-emerald-200", badge: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
   { key: "lost", label: "Perdido", color: "bg-red-50 border-red-200", badge: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-400" },
 ];
 
-const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Viena", online: "Online" };
-const programLabels: Record<string, string> = { children: "Niños", teens: "Adolescentes", adults: "Adultos", business: "Negocios", polyglot: "Polyglot", immersion: "Inmersión", homeschool: "Homeschool" };
+const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", online: "Online" };
+const programLabels: Record<string, string> = { children: "Children", teens: "Teens", adults: "Adults", business: "Business", polyglot: "Polyglot", immersion: "Immersion", homeschool: "Homeschool" };
 
 const emptyForm = {
   firstName: "", lastName: "", email: "", phone: "",
@@ -87,12 +87,12 @@ export default function LeadsPipeline() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users2 className="w-6 h-6 text-primary" /> Pipeline de Leads
+            <Users2 className="w-6 h-6 text-primary" /> Leads Pipeline
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">{leads.length} prospectos en el embudo de ventas</p>
         </div>
         <Button onClick={() => { setForm({ ...emptyForm }); setEditId(null); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> Nuevo Lead
+          <Plus className="w-4 h-4" /> New Lead
         </Button>
       </div>
 
@@ -197,7 +197,7 @@ export default function LeadsPipeline() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setSelectedLead(null)}>Cerrar</Button>
-              <Button onClick={() => { openEdit(selectedLead); setSelectedLead(null); }}>Editar</Button>
+              <Button onClick={() => { openEdit(selectedLead); setSelectedLead(null); }}>Edit</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -206,30 +206,30 @@ export default function LeadsPipeline() {
       {/* Create/Edit Form */}
       <Dialog open={showForm} onOpenChange={(o) => { if (!o) { setShowForm(false); setEditId(null); } }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{editId ? "Editar Lead" : "Nuevo Lead"}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{editId ? "Edit Lead" : "New Lead"}</DialogTitle></DialogHeader>
           <div className="grid grid-cols-2 gap-4 py-2">
-            <div className="space-y-1.5"><Label>Nombre *</Label><Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Apellido *</Label><Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>First Name *</Label><Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>Last Name *</Label><Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} /></div>
             <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div className="space-y-1.5"><Label>Teléfono</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
             <div className="space-y-1.5">
-              <Label>Grupo de Edad</Label>
+              <Label>Age Group</Label>
               <Select value={form.ageGroup} onValueChange={(v) => setForm({ ...form, ageGroup: v })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
-                <SelectContent><SelectItem value="children">Niños</SelectItem><SelectItem value="teens">Adolescentes</SelectItem><SelectItem value="adults">Adultos</SelectItem></SelectContent>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                <SelectContent><SelectItem value="children">Children</SelectItem><SelectItem value="teens">Teens</SelectItem><SelectItem value="adults">Adults</SelectItem></SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Programa de Interés</Label>
+              <Label>Program de Interés</Label>
               <Select value={form.interestedProgram} onValueChange={(v) => setForm({ ...form, interestedProgram: v })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{Object.entries(programLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Sede Preferida</Label>
+              <Label>Campus Preferida</Label>
               <Select value={form.preferredCampus} onValueChange={(v) => setForm({ ...form, preferredCampus: v })}>
-                <SelectTrigger><SelectValue placeholder="Seleccionar" /></SelectTrigger>
+                <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                 <SelectContent>{Object.entries(campusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
               </Select>
             </div>
@@ -241,15 +241,15 @@ export default function LeadsPipeline() {
               </Select>
             </div>
             <div className="space-y-1.5"><Label>Fuente</Label><Input value={form.source} onChange={(e) => setForm({ ...form, source: e.target.value })} placeholder="website, referido, redes..." /></div>
-            <div className="space-y-1.5"><Label>Asignado a</Label><Input value={form.assignedTo} onChange={(e) => setForm({ ...form, assignedTo: e.target.value })} placeholder="Nombre del asesor" /></div>
-            <div className="space-y-1.5"><Label>Fecha de Prueba</Label><Input type="date" value={form.trialDate} onChange={(e) => setForm({ ...form, trialDate: e.target.value })} /></div>
+            <div className="space-y-1.5"><Label>Assigned to</Label><Input value={form.assignedTo} onChange={(e) => setForm({ ...form, assignedTo: e.target.value })} placeholder="Advisor name" /></div>
+            <div className="space-y-1.5"><Label>Trial Date</Label><Input type="date" value={form.trialDate} onChange={(e) => setForm({ ...form, trialDate: e.target.value })} /></div>
             <div className="col-span-2 space-y-1.5"><Label>Notas</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowForm(false)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
             <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
               {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {editId ? "Guardar" : "Crear Lead"}
+              {editId ? "Save" : "Create Lead"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -258,12 +258,12 @@ export default function LeadsPipeline() {
       {/* Delete Confirm */}
       <Dialog open={!!deleteId} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>¿Eliminar lead?</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>¿Delete Lead?</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancelar</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteMutation.mutate({ id: deleteId! })} disabled={deleteMutation.isPending}>
-              {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Eliminar
+              {deleteMutation.isPending && <Loader2 className="w-4 h-4 animate-spin mr-2" />}Delete
             </Button>
           </DialogFooter>
         </DialogContent>

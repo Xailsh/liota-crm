@@ -1,0 +1,81 @@
+CREATE TABLE `camps` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`name` varchar(128) NOT NULL,
+	`season` enum('winter','spring','summer','fall') NOT NULL,
+	`year` int NOT NULL,
+	`startDate` date NOT NULL,
+	`endDate` date NOT NULL,
+	`campus` enum('merida','dallas','denver','vienna','online','all') NOT NULL,
+	`ageGroup` enum('kids','teens','adults','mixed') DEFAULT 'mixed',
+	`capacity` int DEFAULT 20,
+	`enrolled` int DEFAULT 0,
+	`priceUSD` decimal(10,2),
+	`priceMXN` decimal(10,2),
+	`description` text,
+	`highlights` text,
+	`status` enum('upcoming','open','full','in_progress','completed','cancelled') NOT NULL DEFAULT 'upcoming',
+	`instructorId` int,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `camps_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `languagePackages` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`name` varchar(128) NOT NULL,
+	`type` enum('esl','ssl','one_language','two_language','polyglot','full_package','business_english','kids_package','teens_package','custom') NOT NULL,
+	`languages` varchar(256),
+	`totalHours` int NOT NULL,
+	`sessionsPerWeek` int DEFAULT 2,
+	`sessionDurationMin` int DEFAULT 60,
+	`priceUSD` decimal(10,2) NOT NULL,
+	`priceMXN` decimal(10,2),
+	`hourlyRateUSD` decimal(8,2) DEFAULT '20.00',
+	`hourlyRateMXN` decimal(8,2) DEFAULT '200.00',
+	`description` text,
+	`features` text,
+	`isActive` boolean NOT NULL DEFAULT true,
+	`maxStudents` int DEFAULT 6,
+	`campus` enum('merida','dallas','denver','vienna','online','all') DEFAULT 'all',
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `languagePackages_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `scholarships` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`studentId` int NOT NULL,
+	`name` varchar(128) NOT NULL,
+	`type` enum('full','partial','merit','need_based','community','referral','staff') NOT NULL,
+	`discountPercent` decimal(5,2),
+	`discountAmount` decimal(10,2),
+	`currency` varchar(8) DEFAULT 'USD',
+	`startDate` date,
+	`endDate` date,
+	`status` enum('active','pending','expired','revoked') NOT NULL DEFAULT 'pending',
+	`notes` text,
+	`approvedBy` varchar(128),
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `scholarships_id` PRIMARY KEY(`id`)
+);
+--> statement-breakpoint
+CREATE TABLE `specialEvents` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`name` varchar(128) NOT NULL,
+	`type` enum('cultural','competition','graduation','open_house','workshop','webinar','parent_meeting','holiday','fundraiser','other') NOT NULL,
+	`date` date NOT NULL,
+	`startTime` varchar(8),
+	`endTime` varchar(8),
+	`campus` enum('merida','dallas','denver','vienna','online','all') NOT NULL,
+	`capacity` int,
+	`registrations` int DEFAULT 0,
+	`priceUSD` decimal(10,2) DEFAULT '0.00',
+	`priceMXN` decimal(10,2) DEFAULT '0.00',
+	`isFree` boolean DEFAULT true,
+	`description` text,
+	`status` enum('upcoming','open','full','in_progress','completed','cancelled') NOT NULL DEFAULT 'upcoming',
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	`updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `specialEvents_id` PRIMARY KEY(`id`)
+);

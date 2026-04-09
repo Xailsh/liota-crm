@@ -1,11 +1,9 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { cn } from "@/lib/utils";
-import { trpc } from "@/lib/trpc";
 import {
   BarChart3,
   BookOpen,
-  Building2,
   ChevronRight,
   CreditCard,
   GraduationCap,
@@ -18,6 +16,10 @@ import {
   Users,
   Users2,
   X,
+  Award,
+  Package,
+  Tent,
+  Star,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -26,40 +28,51 @@ import { Avatar, AvatarFallback } from "./ui/avatar";
 import { Badge } from "./ui/badge";
 import { Separator } from "./ui/separator";
 
+const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663079010352/YzZjuTcos3se78oWJYxJkp/liota-logo_0110e626.jpeg";
+
 const navItems = [
   {
-    group: "Principal",
+    group: "Main",
     items: [
-      { href: "/", icon: LayoutDashboard, label: "Dashboard", description: "Vista general" },
+      { href: "/", icon: LayoutDashboard, label: "Dashboard", description: "Overview" },
     ],
   },
   {
-    group: "Gestión Académica",
+    group: "Academic Management",
     items: [
-      { href: "/students", icon: GraduationCap, label: "Estudiantes", description: "Perfiles y matrículas" },
-      { href: "/classes", icon: BookOpen, label: "Clases y Programas", description: "Grupos y horarios" },
-      { href: "/academic-progress", icon: TrendingUp, label: "Progreso Académico", description: "Evaluaciones MCER" },
+      { href: "/students", icon: GraduationCap, label: "Students", description: "Profiles & enrollments" },
+      { href: "/classes", icon: BookOpen, label: "Classes & Programs", description: "Groups & schedules" },
+      { href: "/academic-progress", icon: TrendingUp, label: "Academic Progress", description: "CEFR assessments" },
     ],
   },
   {
-    group: "Ventas y Marketing",
+    group: "Sales & Marketing",
     items: [
-      { href: "/leads", icon: Users2, label: "Pipeline de Leads", description: "Embudo de ventas" },
-      { href: "/email-marketing", icon: Mail, label: "Email Marketing", description: "Campañas y plantillas" },
-      { href: "/contacts", icon: Users, label: "Contactos", description: "Padres y estudiantes" },
+      { href: "/leads", icon: Users2, label: "Leads Pipeline", description: "Sales funnel" },
+      { href: "/email-marketing", icon: Mail, label: "Email Marketing", description: "Campaigns & templates" },
+      { href: "/contacts", icon: Users, label: "Contacts", description: "Parents & students" },
     ],
   },
   {
-    group: "Finanzas",
+    group: "Finance",
     items: [
-      { href: "/accounting", icon: CreditCard, label: "Contabilidad", description: "Pagos y facturas" },
-      { href: "/financial", icon: Lock, label: "Dashboard Financiero", description: "Solo administradores", adminOnly: true },
+      { href: "/accounting", icon: CreditCard, label: "Accounting", description: "Payments & invoices" },
+      { href: "/financial", icon: Lock, label: "Financial Dashboard", description: "Admins only", adminOnly: true },
     ],
   },
   {
-    group: "Reportes",
+    group: "Programs & Events",
     items: [
-      { href: "/analytics", icon: BarChart3, label: "Analíticas", description: "Estadísticas y reportes" },
+      { href: "/scholarships", icon: Award, label: "Scholarships", description: "Financial aid" },
+      { href: "/packages", icon: Package, label: "Packages & Rates", description: "Pricing & bundles" },
+      { href: "/camps", icon: Tent, label: "Seasonal Camps", description: "Winter, Spring, Summer, Fall" },
+      { href: "/events", icon: Star, label: "Special Events", description: "Graduations & workshops" },
+    ],
+  },
+  {
+    group: "Reports",
+    items: [
+      { href: "/analytics", icon: BarChart3, label: "Analytics", description: "Stats & reports" },
     ],
   },
 ];
@@ -77,12 +90,10 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center space-y-4">
-          <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center mx-auto">
-            <Building2 className="w-6 h-6 text-primary-foreground" />
-          </div>
+          <img src={LOGO_URL} alt="LIOTA Institute" className="w-20 h-20 object-contain mx-auto rounded-xl" />
           <div className="space-y-1">
             <p className="font-semibold text-foreground">LIOTA CRM</p>
-            <p className="text-sm text-muted-foreground">Cargando...</p>
+            <p className="text-sm text-muted-foreground">Loading...</p>
           </div>
           <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
         </div>
@@ -96,9 +107,11 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
         <div className="w-full max-w-md">
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-8 shadow-2xl text-center space-y-6">
             <div className="space-y-3">
-              <div className="w-16 h-16 rounded-2xl bg-[oklch(0.72_0.14_75)] flex items-center justify-center mx-auto shadow-lg">
-                <Building2 className="w-8 h-8 text-[oklch(0.15_0.02_240)]" />
-              </div>
+              <img
+                src={LOGO_URL}
+                alt="LIOTA Institute"
+                className="w-24 h-24 object-contain mx-auto rounded-2xl shadow-lg"
+              />
               <div>
                 <h1 className="text-2xl font-bold text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
                   LIOTA CRM
@@ -108,14 +121,14 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
             </div>
             <Separator className="bg-white/10" />
             <div className="space-y-2">
-              <p className="text-white/80 text-sm">Sistema de gestión integral para la academia de inglés</p>
-              <p className="text-white/50 text-xs">Inicia sesión para acceder al panel de administración</p>
+              <p className="text-white/80 text-sm">Comprehensive management system for your language academy</p>
+              <p className="text-white/50 text-xs">Sign in to access the administration panel</p>
             </div>
             <Button
               className="w-full bg-[oklch(0.72_0.14_75)] hover:bg-[oklch(0.65_0.14_75)] text-[oklch(0.15_0.02_240)] font-semibold h-11"
               onClick={() => (window.location.href = getLoginUrl())}
             >
-              Iniciar Sesión
+              Sign In
             </Button>
           </div>
         </div>
@@ -130,11 +143,13 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="p-5 border-b border-sidebar-border">
+      <div className="p-4 border-b border-sidebar-border">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-[oklch(0.72_0.14_75)] flex items-center justify-center flex-shrink-0 shadow-md">
-            <Building2 className="w-5 h-5 text-[oklch(0.15_0.02_240)]" />
-          </div>
+          <img
+            src={LOGO_URL}
+            alt="LIOTA Institute"
+            className="w-10 h-10 object-contain rounded-xl flex-shrink-0"
+          />
           <div className="min-w-0">
             <p className="font-bold text-sidebar-foreground text-sm leading-tight" style={{ fontFamily: "'Playfair Display', serif" }}>
               LIOTA CRM
@@ -193,7 +208,7 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
           </Avatar>
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-sidebar-foreground truncate leading-tight">
-              {user?.name ?? "Usuario"}
+              {user?.name ?? "User"}
             </p>
             <div className="flex items-center gap-1 mt-0.5">
               <Badge
@@ -205,7 +220,7 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
                     : "bg-sidebar-accent text-sidebar-accent-foreground"
                 )}
               >
-                {user?.role === "admin" ? "Admin" : "Usuario"}
+                {user?.role === "admin" ? "Admin" : "User"}
               </Badge>
             </div>
           </div>
@@ -214,7 +229,7 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
             size="icon"
             className="w-7 h-7 text-sidebar-foreground/50 hover:text-sidebar-foreground hover:bg-sidebar-accent flex-shrink-0"
             onClick={logout}
-            title="Cerrar sesión"
+            title="Sign out"
           >
             <LogOut className="w-3.5 h-3.5" />
           </Button>
@@ -264,9 +279,7 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
             <Menu className="w-5 h-5" />
           </Button>
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-lg bg-[oklch(0.72_0.14_75)] flex items-center justify-center">
-              <Building2 className="w-4 h-4 text-[oklch(0.15_0.02_240)]" />
-            </div>
+            <img src={LOGO_URL} alt="LIOTA" className="w-7 h-7 object-contain rounded-lg" />
             <span className="font-bold text-sm" style={{ fontFamily: "'Playfair Display', serif" }}>LIOTA CRM</span>
           </div>
           <Avatar className="w-8 h-8">

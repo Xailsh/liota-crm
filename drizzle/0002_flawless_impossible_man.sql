@@ -1,0 +1,1 @@
+ALTER TABLE `payments` MODIFY COLUMN `method` enum('paypal','card','cash','transfer','stripe','zelle','dolla') NOT NULL;
