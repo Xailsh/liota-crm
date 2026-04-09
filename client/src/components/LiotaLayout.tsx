@@ -5,7 +5,7 @@ import {
   BarChart3, BookOpen, ChevronRight, CreditCard, GraduationCap,
   LayoutDashboard, Lock, LogOut, Mail, Menu, TrendingUp, Users, Users2, X,
   Award, Package, Tent, Star, MessageSquare, Mic, Zap, Link2, Shield,
-  Globe, RefreshCw, AlertTriangle, Library, Plane,
+  Globe, RefreshCw, AlertTriangle, Library, Plane, Receipt,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -44,6 +44,7 @@ const buildNavItems = (t: (k: any) => string) => [
     group: "Finance",
     items: [
       { href: "/accounting", icon: CreditCard, label: t("accounting"), description: "Payments & invoices" },
+      { href: "/bills", icon: Receipt, label: "Bills & Expenses", description: "Recurring payments" },
       { href: "/financial", icon: Lock, label: t("financialDashboard"), description: "Admins only", adminOnly: true },
     ],
   },

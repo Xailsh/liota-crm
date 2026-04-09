@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { TrendingUp, Plus, GraduationCap, Star, Loader2, Edit2, ChevronUp } from "lucide-react";
+import { TrendingUp, Plus, GraduationCap, Star, Loader2, Edit2, ChevronUp, ExternalLink, BookOpen, ClipboardCheck } from "lucide-react";
 
 const MCER_LEVELS = ["A1", "A2", "B1", "B2", "C1", "C2"];
 const mcerColors: Record<string, string> = {
@@ -197,6 +197,72 @@ export default function AcademicProgress() {
           ))}
         </div>
       )}
+
+      {/* Placement Test Section */}
+      <div className="mt-6 border rounded-xl overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-5 text-white">
+          <div className="flex items-center gap-3">
+            <ClipboardCheck className="w-6 h-6" />
+            <div>
+              <h2 className="text-lg font-bold">English Level Placement Tests</h2>
+              <p className="text-blue-100 text-sm">Send a placement test to new students to determine their CEFR level (A1–C2)</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-5 grid md:grid-cols-3 gap-4 bg-card">
+          <div className="border rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-lg bg-green-100 flex items-center justify-center text-xl">🦜</div>
+              <div>
+                <p className="font-semibold text-sm">Duolingo English Test</p>
+                <p className="text-xs text-muted-foreground">Free 15-min practice test</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Official Duolingo practice test — adaptive, covers reading, listening, writing & speaking. Maps to CEFR levels.</p>
+            <a href="https://englishtest.duolingo.com/quick" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg transition-colors">
+              <ExternalLink className="w-3 h-3" /> Open Test
+            </a>
+          </div>
+          <div className="border rounded-xl p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center text-xl">🎓</div>
+              <div>
+                <p className="font-semibold text-sm">EF SET Quick Check</p>
+                <p className="text-xs text-muted-foreground">Free 15-min CEFR test</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">EF Education First standardized test. Measures reading & listening. Provides CEFR certificate. Accepted internationally.</p>
+            <a href="https://www.efset.org/quick-check/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg transition-colors">
+              <ExternalLink className="w-3 h-3" /> Open Test
+            </a>
+          </div>
+          <div className="border border-amber-300 rounded-xl p-4 space-y-3 bg-amber-50/50">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center text-xl">📊</div>
+              <div>
+                <p className="font-semibold text-sm">TrackTest (Recommended)</p>
+                <p className="text-xs text-amber-700 font-medium">Free for schools ⭐</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Adaptive grammar quiz, 10 min. Results tracked in your school account. Students register via your unique school link — results appear in your dashboard.</p>
+            <a href="https://tracktest.eu/english-placement-test-for-websites/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-lg transition-colors">
+              <ExternalLink className="w-3 h-3" /> Register School
+            </a>
+          </div>
+        </div>
+        <div className="px-5 pb-5 bg-card">
+          <div className="bg-muted/50 rounded-lg p-4">
+            <p className="text-sm font-medium mb-2 flex items-center gap-2"><BookOpen className="w-4 h-4" /> How to use with new students</p>
+            <ol className="text-xs text-muted-foreground space-y-1 list-decimal list-inside">
+              <li>Register LIOTA on TrackTest (free) to get your unique school link</li>
+              <li>Share the link with new students via email or WhatsApp from the Bulk Email or Contacts page</li>
+              <li>Students complete the 10-minute adaptive test — results appear in your TrackTest dashboard</li>
+              <li>Record the CEFR level here using the "New Assessment" button above</li>
+              <li>Assign the student to the appropriate class level in the Classes page</li>
+            </ol>
+          </div>
+        </div>
+      </div>
 
       {/* Create Form Dialog */}
       <Dialog open={showForm} onOpenChange={(o) => { if (!o) setShowForm(false); }}>

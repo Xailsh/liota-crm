@@ -89,6 +89,13 @@ import {
   getAllUsers,
   updateUserRole,
   getSystemStats,
+  // Bills
+  getRecurringBills,
+  createRecurringBill,
+  updateRecurringBill,
+  markBillPaid,
+  deleteRecurringBill,
+  getBillsDueForReminder,
 } from "./db";
 // Admin guard middlewaree
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -995,6 +1002,96 @@ GUIDELINES:
         }
 
         return { reply };
+      }),
+  }),
+
+  // ─── Recurring Bills ──────────────────────────────────────────────────────────
+  bills: router({
+    list: protectedProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        campus: z.string().optional(),
+        category: z.string().optional(),
+      }))
+      .query(async ({ input }) => getRecurringBills(input)),
+
+    create: protectedProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        category: z.enum(["rent","utilities","software","payroll","insurance","marketing","supplies","taxes","subscriptions","maintenance","other"]),
+        amount: z.string(),
+        currency: z.string().default("USD"),
+        campus: z.string().default("all"),
+        frequency: z.enum(["monthly","quarterly","annually","one_time"]),
+        dueDayOfMonth: z.number().min(1).max(31),
+        nextDueDate: z.date(),
+        notes: z.string().optional(),
+        vendor: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => createRecurringBill(input)),
+
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        amount: z.string().optional(),
+        currency: z.string().optional(),
+        notes: z.string().optional(),
+        vendor: z.string().optional(),
+        remindersEnabled: z.boolean().optional(),
+        nextDueDate: z.date().optional(),
+      }))
+      .mutation(async ({ input }) => { const { id, ...data } = input; return updateRecurringBill(id, data); }),
+
+    markPaid: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await markBillPaid(input.id); return { success: true }; }),
+
+    disable: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await updateRecurringBill(input.id, { status: "disabled" }); return { success: true }; }),
+
+    enable: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await updateRecurringBill(input.id, { status: "active" }); return { success: true }; }),
+
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await deleteRecurringBill(input.id); return { success: true }; }),
+
+    checkReminders: protectedProcedure
+      .mutation(async () => {
+        const { notifyOwner } = await import("./_core/notification");
+        const allBills = await getBillsDueForReminder();
+        const now = new Date();
+        let notified = 0;
+        for (const bill of allBills) {
+          const due = new Date(bill.nextDueDate);
+          const daysUntilDue = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+          const currency = bill.currency || "USD";
+          const amount = `${currency} ${Number(bill.amount).toLocaleString()}`;
+          let shouldNotify = false;
+          let reminderType = "";
+          let updates: Record<string, boolean> = {};
+          if (daysUntilDue <= 7 && daysUntilDue > 3 && !bill.reminder7Sent) {
+            shouldNotify = true; reminderType = "7 days"; updates = { reminder7Sent: true };
+          } else if (daysUntilDue <= 3 && daysUntilDue > 1 && !bill.reminder3Sent) {
+            shouldNotify = true; reminderType = "3 days"; updates = { reminder3Sent: true };
+          } else if (daysUntilDue <= 1 && daysUntilDue >= 0 && !bill.reminder1Sent) {
+            shouldNotify = true; reminderType = "tomorrow"; updates = { reminder1Sent: true };
+          } else if (daysUntilDue < 0 && Math.abs(daysUntilDue) >= 3 && !bill.reminderOverdueSent) {
+            shouldNotify = true; reminderType = "OVERDUE 3+ days"; updates = { reminderOverdueSent: true, status: "overdue" as any };
+          }
+          if (shouldNotify) {
+            await notifyOwner({
+              title: `💳 Bill Reminder: ${bill.name} (${reminderType})`,
+              content: `Bill: ${bill.name}\nAmount: ${amount}\nDue: ${due.toLocaleDateString()}\nCampus: ${bill.campus}\nVendor: ${bill.vendor || "N/A"}\nStatus: Due in ${daysUntilDue >= 0 ? daysUntilDue + " days" : Math.abs(daysUntilDue) + " days OVERDUE"}`,
+            });
+            await updateRecurringBill(bill.id, updates as any);
+            notified++;
+          }
+        }
+        return { notified, total: allBills.length };
       }),
   }),
 

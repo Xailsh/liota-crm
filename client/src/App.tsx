@@ -28,6 +28,7 @@ import AdminPanel from "./pages/AdminPanel";
 import BulkEmail from "./pages/BulkEmail";
 import DripCampaigns from "./pages/DripCampaigns";
 import BookCatalog from "./pages/BookCatalog";
+import Bills from "./pages/Bills";
 import StudyAbroad from "./pages/StudyAbroad";
 import LiotaLayout from "./components/LiotaLayout";
 
@@ -58,6 +59,7 @@ function Router() {
         <Route path="/bulk-email" component={BulkEmail} />
         <Route path="/drip-campaigns" component={DripCampaigns} />
         <Route path="/book-catalog" component={BookCatalog} />
+        <Route path="/bills" component={Bills} />
         <Route path="/study-abroad" component={StudyAbroad} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />

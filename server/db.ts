@@ -26,6 +26,7 @@ import {
   syncJobs,
   errorLogs,
   inboundWebhooks,
+  recurringBills,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -1038,4 +1039,101 @@ export async function getSystemStats() {
     totalCampaigns: Number(campaignCount?.count ?? 0),
     totalClasses: Number(classCount?.count ?? 0),
   };
+}
+
+// ─── Recurring Bills ──────────────────────────────────────────────────────────
+export async function getRecurringBills(filters?: { status?: string; campus?: string; category?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  let query = db.select().from(recurringBills);
+  const conditions = [];
+  if (filters?.status && filters.status !== "all") conditions.push(eq(recurringBills.status, filters.status as any));
+  if (filters?.campus && filters.campus !== "all") conditions.push(eq(recurringBills.campus, filters.campus));
+  if (filters?.category && filters.category !== "all") conditions.push(eq(recurringBills.category, filters.category as any));
+  if (conditions.length > 0) return db.select().from(recurringBills).where(and(...conditions)).orderBy(recurringBills.nextDueDate);
+  return db.select().from(recurringBills).orderBy(recurringBills.nextDueDate);
+}
+
+export async function createRecurringBill(data: {
+  name: string; category: string; amount: string; currency: string;
+  campus: string; frequency: string; dueDayOfMonth: number; nextDueDate: Date;
+  notes?: string; vendor?: string;
+}) {
+  const db = await getDb();
+  if (!db) return null;
+  const [result] = await db.insert(recurringBills).values({
+    name: data.name,
+    category: data.category as any,
+    amount: data.amount,
+    currency: data.currency,
+    campus: data.campus,
+    frequency: data.frequency as any,
+    dueDayOfMonth: data.dueDayOfMonth,
+    nextDueDate: data.nextDueDate,
+    notes: data.notes,
+    vendor: data.vendor,
+    status: "active",
+    isPreset: false,
+  });
+  return result;
+}
+
+export async function updateRecurringBill(id: number, data: Partial<{
+  name: string; amount: string; currency: string; notes: string; vendor: string;
+  status: string; remindersEnabled: boolean; nextDueDate: Date;
+  reminder7Sent: boolean; reminder3Sent: boolean; reminder1Sent: boolean; reminderOverdueSent: boolean;
+}>) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(recurringBills).set({ ...data as any, updatedAt: new Date() }).where(eq(recurringBills.id, id));
+}
+
+export async function markBillPaid(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  const [bill] = await db.select().from(recurringBills).where(eq(recurringBills.id, id));
+  if (!bill) return;
+  // Calculate next due date based on frequency
+  const now = new Date();
+  let nextDue = new Date(bill.nextDueDate);
+  if (bill.frequency === "monthly") {
+    nextDue = new Date(now.getFullYear(), now.getMonth() + 1, bill.dueDayOfMonth);
+  } else if (bill.frequency === "quarterly") {
+    nextDue = new Date(now.getFullYear(), now.getMonth() + 3, bill.dueDayOfMonth);
+  } else if (bill.frequency === "annually") {
+    nextDue = new Date(now.getFullYear() + 1, now.getMonth(), bill.dueDayOfMonth);
+  }
+  await db.update(recurringBills).set({
+    status: "active",
+    lastPaidDate: now,
+    nextDueDate: bill.frequency === "one_time" ? bill.nextDueDate : nextDue,
+    reminder7Sent: false,
+    reminder3Sent: false,
+    reminder1Sent: false,
+    reminderOverdueSent: false,
+    updatedAt: now,
+  }).where(eq(recurringBills.id, id));
+}
+
+export async function deleteRecurringBill(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(recurringBills).where(eq(recurringBills.id, id));
+}
+
+export async function getBillsDueForReminder() {
+  const db = await getDb();
+  if (!db) return [];
+  const now = new Date();
+  const in7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const in3Days = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+  const in1Day = new Date(now.getTime() + 1 * 24 * 60 * 60 * 1000);
+  const overdue3Days = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+  return db.select().from(recurringBills).where(
+    and(
+      eq(recurringBills.remindersEnabled, true),
+      sql`status != 'disabled'`,
+      sql`status != 'paid'`
+    )
+  );
 }

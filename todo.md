@@ -152,3 +152,38 @@
 - [x] Email Templates: add Spanish versions of all preset templates
 - [x] Email Templates: show language badge (EN/ES) on template cards
 - [x] Email Templates: filter templates by language
+
+## Session 4 - Meta Lead Form Sync & Bulk Email Duplication
+- [ ] Visit Sports App bulk email page and capture all features
+- [ ] Duplicate bulk email page into LIOTA CRM (matching Sports App functionality)
+- [ ] Set up Meta Lead Form webhook endpoint for Form ID 1652859402713081
+- [ ] Store synced Meta leads in the leads/contacts DB table
+- [ ] Add Meta sync status indicator to MetaLeads page
+- [ ] Run tests and save checkpoint
+
+## Session 4b - Multi-Channel Outreach Hub
+- [ ] Build OutreachHub page with platform credentials/connections table (Email, WhatsApp, Meta, Instagram, TikTok, YouTube, X, LinkedIn)
+- [ ] Add bulk send backend procedure with per-message delay timer (5-30s)
+- [ ] Build Multi-Channel Compose UI: recipient filters, template selector, channel picker, timer slider, scheduling
+- [ ] Add WhatsApp text template sender
+- [ ] Add WhatsApp voice memo sender
+- [ ] Add send history table with status per recipient per channel
+- [ ] Add OutreachHub to sidebar navigation
+- [ ] Wire Meta Lead Form sync for Form ID 1652859402713081
+- [ ] Add secrets management for all platform API keys
+
+## Session 4c - Placement Test Integration
+- [ ] Research Duolingo English Test free demo / embed options
+- [x] Add placement test section to Academic Progress page
+- [ ] Build built-in CEFR placement quiz (A1-C2) as fallback/supplement
+- [ ] Store placement test results per student in DB
+- [ ] Send placement test link to new leads via email/WhatsApp
+
+## Session 4d - LIOTA Bills Tracker
+- [x] Add recurring_bills table to schema and migrate DB
+- [x] Build bills CRUD procedures (create, update, markPaid, disable, list)
+- [x] Build reminder check procedure (7/3/1 day before, 3 days overdue)
+- [x] Wire notifyOwner for bill reminders
+- [x] Build Bills page UI with preset LIOTA bills loaded
+- [x] Add Bills to sidebar navigation under Finance
+- [x] Seed preset bills for language institute (rent, utilities, software, etc.)

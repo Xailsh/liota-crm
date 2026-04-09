@@ -461,3 +461,34 @@ export const inboundWebhooks = mysqlTable("inboundWebhooks", {
 });
 export type InboundWebhook = typeof inboundWebhooks.$inferSelect;
 export type InsertInboundWebhook = typeof inboundWebhooks.$inferInsert;
+
+// ─── Recurring Bills ──────────────────────────────────────────────────────────
+export const recurringBills = mysqlTable("recurringBills", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 256 }).notNull(),
+  category: mysqlEnum("category", [
+    "rent", "utilities", "software", "payroll", "insurance",
+    "marketing", "supplies", "taxes", "subscriptions", "maintenance", "other"
+  ]).default("other").notNull(),
+  amount: decimal("amount", { precision: 10, scale: 2 }).notNull(),
+  currency: varchar("currency", { length: 8 }).default("USD").notNull(),
+  campus: varchar("campus", { length: 64 }).default("all").notNull(),
+  frequency: mysqlEnum("frequency", ["monthly", "quarterly", "annually", "one_time"]).default("monthly").notNull(),
+  dueDayOfMonth: int("dueDayOfMonth").notNull(), // 1-31
+  nextDueDate: timestamp("nextDueDate").notNull(),
+  lastPaidDate: timestamp("lastPaidDate"),
+  status: mysqlEnum("status", ["active", "paid", "overdue", "disabled"]).default("active").notNull(),
+  notes: text("notes"),
+  vendor: varchar("vendor", { length: 256 }),
+  isPreset: boolean("isPreset").default(false),
+  remindersEnabled: boolean("remindersEnabled").default(true),
+  // Track which reminders have been sent for current cycle
+  reminder7Sent: boolean("reminder7Sent").default(false),
+  reminder3Sent: boolean("reminder3Sent").default(false),
+  reminder1Sent: boolean("reminder1Sent").default(false),
+  reminderOverdueSent: boolean("reminderOverdueSent").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type RecurringBill = typeof recurringBills.$inferSelect;
+export type InsertRecurringBill = typeof recurringBills.$inferInsert;
