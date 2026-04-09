@@ -177,7 +177,7 @@ export default function FinancialDashboard() {
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
           <Button variant="outline" size="sm" onClick={() => refetch()} className="gap-2 text-xs">
-            <RefreshCw className="w-3.5 h-3.5" /> Actualizar
+            <RefreshCw className="w-3.5 h-3.5" /> Refresh
           </Button>
           {revealed && (
             <Button variant="outline" size="sm" onClick={handleLock} className="gap-2 text-xs text-amber-600 border-amber-300 hover:bg-amber-50">
@@ -209,7 +209,7 @@ export default function FinancialDashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           {
-            label: "Revenue Estimados",
+            label: "Estimated Revenue",
             value: revealed && fd ? `$${fd.estimatedRevenue.toLocaleString("en-US")}` : "$●●●●●",
             sub: "Total cobrado + pendiente",
             icon: TrendingUp,

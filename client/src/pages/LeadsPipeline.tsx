@@ -13,12 +13,12 @@ import { Users2, Plus, Mail, Phone, MapPin, Calendar, ArrowRight, Loader2, Edit2
 
 const STAGES = [
   { key: "new_lead", label: "New Lead", color: "bg-slate-100 border-slate-300", badge: "bg-slate-100 text-slate-700 border-slate-300", dot: "bg-slate-400" },
-  { key: "contacted", label: "Contactado", color: "bg-blue-50 border-blue-200", badge: "bg-blue-100 text-blue-700 border-blue-200", dot: "bg-blue-500" },
-  { key: "trial_scheduled", label: "Trial Agendada", color: "bg-violet-50 border-violet-200", badge: "bg-violet-100 text-violet-700 border-violet-200", dot: "bg-violet-500" },
-  { key: "trial_done", label: "Trial Realizada", color: "bg-amber-50 border-amber-200", badge: "bg-amber-100 text-amber-700 border-amber-200", dot: "bg-amber-500" },
-  { key: "proposal_sent", label: "Propuesta Sent", color: "bg-orange-50 border-orange-200", badge: "bg-orange-100 text-orange-700 border-orange-200", dot: "bg-orange-500" },
-  { key: "enrolled", label: "Inscrito", color: "bg-emerald-50 border-emerald-200", badge: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
-  { key: "lost", label: "Perdido", color: "bg-red-50 border-red-200", badge: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-400" },
+  { key: "contacted", label: "Contacted", color: "bg-blue-50 border-blue-200", badge: "bg-blue-100 text-blue-700 border-blue-200", dot: "bg-blue-500" },
+  { key: "trial_scheduled", label: "Trial Scheduled", color: "bg-violet-50 border-violet-200", badge: "bg-violet-100 text-violet-700 border-violet-200", dot: "bg-violet-500" },
+  { key: "trial_done", label: "Trial Done", color: "bg-amber-50 border-amber-200", badge: "bg-amber-100 text-amber-700 border-amber-200", dot: "bg-amber-500" },
+  { key: "proposal_sent", label: "Proposal Sent", color: "bg-orange-50 border-orange-200", badge: "bg-orange-100 text-orange-700 border-orange-200", dot: "bg-orange-500" },
+  { key: "enrolled", label: "Enrolled", color: "bg-emerald-50 border-emerald-200", badge: "bg-emerald-100 text-emerald-700 border-emerald-200", dot: "bg-emerald-500" },
+  { key: "lost", label: "Lost", color: "bg-red-50 border-red-200", badge: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-400" },
 ];
 
 const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", online: "Online" };
@@ -259,7 +259,7 @@ export default function LeadsPipeline() {
       <Dialog open={!!deleteId} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>¿Delete Lead?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
+          <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteMutation.mutate({ id: deleteId! })} disabled={deleteMutation.isPending}>

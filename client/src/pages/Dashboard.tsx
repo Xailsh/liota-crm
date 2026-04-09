@@ -46,12 +46,12 @@ const statusLabels: Record<string, string> = {
 
 const stageLabels: Record<string, string> = {
   new_lead: "New Lead",
-  contacted: "Contactado",
-  trial_scheduled: "Trial Agendada",
-  trial_done: "Trial Realizada",
-  proposal_sent: "Propuesta Sent",
-  enrolled: "Inscrito",
-  lost: "Perdido",
+  contacted: "Contacted",
+  trial_scheduled: "Trial Scheduled",
+  trial_done: "Trial Done",
+  proposal_sent: "Proposal Sent",
+  enrolled: "Enrolled",
+  lost: "Lost",
 };
 
 export default function Dashboard() {
@@ -59,10 +59,10 @@ export default function Dashboard() {
   const { data: metrics, isLoading, refetch } = trpc.dashboard.metrics.useQuery();
   const seedMutation = trpc.dashboard.seed.useMutation({
     onSuccess: () => {
-      toast.success("Datos de demostración cargados correctamente");
+      toast.success("Demo data loaded successfully");
       refetch();
     },
-    onError: (e) => toast.error("Error al cargar datos: " + e.message),
+    onError: (e) => toast.error("Error loading data: " + e.message),
   });
 
   if (isLoading) {
@@ -70,7 +70,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-center h-full min-h-96">
         <div className="text-center space-y-3">
           <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-          <p className="text-muted-foreground text-sm">Cargando métricas...</p>
+          <p className="text-muted-foreground text-sm">Loading metrics...</p>
         </div>
       </div>
     );
@@ -80,7 +80,7 @@ export default function Dashboard() {
     {
       title: "Total Students",
       value: metrics?.totalStudents ?? 0,
-      sub: `${metrics?.activeStudents ?? 0} activos · ${metrics?.trialStudents ?? 0} en prueba`,
+      sub: `${metrics?.activeStudents ?? 0} active · ${metrics?.trialStudents ?? 0} in trial`,
       icon: GraduationCap,
       color: "text-blue-600",
       bg: "bg-blue-50",
@@ -98,7 +98,7 @@ export default function Dashboard() {
     {
       title: "Active Campaigns",
       value: metrics?.activeCampaigns ?? 0,
-      sub: "En borrador o programadas",
+      sub: "Draft or scheduled",
       icon: Mail,
       color: "text-amber-600",
       bg: "bg-amber-50",
@@ -107,7 +107,7 @@ export default function Dashboard() {
     {
       title: "Scheduled Classes",
       value: metrics?.scheduledClasses ?? 0,
-      sub: "Actives y por iniciar",
+      sub: "Active and upcoming",
       icon: BookOpen,
       color: "text-violet-600",
       bg: "bg-violet-50",
@@ -116,7 +116,7 @@ export default function Dashboard() {
     {
       title: "Active Leads",
       value: metrics?.totalLeads ?? 0,
-      sub: "En el pipeline de ventas",
+      sub: "In the sales pipeline",
       icon: Users,
       color: "text-rose-600",
       bg: "bg-rose-50",
@@ -125,7 +125,7 @@ export default function Dashboard() {
     {
       title: "Satisfaction Rate",
       value: `${metrics?.satisfactionRate ?? 95}%`,
-      sub: "Basado en evaluaciones",
+      sub: "Based on assessments",
       icon: Star,
       color: "text-yellow-600",
       bg: "bg-yellow-50",
@@ -139,10 +139,10 @@ export default function Dashboard() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">
-            Bienvenido, {user?.name?.split(" ")[0] ?? "Administrador"}
+            Welcome, {user?.name?.split(" ")[0] ?? "Administrator"}
           </h1>
           <p className="text-muted-foreground text-sm mt-0.5">
-            Panel de control · LIOTA Institute — Language Institute Of The Americas
+            Control Panel · LIOTA Institute — Language Institute Of The Americas
           </p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
@@ -153,7 +153,7 @@ export default function Dashboard() {
             className="gap-2 text-xs"
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            Actualizar
+            Refresh
           </Button>
           {(metrics?.totalStudents ?? 0) === 0 && (
             <Button
@@ -197,7 +197,7 @@ export default function Dashboard() {
       <Card className="border border-border card-shadow">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base font-semibold">Resumen Financiero</CardTitle>
+            <CardTitle className="text-base font-semibold">Financial Summary</CardTitle>
             <Badge variant="outline" className="text-xs">USD</Badge>
           </div>
         </CardHeader>
@@ -205,7 +205,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: "Total Revenue", value: metrics?.totalRevenue ?? 0, color: "text-emerald-600" },
-              { label: "Pending por Cobrar", value: metrics?.pendingRevenue ?? 0, color: "text-amber-600" },
+              { label: "Pending to Collect", value: metrics?.pendingRevenue ?? 0, color: "text-amber-600" },
               { label: "Total Expenses", value: metrics?.totalExpenses ?? 0, color: "text-red-500" },
               { label: "Net Profit", value: (metrics?.totalRevenue ?? 0) - (metrics?.totalExpenses ?? 0), color: "text-blue-600" },
             ].map((item) => (
@@ -238,7 +238,7 @@ export default function Dashboard() {
           <CardContent className="space-y-2">
             {(metrics?.recentStudents ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No hay estudiantes aún. Carga los datos de demostración.
+                No students yet. Load demo data to get started.
               </p>
             ) : (
               (metrics?.recentStudents ?? []).map((s: any) => (
@@ -272,17 +272,17 @@ export default function Dashboard() {
             <div className="flex items-center justify-between">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <Users className="w-4 h-4 text-primary" />
-                Leads Recientes
+                Recent Leads
               </CardTitle>
               <Button variant="ghost" size="sm" className="text-xs text-primary gap-1 h-7" asChild>
-                <a href="/leads">Ver pipeline <ArrowUpRight className="w-3 h-3" /></a>
+                <a href="/leads">View pipeline <ArrowUpRight className="w-3 h-3" /></a>
               </Button>
             </div>
           </CardHeader>
           <CardContent className="space-y-2">
             {(metrics?.recentLeads ?? []).length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No hay leads aún.
+                No leads yet.
               </p>
             ) : (
               (metrics?.recentLeads ?? []).map((lead: any) => (
@@ -320,8 +320,8 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {[
               { key: "merida", label: "Mérida", country: "México 🇲🇽", color: "border-blue-200 bg-blue-50" },
-              { key: "dallas", label: "Dallas", country: "Texas, EE.UU. 🇺🇸", color: "border-green-200 bg-green-50" },
-              { key: "denver", label: "Denver", country: "Colorado, EE.UU. 🇺🇸", color: "border-purple-200 bg-purple-50" },
+              { key: "dallas", label: "Dallas", country: "Texas, USA 🇺🇸", color: "border-green-200 bg-green-50" },
+              { key: "denver", label: "Denver", country: "Colorado, USA 🇺🇸", color: "border-purple-200 bg-purple-50" },
               { key: "vienna", label: "Vienna", country: "Austria 🇦🇹", color: "border-rose-200 bg-rose-50" },
               { key: "online", label: "Online", country: "Global 🌐", color: "border-amber-200 bg-amber-50" },
             ].map((campus) => (

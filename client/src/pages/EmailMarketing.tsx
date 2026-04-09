@@ -17,7 +17,7 @@ const statusColors: Record<string, string> = {
   sent: "bg-emerald-100 text-emerald-700 border-emerald-200",
   cancelled: "bg-red-100 text-red-700 border-red-200",
 };
-const statusLabels: Record<string, string> = { draft: "Draft", scheduled: "Programda", sent: "Sent", cancelled: "Cancelled" };
+const statusLabels: Record<string, string> = { draft: "Draft", scheduled: "Scheduled", sent: "Sent", cancelled: "Cancelled" };
 const templateLabels: Record<string, string> = { promotion: "Promotion", reminder: "Reminder", newsletter: "Newsletter", welcome: "Welcome", progress_report: "Progress Report" };
 const templateColors: Record<string, string> = {
   promotion: "bg-amber-50 text-amber-700 border-amber-200",
@@ -28,11 +28,11 @@ const templateColors: Record<string, string> = {
 };
 
 const TEMPLATES = {
-  promotion: { subject: "¡Oferta especial en LIOTA! Inscríbete hoy", body: "Estimado/a,\n\nTenemos una oferta especial para ti. Por tiempo limitado, obtén un descuento exclusivo en nuestros programas de inglés.\n\nNo pierdas esta oportunidad de mejorar tu inglés con los mejores instructores certificados.\n\n¡Inscríbete hoy!\n\nEl equipo de LIOTA Institute\nLanguage Institute Of The Americas" },
-  reminder: { subject: "Reminder: Tu clase de inglés es mañana", body: "Hola,\n\nTe recordamos que mañana tienes clase de inglés en LIOTA Institute.\n\nPor favor asegúrate de conectarte a tiempo o llegar a la sede con anticipación.\n\nSi necesitas reprogramar, contáctanos con anticipación.\n\nHasta mañana,\nEl equipo de LIOTA" },
-  newsletter: { subject: "LIOTA News - Monthly Update", body: "Estimada comunidad LIOTA,\n\nEste mes tenemos emocionantes novedades para compartir contigo:\n\n• Nuevos programas disponibles\n• Eventos especiales\n• Logros de nuestros estudiantes\n• Próximas fechas importantes\n\nGracias por ser parte de nuestra familia.\n\nEl equipo de LIOTA Institute" },
-  welcome: { subject: "¡Bienvenido/a a la familia LIOTA!", body: "Querido/a estudiante,\n\nEs un placer darte la bienvenida a LIOTA Institute - Language Institute Of The Americas.\n\nEstamos emocionados de acompañarte en tu viaje de aprendizaje del inglés. Nuestro equipo de instructores certificados está listo para ayudarte a alcanzar tus metas.\n\nSi tienes alguna pregunta, no dudes en contactarnos.\n\n¡Bienvenido/a!\nEl equipo de LIOTA" },
-  progress_report: { subject: "Reporte de progreso - Tu avance en inglés", body: "Estimado/a padre/madre/estudiante,\n\nAdjunto encontrarás el reporte de progreso del período actual.\n\nTu estudiante ha demostrado un excelente avance en las áreas de:\n• Speaking\n• Listening\n• Reading\n• Writing\n\nSeguimos trabajando juntos para alcanzar el siguiente nivel MCER.\n\nEl equipo académico de LIOTA" },
+  promotion: { subject: "Special offer at LIOTA! Enroll today", body: "Dear student,\n\nWe have a special offer for you. For a limited time, get an exclusive discount on our language programs.\n\nDon't miss this opportunity to improve your English with our best certified instructors.\n\nEnroll today!\n\nThe LIOTA Institute Team\nLanguage Institute Of The Americas" },
+  reminder: { subject: "Reminder: Your English class is tomorrow", body: "Hello,\n\nThis is a reminder that you have an English class tomorrow at LIOTA Institute.\n\nPlease make sure to connect on time or arrive at the campus early.\n\nIf you need to reschedule, please contact us in advance.\n\nSee you tomorrow,\nThe LIOTA Team" },
+  newsletter: { subject: "LIOTA News - Monthly Update", body: "Dear LIOTA community,\n\nThis month we have exciting news to share with you:\n\n\u2022 New programs available\n\u2022 Special events\n\u2022 Student achievements\n\u2022 Upcoming important dates\n\nThank you for being part of our family.\n\nThe LIOTA Institute Team" },
+  welcome: { subject: "Welcome to the LIOTA family!", body: "Dear student,\n\nIt is our pleasure to welcome you to LIOTA Institute - Language Institute Of The Americas.\n\nWe are excited to accompany you on your language learning journey. Our team of certified instructors is ready to help you achieve your goals.\n\nIf you have any questions, please do not hesitate to contact us.\n\nWelcome!\nThe LIOTA Team" },
+  progress_report: { subject: "Progress Report - Your language advancement", body: "Dear parent/student,\n\nPlease find attached the progress report for the current period.\n\nYour student has shown excellent progress in the following areas:\n\u2022 Speaking\n\u2022 Listening\n\u2022 Reading\n\u2022 Writing\n\nWe continue working together to reach the next CEFR level.\n\nThe LIOTA Academic Team" },
 };
 
 const emptyForm = {
@@ -52,15 +52,15 @@ export default function EmailMarketing() {
   const { data: campaigns = [], isLoading, refetch } = trpc.campaigns.list.useQuery();
 
   const createMutation = trpc.campaigns.create.useMutation({
-    onSuccess: () => { toast.success("Campaign creada"); setShowForm(false); setForm({ ...emptyForm }); refetch(); },
+    onSuccess: () => { toast.success("Campaign created"); setShowForm(false); setForm({ ...emptyForm }); refetch(); },
     onError: (e) => toast.error(e.message),
   });
   const updateMutation = trpc.campaigns.update.useMutation({
-    onSuccess: () => { toast.success("Campaign actualizada"); setShowForm(false); setEditId(null); refetch(); },
+    onSuccess: () => { toast.success("Campaign updated"); setShowForm(false); setEditId(null); refetch(); },
     onError: (e) => toast.error(e.message),
   });
   const deleteMutation = trpc.campaigns.delete.useMutation({
-    onSuccess: () => { toast.success("Campaign eliminada"); setDeleteId(null); refetch(); },
+    onSuccess: () => { toast.success("Campaign deleted"); setDeleteId(null); refetch(); },
     onError: (e) => toast.error(e.message),
   });
 
@@ -71,7 +71,7 @@ export default function EmailMarketing() {
 
   const handleSend = (id: number) => {
     updateMutation.mutate({ id, status: "sent", recipientCount: Math.floor(Math.random() * 200) + 50 });
-    toast.success("Campaign marcada como enviada");
+    toast.success("Campaign marked as sent");
   };
 
   const applyTemplate = (type: keyof typeof TEMPLATES) => {
@@ -97,10 +97,10 @@ export default function EmailMarketing() {
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Mail className="w-6 h-6 text-primary" /> Email Marketing
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Campaigns segmentadas por programa, sede y grupo de edad</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Segmented campaigns by program, campus, and age group</p>
         </div>
         <Button onClick={() => { setForm({ ...emptyForm }); setEditId(null); setShowForm(true); }} className="gap-2">
-          <Plus className="w-4 h-4" /> Nueva Campaign
+          <Plus className="w-4 h-4" /> New Campaign
         </Button>
       </div>
 
@@ -108,9 +108,9 @@ export default function EmailMarketing() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
           { label: "Total Campaigns", value: campaigns.length, icon: Mail, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Campaigns Sents", value: sentCampaigns.length, icon: Send, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Total Destinatarios", value: totalRecipients.toLocaleString(), icon: Users, color: "text-violet-600", bg: "bg-violet-50" },
-          { label: "Tasa de Apertura", value: `${avgOpenRate}%`, icon: Eye, color: "text-amber-600", bg: "bg-amber-50" },
+          { label: "Campaigns Sent", value: sentCampaigns.length, icon: Send, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Total Recipients", value: totalRecipients.toLocaleString(), icon: Users, color: "text-violet-600", bg: "bg-violet-50" },
+          { label: "Open Rate", value: `${avgOpenRate}%`, icon: Eye, color: "text-amber-600", bg: "bg-amber-50" },
         ].map((s) => (
           <Card key={s.label} className="border border-border card-shadow">
             <CardContent className="p-4 flex items-center gap-3">
@@ -133,7 +133,7 @@ export default function EmailMarketing() {
         <Card className="border border-dashed border-border">
           <CardContent className="py-16 text-center">
             <Mail className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-muted-foreground font-medium">No hay campañas aún</p>
+            <p className="text-muted-foreground font-medium">No campaigns yet</p>
           </CardContent>
         </Card>
       ) : (
@@ -156,13 +156,13 @@ export default function EmailMarketing() {
                     {c.status === "sent" && (
                       <div className="flex items-center gap-4 mt-2">
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Users className="w-3 h-3" /><span>{c.recipientCount ?? 0} destinatarios</span>
+                          <Users className="w-3 h-3" /><span>{c.recipientCount ?? 0} recipients</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <Eye className="w-3 h-3" /><span>{c.openCount ?? 0} aperturas ({c.recipientCount > 0 ? Math.round((c.openCount / c.recipientCount) * 100) : 0}%)</span>
+                          <Eye className="w-3 h-3" /><span>{c.openCount ?? 0} opens ({c.recipientCount > 0 ? Math.round((c.openCount / c.recipientCount) * 100) : 0}%)</span>
                         </div>
                         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <BarChart2 className="w-3 h-3" /><span>{c.clickCount ?? 0} clics</span>
+                          <BarChart2 className="w-3 h-3" /><span>{c.clickCount ?? 0} clicks</span>
                         </div>
                       </div>
                     )}
@@ -170,7 +170,7 @@ export default function EmailMarketing() {
                   <div className="flex items-center gap-2 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
                     {c.status === "draft" && (
                       <Button size="sm" variant="outline" className="gap-1.5 h-8 text-xs" onClick={() => handleSend(c.id)}>
-                        <Send className="w-3.5 h-3.5" /> Enviar
+                        <Send className="w-3.5 h-3.5" /> Send
                       </Button>
                     )}
                     <Button variant="ghost" size="icon" className="w-8 h-8" onClick={() => openEdit(c)}>
@@ -194,7 +194,7 @@ export default function EmailMarketing() {
           <div className="space-y-4 py-2">
             {!editId && (
               <div className="space-y-2">
-                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Plantilla Rápida</Label>
+                <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Quick Template</Label>
                 <div className="flex flex-wrap gap-2">
                   {Object.entries(templateLabels).map(([k, v]) => (
                     <Button key={k} variant="outline" size="sm" className={`text-xs h-7 ${form.templateType === k ? "border-primary text-primary" : ""}`} onClick={() => applyTemplate(k as any)}>
@@ -210,18 +210,18 @@ export default function EmailMarketing() {
                 <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ej: Enrollment Enero 2026" />
               </div>
               <div className="col-span-2 space-y-1.5">
-                <Label>Asunto del Email *</Label>
-                <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Asunto del correo electrónico" />
+                <Label>Email Subject *</Label>
+                <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="Email subject line" />
               </div>
               <div className="space-y-1.5">
-                <Label>Type de Plantilla</Label>
+                <Label>Template Type</Label>
                 <Select value={form.templateType} onValueChange={(v: any) => setForm({ ...form, templateType: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>{Object.entries(templateLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Segmento por Program</Label>
+                <Label>Segment by Program</Label>
                 <Select value={form.segmentProgram} onValueChange={(v: any) => setForm({ ...form, segmentProgram: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -237,7 +237,7 @@ export default function EmailMarketing() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Segmento por Campus</Label>
+                <Label>Segment by Campus</Label>
                 <Select value={form.segmentCampus} onValueChange={(v: any) => setForm({ ...form, segmentCampus: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -251,7 +251,7 @@ export default function EmailMarketing() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Segmento por Edad</Label>
+                <Label>Segment by Age Group</Label>
                 <Select value={form.segmentAgeGroup} onValueChange={(v: any) => setForm({ ...form, segmentAgeGroup: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -263,7 +263,7 @@ export default function EmailMarketing() {
                 </Select>
               </div>
               <div className="col-span-2 space-y-1.5">
-                <Label>Cuerpo del Email *</Label>
+                <Label>Email Body *</Label>
                 <Textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} placeholder="Contenido del correo electrónico..." rows={8} className="font-mono text-sm" />
               </div>
             </div>
@@ -282,7 +282,7 @@ export default function EmailMarketing() {
       <Dialog open={!!deleteId} onOpenChange={(o) => { if (!o) setDeleteId(null); }}>
         <DialogContent className="max-w-sm">
           <DialogHeader><DialogTitle>¿Delete campaña?</DialogTitle></DialogHeader>
-          <p className="text-sm text-muted-foreground">Esta acción no se puede deshacer.</p>
+          <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>Cancel</Button>
             <Button variant="destructive" onClick={() => deleteMutation.mutate({ id: deleteId! })} disabled={deleteMutation.isPending}>

@@ -126,7 +126,7 @@ export default function AcademicProgress() {
         <Card className="border border-dashed border-border">
           <CardContent className="py-16 text-center">
             <TrendingUp className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-muted-foreground font-medium">No hay evaluaciones registradas</p>
+            <p className="text-muted-foreground font-medium">No assessments recorded yet</p>
           </CardContent>
         </Card>
       ) : (
