@@ -8,9 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Shield, Users, Settings, Database, Activity, Loader2,
-  Edit2, CheckCircle, AlertTriangle, Globe, Lock, Check, Minus
+  Edit2, CheckCircle, AlertTriangle, Globe, Lock, Check, Minus,
+  Mail, UserPlus, Copy, Trash2, Ban, Clock
 } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -184,14 +187,119 @@ function PermissionsTab() {
 
 function UsersTab() {
   const { data: users = [], isLoading, refetch } = trpc.admin.listUsers.useQuery();
+  const { data: invitations = [], refetch: refetchInvitations } = trpc.admin.listInvitations.useQuery();
+  const [showInviteDialog, setShowInviteDialog] = useState(false);
+  const [inviteForm, setInviteForm] = useState({ email: "", role: "user" as any, message: "" });
+  const [lastInviteUrl, setLastInviteUrl] = useState("");
+  const [showInviteSuccess, setShowInviteSuccess] = useState(false);
+
   const updateRoleMutation = trpc.admin.updateUserRole.useMutation({
     onSuccess: () => { toast.success("Role updated successfully"); refetch(); },
     onError: (e) => toast.error(e.message),
   });
+  const createInviteMutation = trpc.admin.createInvitation.useMutation({
+    onSuccess: (data) => {
+      setLastInviteUrl(data.inviteUrl);
+      setShowInviteSuccess(true);
+      setShowInviteDialog(false);
+      setInviteForm({ email: "", role: "user", message: "" });
+      refetchInvitations();
+      toast.success(`Invitation link created for ${inviteForm.email}`);
+    },
+    onError: (e) => toast.error(e.message),
+  });
+  const revokeInviteMutation = trpc.admin.revokeInvitation.useMutation({
+    onSuccess: () => { toast.success("Invitation revoked"); refetchInvitations(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteInviteMutation = trpc.admin.deleteInvitation.useMutation({
+    onSuccess: () => { toast.success("Invitation deleted"); refetchInvitations(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const pendingInvitations = (invitations as any[]).filter((i: any) => i.status === "pending");
+  const pastInvitations = (invitations as any[]).filter((i: any) => i.status !== "pending");
 
   return (
     <div className="space-y-4">
-      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+      {/* Invite Success Banner */}
+      {showInviteSuccess && lastInviteUrl && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-2">
+              <CheckCircle className="w-5 h-5 text-green-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-green-800">Invitation link created!</p>
+                <p className="text-xs text-green-700 mt-0.5">Share this link with the invitee. It expires in 7 days.</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <code className="text-xs bg-green-100 border border-green-300 rounded px-2 py-1 text-green-900 break-all">{lastInviteUrl}</code>
+                  <Button size="sm" variant="outline" className="shrink-0 h-7 text-xs" onClick={() => { navigator.clipboard.writeText(lastInviteUrl); toast.success("Link copied!"); }}>
+                    <Copy className="w-3 h-3 mr-1" /> Copy
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <Button size="sm" variant="ghost" className="shrink-0 h-7 text-xs" onClick={() => setShowInviteSuccess(false)}>Dismiss</Button>
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between">
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 flex-1 mr-3">
+          <div className="flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
+            <p className="text-sm text-amber-800">
+              Role changes take effect immediately. Only <strong>Admin</strong> users can access the Financial Dashboard and Admin Panel.
+              See the <strong>Permissions</strong> tab for a full breakdown of what each role can access.
+            </p>
+          </div>
+        </div>
+        <Button onClick={() => setShowInviteDialog(true)} className="shrink-0 gap-2">
+          <UserPlus className="w-4 h-4" /> Invite User
+        </Button>
+      </div>
+
+      {/* Invite User Dialog */}
+      <Dialog open={showInviteDialog} onOpenChange={setShowInviteDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Mail className="w-5 h-5 text-primary" /> Invite New User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Email Address *</Label>
+              <Input type="email" placeholder="colleague@example.com" value={inviteForm.email} onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Role</Label>
+              <Select value={inviteForm.role} onValueChange={v => setInviteForm(f => ({ ...f, role: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin — Full access</SelectItem>
+                  <SelectItem value="instructor">Instructor — Classes & students</SelectItem>
+                  <SelectItem value="coordinator">Coordinator — Students, leads, events</SelectItem>
+                  <SelectItem value="receptionist">Receptionist — Front desk access</SelectItem>
+                  <SelectItem value="user">User — Basic access</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Personal Message (optional)</Label>
+              <Textarea placeholder="Welcome to the LIOTA CRM team! Click the link below to set up your account." value={inviteForm.message} onChange={e => setInviteForm(f => ({ ...f, message: e.target.value }))} rows={3} />
+            </div>
+            <p className="text-xs text-muted-foreground">An invitation link will be generated (valid for 7 days). Share it with the invitee — they'll click it to access the CRM.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowInviteDialog(false)}>Cancel</Button>
+            <Button onClick={() => { if (!inviteForm.email) { toast.error("Email is required"); return; } createInviteMutation.mutate({ ...inviteForm, origin: window.location.origin }); }} disabled={createInviteMutation.isPending} className="gap-2">
+              {createInviteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+              Generate Invite Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3" style={{display:'none'}}>
         <div className="flex items-start gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
           <p className="text-sm text-amber-800">
@@ -247,6 +355,74 @@ function UsersTab() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Pending Invitations */}
+      {pendingInvitations.length > 0 && (
+        <Card className="border border-border">
+          <CardHeader className="pb-3 border-b border-border">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-500" /> Pending Invitations ({pendingInvitations.length})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {pendingInvitations.map((inv: any) => {
+                const daysLeft = Math.ceil((new Date(inv.expiresAt).getTime() - Date.now()) / 86400000);
+                return (
+                  <div key={inv.id} className="flex items-center justify-between px-4 py-3 gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                        <Mail className="w-4 h-4 text-amber-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{inv.email}</p>
+                        <p className="text-xs text-muted-foreground">
+                          <Badge className={`text-xs border mr-1 ${ROLE_COLORS[inv.role] ?? "bg-gray-100 text-gray-600"}`}>{ROLE_LABELS[inv.role] ?? inv.role}</Badge>
+                          Invited by {inv.invitedByName ?? "Admin"} · Expires in {daysLeft}d
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => { const url = `${window.location.origin}/invite/${inv.token}`; navigator.clipboard.writeText(url); toast.success("Invite link copied!"); }}>
+                        <Copy className="w-3 h-3" /> Copy Link
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs gap-1 text-red-600 hover:text-red-700" onClick={() => revokeInviteMutation.mutate({ id: inv.id })} disabled={revokeInviteMutation.isPending}>
+                        <Ban className="w-3 h-3" /> Revoke
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Past Invitations */}
+      {pastInvitations.length > 0 && (
+        <Card className="border border-border">
+          <CardHeader className="pb-3 border-b border-border">
+            <CardTitle className="text-base flex items-center gap-2 text-muted-foreground">
+              <CheckCircle className="w-4 h-4" /> Past Invitations
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="divide-y divide-border">
+              {pastInvitations.slice(0, 5).map((inv: any) => (
+                <div key={inv.id} className="flex items-center justify-between px-4 py-2.5 gap-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm truncate">{inv.email}</p>
+                    <p className="text-xs text-muted-foreground">{inv.status === "accepted" ? "✅ Accepted" : inv.status === "revoked" ? "🚫 Revoked" : "⏰ Expired"} · {new Date(inv.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <Button size="sm" variant="ghost" className="h-7 text-xs text-muted-foreground" onClick={() => deleteInviteMutation.mutate({ id: inv.id })}>
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Team Members Summary */}

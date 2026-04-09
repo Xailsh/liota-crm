@@ -30,6 +30,7 @@ import DripCampaigns from "./pages/DripCampaigns";
 import BookCatalog from "./pages/BookCatalog";
 import Bills from "./pages/Bills";
 import StudyAbroad from "./pages/StudyAbroad";
+import AcceptInvite from "./pages/AcceptInvite";
 import LiotaLayout from "./components/LiotaLayout";
 
 function Router() {
@@ -61,6 +62,7 @@ function Router() {
         <Route path="/book-catalog" component={BookCatalog} />
         <Route path="/bills" component={Bills} />
         <Route path="/study-abroad" component={StudyAbroad} />
+        <Route path="/invite/:token" component={AcceptInvite} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

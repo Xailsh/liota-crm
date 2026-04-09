@@ -197,12 +197,12 @@
 - [x] Totales por moneda (USD/EUR/GBP/MXN) con desglose pendiente/pagado/vencido
 
 ## Sistema de Invitaciones (Admin Panel)
-- [ ] Tabla invitations en DB (id, email, role, token, status, invitedBy, expiresAt, acceptedAt)
-- [ ] Backend: admin.createInvitation (genera token único, envía email con link)
-- [ ] Backend: admin.listInvitations (pendientes, aceptadas, expiradas)
-- [ ] Backend: admin.revokeInvitation
-- [ ] Backend: public.acceptInvitation (valida token, crea/actualiza usuario)
-- [ ] Frontend: botón "Invite User" en Admin Panel → Users & Roles
-- [ ] Frontend: modal con campo email + selector de rol (admin/user/instructor/coordinator/receptionist)
-- [ ] Frontend: tabla de invitaciones pendientes con estado y opción de revocar/reenviar
-- [ ] Página pública /invite/:token para que el invitado acepte y acceda al CRM
+- [x] Tabla invitations en DB (id, email, role, token, status, invitedBy, expiresAt, acceptedAt)
+- [x] Backend: admin.createInvitation (genera token único, envía email con link)
+- [x] Backend: admin.listInvitations (pendientes, aceptadas, expiradas)
+- [x] Backend: admin.revokeInvitation
+- [x] Backend: public.acceptInvitation (valida token, crea/actualiza usuario)
+- [x] Frontend: botón "Invite User" en Admin Panel → Users & Roles
+- [x] Frontend: modal con campo email + selector de rol (admin/user/instructor/coordinator/receptionist)
+- [x] Frontend: tabla de invitaciones pendientes con estado y opción de revocar/reenviar
+- [x] Página pública /invite/:token para que el invitado acepte y acceda al CRM

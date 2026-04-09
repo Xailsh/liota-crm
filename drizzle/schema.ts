@@ -492,3 +492,21 @@ export const recurringBills = mysqlTable("recurringBills", {
 });
 export type RecurringBill = typeof recurringBills.$inferSelect;
 export type InsertRecurringBill = typeof recurringBills.$inferInsert;
+
+// ─── Invitations ──────────────────────────────────────────────────────────────
+export const invitations = mysqlTable("invitations", {
+  id: int("id").autoincrement().primaryKey(),
+  email: varchar("email", { length: 256 }).notNull(),
+  role: mysqlEnum("role", ["admin", "user", "instructor", "coordinator", "receptionist"]).notNull().default("user"),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  status: mysqlEnum("status", ["pending", "accepted", "revoked", "expired"]).notNull().default("pending"),
+  invitedByName: varchar("invitedByName", { length: 256 }),
+  invitedByEmail: varchar("invitedByEmail", { length: 256 }),
+  message: text("message"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  acceptedAt: timestamp("acceptedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type Invitation = typeof invitations.$inferSelect;
+export type InsertInvitation = typeof invitations.$inferInsert;

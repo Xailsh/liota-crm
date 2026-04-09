@@ -27,6 +27,7 @@ import {
   errorLogs,
   inboundWebhooks,
   recurringBills,
+  invitations,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -1209,4 +1210,62 @@ export async function getBillsMetrics() {
       category: b.category,
     })),
   };
+}
+
+// ─── Invitations ──────────────────────────────────────────────────────────────
+
+export async function createInvitation(data: {
+  email: string;
+  role: string;
+  token: string;
+  invitedByName?: string;
+  invitedByEmail?: string;
+  message?: string;
+  expiresAt: Date;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.insert(invitations).values({
+    email: data.email,
+    role: data.role as any,
+    token: data.token,
+    invitedByName: data.invitedByName,
+    invitedByEmail: data.invitedByEmail,
+    message: data.message,
+    expiresAt: data.expiresAt,
+    status: "pending",
+  });
+}
+
+export async function listInvitations() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(invitations).orderBy(sql`createdAt DESC`);
+}
+
+export async function getInvitationByToken(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(invitations).where(eq(invitations.token, token));
+  return rows[0] ?? null;
+}
+
+export async function acceptInvitation(token: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(invitations)
+    .set({ status: "accepted", acceptedAt: new Date() })
+    .where(eq(invitations.token, token));
+}
+
+export async function revokeInvitation(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(invitations).set({ status: "revoked" }).where(eq(invitations.id, id));
+}
+
+export async function deleteInvitation(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.delete(invitations).where(eq(invitations.id, id));
 }
