@@ -1,0 +1,9 @@
+{
+  "query": "INSERT INTO users (openId, name, email, loginMethod, role, createdAt, updatedAt, lastSignedIn)\nVALUES ('buba-davis-liota', 'Buba Davis', 'buba.aragon@gmail.com', 'manual', 'admin', NOW(), NOW(), NOW())\nON DUPLICATE KEY UPDATE\n  name = 'Buba Davis',\n  email = 'buba.aragon@gmail.com',\n  role = 'admin',\n  updatedAt = NOW();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2HkwpY45f9QmLg9.469c1175074f --database YzZjuTcos3se78oWJYxJkp --execute INSERT INTO users (openId, name, email, loginMethod, role, createdAt, updatedAt, lastSignedIn)\nVALUES ('buba-davis-liota', 'Buba Davis', 'buba.aragon@gmail.com', 'manual', 'admin', NOW(), NOW(), NOW())\nON DUPLICATE KEY UPDATE\n  name = 'Buba Davis',\n  email = 'buba.aragon@gmail.com',\n  role = 'admin',\n  updatedAt = NOW();",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 364
+}

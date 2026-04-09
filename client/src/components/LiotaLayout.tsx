@@ -5,7 +5,7 @@ import {
   BarChart3, BookOpen, ChevronRight, CreditCard, GraduationCap,
   LayoutDashboard, Lock, LogOut, Mail, Menu, TrendingUp, Users, Users2, X,
   Award, Package, Tent, Star, MessageSquare, Mic, Zap, Link2, Shield,
-  Globe, RefreshCw, AlertTriangle,
+  Globe, RefreshCw, AlertTriangle, Library, Plane,
 } from "lucide-react";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
@@ -54,6 +54,8 @@ const buildNavItems = (t: (k: any) => string) => [
       { href: "/packages", icon: Package, label: t("languagePackages"), description: "Pricing & bundles" },
       { href: "/camps", icon: Tent, label: t("camps"), description: "Seasonal camps" },
       { href: "/events", icon: Star, label: t("specialEvents"), description: "Graduations & workshops" },
+      { href: "/book-catalog", icon: Library, label: "Book Catalog", description: "60 LIOTA books" },
+      { href: "/study-abroad", icon: Plane, label: "Study Abroad", description: "Residency & travel" },
     ],
   },
   {

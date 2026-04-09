@@ -101,6 +101,7 @@ const translations = {
     dallas: "Dallas",
     denver: "Denver",
     vienna: "Vienna",
+    nottingham: "Nottingham",
     online: "Online",
     all: "All",
     // Status
@@ -220,6 +221,7 @@ const translations = {
     dallas: "Dallas",
     denver: "Denver",
     vienna: "Viena",
+    nottingham: "Nottingham",
     online: "En Línea",
     all: "Todos",
     // Status
@@ -269,7 +271,8 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [language, handleSetLanguage]);
 
   const t = useCallback((key: TranslationKey): string => {
-    return translations[language][key] ?? translations.en[key] ?? key;
+    const langTranslations = translations[language] as Record<string, string>;
+    return langTranslations[key] ?? (translations.en as Record<string, string>)[key] ?? key;
   }, [language]);
 
   return (

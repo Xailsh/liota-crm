@@ -21,7 +21,7 @@ const STAGES = [
   { key: "lost", label: "Lost", color: "bg-red-50 border-red-200", badge: "bg-red-100 text-red-700 border-red-200", dot: "bg-red-400" },
 ];
 
-const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", online: "Online" };
+const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", nottingham: "Nottingham", online: "Online" };
 const programLabels: Record<string, string> = { children: "Children", teens: "Teens", adults: "Adults", business: "Business", polyglot: "Polyglot", immersion: "Immersion", homeschool: "Homeschool" };
 
 const emptyForm = {

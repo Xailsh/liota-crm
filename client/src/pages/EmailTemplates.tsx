@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,14 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Plus, Mail, Edit2, Trash2, Loader2, Copy, Eye } from "lucide-react";
+import { Plus, Mail, Edit2, Trash2, Loader2, Copy, Eye, Globe } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const PRESET_TEMPLATES = [
   {
-    name: "Welcome New Student",
-    subject: "Welcome to LIOTA Institute! 🎉",
-    category: "onboarding",
+    name: "Welcome New Student", lang: "en", subject: "Welcome to LIOTA Institute! 🎉", category: "onboarding",
     body: `Dear {{student_name}},
 
 Welcome to the Language Institute Of The Americas (LIOTA)! We're thrilled to have you join our community of language learners.
@@ -41,9 +39,32 @@ The LIOTA Team
 languageinstituteoftheamericas.com`,
   },
   {
-    name: "Class Reminder",
-    subject: "Reminder: Your class is tomorrow — LIOTA",
-    category: "reminder",
+    name: "Bienvenida Nuevo Estudiante", lang: "es", subject: "¡Bienvenido/a al Instituto LIOTA! 🎉", category: "onboarding",
+    body: `Estimado/a {{student_name}},
+
+¡Bienvenido/a al Instituto de Idiomas de las Américas (LIOTA)! Estamos emocionados de que te unas a nuestra comunidad de aprendices de idiomas.
+
+Tu inscripción en el programa {{program_name}} en nuestra sede de {{campus}} está confirmada. Aquí están tus detalles:
+
+📅 Fecha de inicio: {{start_date}}
+🕐 Horario: {{schedule}}
+📍 Ubicación: {{location}}
+👨‍🏫 Instructor: {{instructor_name}}
+
+Qué esperar:
+• Clases en grupos pequeños (máximo 6 estudiantes)
+• Currículo personalizado alineado con el MCER
+• Evaluaciones de progreso regulares
+• Acceso a nuestro portal de aprendizaje en línea
+
+Si tienes alguna pregunta, no dudes en contactarnos.
+
+Saludos cordiales,
+El Equipo LIOTA
+languageinstituteoftheamericas.com`,
+  },
+  {
+    name: "Class Reminder", lang: "en", subject: "Reminder: Your class is tomorrow — LIOTA", category: "reminder",
     body: `Dear {{student_name}},
 
 This is a friendly reminder that your next class is scheduled for:
@@ -64,9 +85,28 @@ See you soon!
 LIOTA Institute`,
   },
   {
-    name: "Monthly Progress Report",
-    subject: "Your Monthly Progress Report — {{month}} {{year}}",
-    category: "progress",
+    name: "Recordatorio de Clase", lang: "es", subject: "Recordatorio: Tu clase es mañana — LIOTA", category: "reminder",
+    body: `Estimado/a {{student_name}},
+
+Este es un recordatorio amistoso de que tu próxima clase está programada para:
+
+📅 Fecha: {{class_date}}
+🕐 Hora: {{class_time}}
+📍 Ubicación: {{location}}
+👨‍🏫 Instructor: {{instructor_name}}
+
+Por favor asegúrate de:
+✅ Completar la tarea asignada
+✅ Traer tus materiales del curso
+✅ Conectarte 5 minutos antes si asistes en línea
+
+Si necesitas reprogramar, contáctanos con al menos 24 horas de anticipación.
+
+¡Hasta pronto!
+Instituto LIOTA`,
+  },
+  {
+    name: "Monthly Progress Report", lang: "en", subject: "Your Monthly Progress Report — {{month}} {{year}}", category: "progress",
     body: `Dear {{student_name}},
 
 Here is your monthly progress report for {{month}} {{year}}:
@@ -85,150 +125,282 @@ Areas for Improvement:
 Next Steps:
 {{next_steps}}
 
-Keep up the great work! Language learning is a journey, and you're making excellent progress.
+Keep up the great work!
 
 Best regards,
 {{instructor_name}}
 LIOTA Institute`,
   },
   {
-    name: "Enrollment Confirmation",
-    subject: "Enrollment Confirmed — LIOTA Institute",
-    category: "enrollment",
+    name: "Reporte Mensual de Progreso", lang: "es", subject: "Tu Reporte Mensual de Progreso — {{month}} {{year}}", category: "progress",
+    body: `Estimado/a {{student_name}},
+
+Aquí está tu reporte mensual de progreso para {{month}} {{year}}:
+
+📊 Nivel MCER Actual: {{cefr_level}}
+📈 Progreso Este Mes: {{progress_summary}}
+✅ Asistencia: {{attendance_rate}}%
+⭐ Comentarios del Instructor: {{instructor_comments}}
+
+Áreas de Fortaleza:
+{{strengths}}
+
+Áreas de Mejora:
+{{improvements}}
+
+Próximos Pasos:
+{{next_steps}}
+
+¡Sigue con el excelente trabajo!
+
+Saludos cordiales,
+{{instructor_name}}
+Instituto LIOTA`,
+  },
+  {
+    name: "Enrollment Confirmation", lang: "en", subject: "Enrollment Confirmed — LIOTA Institute", category: "enrollment",
     body: `Dear {{student_name}},
 
 We are pleased to confirm your enrollment at LIOTA Institute!
 
-Program Details:
-📚 Program: {{program_name}}
-🎯 Level: {{cefr_level}}
-📅 Duration: {{duration}}
-💰 Tuition: {{tuition_amount}}
-💳 Payment Method: {{payment_method}}
+Program: {{program_name}}
+Campus: {{campus}}
+Start Date: {{start_date}}
+Schedule: {{schedule}}
+Instructor: {{instructor_name}}
 
-Your learning journey begins on {{start_date}}. We look forward to helping you achieve your language goals.
+Your learning journey begins on {{start_date}}.
 
-For questions or assistance:
 📧 Email: info@languageinstituteoftheamericas.com
 🌐 Website: languageinstituteoftheamericas.com
 
-Welcome to the LIOTA family!
-The Admissions Team`,
+Best regards,
+The LIOTA Team`,
   },
   {
-    name: "Special Promotion",
-    subject: "🌟 Special Offer — Enroll Now and Save!",
-    category: "promotion",
+    name: "Confirmación de Inscripción", lang: "es", subject: "Inscripción Confirmada — Instituto LIOTA", category: "enrollment",
+    body: `Estimado/a {{student_name}},
+
+¡Nos complace confirmar tu inscripción en el Instituto LIOTA!
+
+Programa: {{program_name}}
+Sede: {{campus}}
+Fecha de inicio: {{start_date}}
+Horario: {{schedule}}
+Instructor: {{instructor_name}}
+
+Tu viaje de aprendizaje comienza el {{start_date}}.
+
+📧 Correo: info@languageinstituteoftheamericas.com
+🌐 Sitio web: languageinstituteoftheamericas.com
+
+Saludos cordiales,
+El Equipo LIOTA`,
+  },
+  {
+    name: "Special Promotion", lang: "en", subject: "🌟 Special Offer — Enroll Now and Save!", category: "promotion",
     body: `Dear {{contact_name}},
 
-We have an exciting offer just for you!
+For a limited time, LIOTA Institute is offering an exclusive discount!
 
-🎉 LIMITED TIME OFFER: {{promotion_details}}
+🎁 SPECIAL OFFER: {{discount}}% off your first enrollment
+⏰ Valid until: {{expiry_date}}
 
-At LIOTA Institute, we offer:
-✅ Expert instructors with years of experience
-✅ Small classes (max 6 students) for personalized attention
-✅ Flexible schedules — online and in-person
-✅ Programs for all ages: Children, Teenagers, Adults, Business English
-✅ Campuses in Mérida, Dallas, Denver, Vienna, and Online
-
-Programs Available:
-• English as a Second Language (ESL)
-• Spanish as a Second Language (SSL)
+Our programs:
+• ESL — English as a Second Language
+• SSL — Spanish as a Second Language
 • Business English
 • Polyglot Package (2+ languages)
-• Seasonal Camps
+• Study Abroad Residency — $1,500 USD / £1,500 / €1,500
 
-📞 Call us today or visit our website to learn more!
-🌐 languageinstituteoftheamericas.com
+📍 Campuses: Mérida, Dallas, Denver, Vienna, Nottingham, Online
 
-This offer expires on {{expiry_date}}.
-
-Best regards,
-LIOTA Institute Marketing Team`,
+🌐 languageinstituteoftheamericas.com`,
   },
   {
-    name: "Camp Registration",
-    subject: "{{camp_name}} Camp Registration Confirmed!",
-    category: "camps",
+    name: "Oferta Especial", lang: "es", subject: "🌟 Oferta Especial — ¡Inscríbete Ahora y Ahorra!", category: "promotion",
+    body: `Estimado/a {{contact_name}},
+
+¡Por tiempo limitado, el Instituto LIOTA ofrece un descuento exclusivo!
+
+🎁 OFERTA ESPECIAL: {{discount}}% de descuento en tu primera inscripción
+⏰ Válido hasta: {{expiry_date}}
+
+Nuestros programas:
+• ESL — Inglés como Segundo Idioma
+• SSL — Español como Segundo Idioma
+• Inglés de Negocios
+• Paquete Políglota (2+ idiomas)
+• Residencia en el Extranjero — $1,500 USD / £1,500 / €1,500
+
+📍 Sedes: Mérida, Dallas, Denver, Viena, Nottingham, En Línea
+
+🌐 languageinstituteoftheamericas.com`,
+  },
+  {
+    name: "Camp Registration Confirmed", lang: "en", subject: "{{camp_name}} Camp Registration Confirmed!", category: "camps",
     body: `Dear {{parent_name}},
 
-Great news! {{student_name}}'s registration for the {{camp_name}} Camp is confirmed.
+We're excited to confirm {{student_name}}'s registration for {{camp_name}}!
 
-Camp Details:
-🏕️ Camp: {{camp_name}}
-📅 Dates: {{start_date}} — {{end_date}}
+📅 Dates: {{camp_start_date}} — {{camp_end_date}}
 📍 Location: {{campus}}
-👥 Group Size: Maximum 12 participants
-🎯 Focus: {{camp_focus}}
+👥 Age Group: {{age_group}}
+🌐 Language Focus: {{language_focus}}
 
-What's Included:
-• Daily language immersion activities
+Activities include:
+• Daily language immersion
 • Cultural workshops
 • Games and interactive learning
-• Certificate of completion
-• Snacks (in-person camps)
+• Certificate ceremony on the last day
 
-What to Bring:
-• Notebook and pen
-• Enthusiasm and a smile! 😊
-
-Payment Status: {{payment_status}}
-Amount Paid: {{amount_paid}}
-
-If you have any questions, please contact us.
-
-See you at camp!
-LIOTA Institute`,
+LIOTA Institute
+languageinstituteoftheamericas.com`,
   },
   {
-    name: "Invoice / Payment Receipt",
-    subject: "Payment Receipt — LIOTA Institute",
-    category: "billing",
+    name: "Confirmación de Campamento", lang: "es", subject: "¡Registro al Campamento {{camp_name}} Confirmado!", category: "camps",
+    body: `Estimado/a {{parent_name}},
+
+¡Estamos emocionados de confirmar el registro de {{student_name}} para el campamento {{camp_name}}!
+
+📅 Fechas: {{camp_start_date}} — {{camp_end_date}}
+📍 Ubicación: {{campus}}
+👥 Grupo de Edad: {{age_group}}
+🌐 Enfoque de Idioma: {{language_focus}}
+
+Actividades incluyen:
+• Inmersión lingüística diaria
+• Talleres culturales
+• Juegos y aprendizaje interactivo
+• Ceremonia de certificados el último día
+
+Instituto LIOTA
+languageinstituteoftheamericas.com`,
+  },
+  {
+    name: "Payment Receipt", lang: "en", subject: "Payment Receipt — LIOTA Institute", category: "billing",
     body: `Dear {{student_name}},
 
 Thank you for your payment! Here is your receipt:
 
-Invoice #: {{invoice_number}}
+Receipt #: {{receipt_number}}
 Date: {{payment_date}}
 Amount: {{amount}}
 Payment Method: {{payment_method}}
-Description: {{description}}
+Program: {{program_name}}
 
-Account Summary:
-Total Due: {{total_due}}
-Amount Paid: {{amount_paid}}
-Balance: {{balance}}
+Your account is now up to date.
 
-If you have any questions about this invoice, please contact our billing department.
+📧 info@languageinstituteoftheamericas.com
+🌐 languageinstituteoftheamericas.com
 
-Thank you for choosing LIOTA Institute!
+Thank you for choosing LIOTA Institute!`,
+  },
+  {
+    name: "Recibo de Pago", lang: "es", subject: "Recibo de Pago — Instituto LIOTA", category: "billing",
+    body: `Estimado/a {{student_name}},
+
+¡Gracias por tu pago! Aquí está tu recibo:
+
+Recibo #: {{receipt_number}}
+Fecha: {{payment_date}}
+Monto: {{amount}}
+Método de Pago: {{payment_method}}
+Programa: {{program_name}}
+
+Tu cuenta está ahora al día.
+
+📧 info@languageinstituteoftheamericas.com
+🌐 languageinstituteoftheamericas.com
+
+¡Gracias por elegir el Instituto LIOTA!`,
+  },
+  {
+    name: "Study Abroad — Application Received", lang: "en", subject: "Your Study Abroad Application Has Been Received — LIOTA", category: "enrollment",
+    body: `Dear {{student_name}},
+
+Thank you for applying to the LIOTA Study Abroad Residency Program!
+
+Your application for the {{campus}} campus has been received.
+
+Next steps:
+1. Our admissions team will review your application within 3-5 business days.
+2. You will receive a CEFR placement test link.
+3. Upon acceptance, you will need to pay the residency fee.
+
+Program Details:
+📍 Campus: {{campus}}
+📅 Start Date: {{start_date}}
+⏱ Duration: 3 months
+💰 Fee: $1,500 USD / £1,500 / €1,500
 
 Best regards,
-LIOTA Institute Billing
+LIOTA Admissions Team
+languageinstituteoftheamericas.com`,
+  },
+  {
+    name: "Estudio en el Extranjero — Solicitud Recibida", lang: "es", subject: "Tu Solicitud de Estudio en el Extranjero Ha Sido Recibida — LIOTA", category: "enrollment",
+    body: `Estimado/a {{student_name}},
+
+¡Gracias por solicitar el Programa de Residencia de Estudio en el Extranjero de LIOTA!
+
+Tu solicitud para la sede de {{campus}} ha sido recibida.
+
+Próximos pasos:
+1. Nuestro equipo revisará tu solicitud en 3-5 días hábiles.
+2. Recibirás un enlace para la prueba de nivel MCER.
+3. Al ser aceptado/a, deberás pagar la tarifa de residencia.
+
+Detalles del Programa:
+📍 Sede: {{campus}}
+📅 Fecha de inicio: {{start_date}}
+⏱ Duración: 3 meses
+💰 Tarifa: $1,500 USD / £1,500 / €1,500
+
+Saludos cordiales,
+Equipo de Admisiones LIOTA
 languageinstituteoftheamericas.com`,
   },
 ];
 
 const CATEGORIES = ["all", "onboarding", "reminder", "progress", "enrollment", "promotion", "camps", "billing", "newsletter"];
 
-type FormState = {
-  name: string;
-  subject: string;
-  body: string;
-  category: string;
+type FormState = { name: string; subject: string; body: string; category: string; lang: "en" | "es"; };
+const emptyForm: FormState = { name: "", subject: "", body: "", category: "newsletter", lang: "en" };
+
+const categoryColors: Record<string, string> = {
+  onboarding: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300",
+  reminder: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300",
+  progress: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300",
+  enrollment: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300",
+  promotion: "bg-pink-100 text-pink-700 dark:bg-pink-900/30 dark:text-pink-300",
+  camps: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-300",
+  billing: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300",
+  newsletter: "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-300",
 };
 
-const emptyForm: FormState = { name: "", subject: "", body: "", category: "newsletter" };
+const langBadge = (lang: string) =>
+  lang === "es" ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
+                : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300";
+
+function detectLang(name: string): "en" | "es" {
+  if (name.startsWith("[ES]") || name.startsWith("(ES)")) return "es";
+  return "en";
+}
+function displayName(name: string): string {
+  return name.replace(/^\[(EN|ES)\]\s*/, "").replace(/^\((EN|ES)\)\s*/, "");
+}
 
 export default function EmailTemplates() {
   const { t } = useLanguage();
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [langFilter, setLangFilter] = useState<"all" | "en" | "es">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [showPreview, setShowPreview] = useState<any | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [presetLang, setPresetLang] = useState<"en" | "es">("en");
 
   const { data: templates = [], refetch, isLoading } = trpc.campaigns.listTemplates.useQuery();
   const createMutation = trpc.campaigns.createTemplate.useMutation({
@@ -246,21 +418,24 @@ export default function EmailTemplates() {
 
   const handleSubmit = () => {
     if (!form.name || !form.subject || !form.body) { toast.error("Please fill in all required fields"); return; }
+    const prefix = form.lang === "es" ? "[ES] " : "[EN] ";
+    const storedName = `${prefix}${form.name}`;
     if (editingId) {
-      updateMutation.mutate({ id: editingId, ...form });
+      updateMutation.mutate({ id: editingId, name: storedName, subject: form.subject, body: form.body, category: form.category });
     } else {
-      createMutation.mutate(form);
+      createMutation.mutate({ name: storedName, subject: form.subject, body: form.body, category: form.category });
     }
   };
 
   const handleEdit = (tpl: any) => {
     setEditingId(tpl.id);
-    setForm({ name: tpl.name, subject: tpl.subject, body: tpl.body, category: tpl.category ?? "newsletter" });
+    const lang = detectLang(tpl.name);
+    setForm({ name: displayName(tpl.name), subject: tpl.subject, body: tpl.body, category: tpl.category ?? "newsletter", lang });
     setShowDialog(true);
   };
 
   const handleUsePreset = (preset: typeof PRESET_TEMPLATES[0]) => {
-    setForm({ name: preset.name, subject: preset.subject, body: preset.body, category: preset.category });
+    setForm({ name: preset.name, subject: preset.subject, body: preset.body, category: preset.category, lang: preset.lang as "en" | "es" });
     setShowDialog(true);
   };
 
@@ -270,137 +445,145 @@ export default function EmailTemplates() {
   };
 
   const allTemplates = [...(templates as any[])];
-  const filtered = allTemplates.filter((t: any) => {
-    const matchCat = categoryFilter === "all" || t.category === categoryFilter;
-    const matchSearch = !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.subject.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCat && matchSearch;
+  const filtered = allTemplates.filter((tpl: any) => {
+    const matchCat = categoryFilter === "all" || tpl.category === categoryFilter;
+    const tplLang = detectLang(tpl.name);
+    const matchLang = langFilter === "all" || tplLang === langFilter;
+    const matchSearch = !searchQuery || tpl.name.toLowerCase().includes(searchQuery.toLowerCase()) || tpl.subject.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchCat && matchLang && matchSearch;
   });
 
-  const categoryColors: Record<string, string> = {
-    onboarding: "bg-green-100 text-green-700",
-    reminder: "bg-blue-100 text-blue-700",
-    progress: "bg-purple-100 text-purple-700",
-    enrollment: "bg-amber-100 text-amber-700",
-    promotion: "bg-pink-100 text-pink-700",
-    camps: "bg-cyan-100 text-cyan-700",
-    billing: "bg-red-100 text-red-700",
-    newsletter: "bg-gray-100 text-gray-700",
-  };
+  const visiblePresets = PRESET_TEMPLATES.filter((p) => p.lang === presetLang);
 
   return (
-    <div className="p-6 space-y-5 max-w-[1400px] mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 flex-wrap">
+    <div className="p-6 space-y-6 max-w-[1400px] mx-auto">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Mail className="w-6 h-6 text-primary" /> Email Templates
           </h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Manage reusable email templates for campaigns and communications</p>
+          <p className="text-sm text-muted-foreground mt-0.5">Manage reusable bilingual email templates (EN / ES)</p>
         </div>
-        <Button onClick={() => { setEditingId(null); setForm(emptyForm); setShowDialog(true); }} className="gap-2">
+        <Button size="sm" className="gap-2" onClick={() => { setEditingId(null); setForm(emptyForm); setShowDialog(true); }}>
           <Plus className="w-4 h-4" /> New Template
         </Button>
       </div>
 
-      {/* Preset Templates */}
-      <Card className="border border-border">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">Quick-Start Preset Templates</CardTitle>
-          <p className="text-xs text-muted-foreground">Click any preset to load it into the editor</p>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {PRESET_TEMPLATES.map((preset) => (
-              <button
-                key={preset.name}
-                onClick={() => handleUsePreset(preset)}
-                className="text-left p-3 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-all group"
-              >
-                <div className="flex items-start gap-2">
-                  <Mail className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold text-foreground leading-tight group-hover:text-primary transition-colors">{preset.name}</p>
-                    <Badge className={`text-[10px] mt-1 ${categoryColors[preset.category] ?? ""}`}>{preset.category}</Badge>
-                  </div>
-                </div>
+      <div className="space-y-3">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">Quick-Start Preset Templates</h2>
+            <p className="text-xs text-muted-foreground">Click any preset to load it into the editor</p>
+          </div>
+          <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+            {(["en", "es"] as const).map((l) => (
+              <button key={l} onClick={() => setPresetLang(l)}
+                className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${presetLang === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+                <Globe className="w-3 h-3 inline mr-1" />{l.toUpperCase()}
               </button>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
+          {visiblePresets.map((preset) => (
+            <button key={`${preset.lang}-${preset.name}`} onClick={() => handleUsePreset(preset)}
+              className="text-left p-3 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all group">
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <span className="text-sm font-medium text-foreground group-hover:text-primary leading-tight">{preset.name}</span>
+                <Badge className={`text-[10px] px-1.5 h-5 shrink-0 ${langBadge(preset.lang)}`}>{preset.lang.toUpperCase()}</Badge>
+              </div>
+              <Badge className={`text-[10px] px-1.5 h-5 ${categoryColors[preset.category] ?? "bg-gray-100 text-gray-700"}`}>{preset.category}</Badge>
+            </button>
+          ))}
+        </div>
+      </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <Input
-          placeholder="Search templates..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-60"
-        />
+      <div className="flex flex-wrap gap-2 items-center">
+        <Input placeholder="Search templates..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="h-9 w-48" />
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
+          <SelectTrigger className="w-36 h-9"><SelectValue placeholder="All Categories" /></SelectTrigger>
           <SelectContent>
             {CATEGORIES.map((c) => (
               <SelectItem key={c} value={c}>{c === "all" ? "All Categories" : c.charAt(0).toUpperCase() + c.slice(1)}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+          {(["all", "en", "es"] as const).map((l) => (
+            <button key={l} onClick={() => setLangFilter(l)}
+              className={`px-3 py-1 rounded-md text-xs font-semibold transition-colors ${langFilter === l ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}>
+              {l === "all" ? "All" : <><Globe className="w-3 h-3 inline mr-0.5" />{l.toUpperCase()}</>}
+            </button>
+          ))}
+        </div>
+        <span className="text-sm text-muted-foreground ml-1">{filtered.length} templates</span>
       </div>
 
-      {/* Templates Grid */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+        <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>
       ) : filtered.length === 0 ? (
-        <Card className="border border-dashed border-border">
-          <CardContent className="p-12 text-center">
-            <Mail className="w-10 h-10 text-muted-foreground/40 mx-auto mb-3" />
-            <p className="text-sm text-muted-foreground">No templates found. Use a preset above or create a new one.</p>
-          </CardContent>
-        </Card>
+        <div className="text-center py-16">
+          <Mail className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+          <p className="text-muted-foreground text-sm">No templates found</p>
+          <p className="text-xs text-muted-foreground mt-1">Create a new template or load a preset above</p>
+        </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((tpl: any) => (
-            <Card key={tpl.id} className="border border-border hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-sm text-foreground truncate">{tpl.name}</p>
-                    <p className="text-xs text-muted-foreground truncate mt-0.5">{tpl.subject}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filtered.map((tpl: any) => {
+            const tplLang = detectLang(tpl.name);
+            const tplDisplayName = displayName(tpl.name);
+            return (
+              <Card key={tpl.id} className="border border-border hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-1.5 flex-wrap mb-2">
+                    <Badge className={`text-[10px] px-1.5 h-5 ${langBadge(tplLang)}`}>
+                      <Globe className="w-2.5 h-2.5 mr-0.5" />{tplLang.toUpperCase()}
+                    </Badge>
+                    {tpl.category && (
+                      <Badge className={`text-[10px] px-1.5 h-5 ${categoryColors[tpl.category] ?? "bg-gray-100 text-gray-700"}`}>{tpl.category}</Badge>
+                    )}
                   </div>
-                  <Badge className={`text-[10px] shrink-0 ${categoryColors[tpl.category] ?? ""}`}>{tpl.category ?? "general"}</Badge>
-                </div>
-                <p className="text-xs text-muted-foreground line-clamp-3 mb-3 font-mono bg-muted/30 p-2 rounded">
-                  {tpl.body?.slice(0, 120)}...
-                </p>
-                <div className="flex items-center gap-1.5">
-                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 flex-1" onClick={() => setShowPreview(tpl)}>
-                    <Eye className="w-3 h-3" /> Preview
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 flex-1" onClick={() => handleCopy(tpl.body)}>
-                    <Copy className="w-3 h-3" /> Copy
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleEdit(tpl)}>
-                    <Edit2 className="w-3 h-3" />
-                  </Button>
-                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate({ id: tpl.id })}>
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                  <h3 className="font-semibold text-sm text-foreground mb-1 leading-tight">{tplDisplayName}</h3>
+                  <p className="text-xs text-muted-foreground mb-3 line-clamp-2">{tpl.subject}</p>
+                  <div className="flex gap-1.5 flex-wrap">
+                    <Button variant="outline" size="sm" className="h-7 text-xs gap-1 flex-1" onClick={() => setShowPreview({ ...tpl, displayName: tplDisplayName, lang: tplLang })}>
+                      <Eye className="w-3 h-3" /> Preview
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs gap-1 flex-1" onClick={() => handleCopy(tpl.body)}>
+                      <Copy className="w-3 h-3" /> Copy
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={() => handleEdit(tpl)}>
+                      <Edit2 className="w-3 h-3" />
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive" onClick={() => deleteMutation.mutate({ id: tpl.id })}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* Create/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={(v) => { setShowDialog(v); if (!v) { setEditingId(null); setForm(emptyForm); } }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editingId ? "Edit Template" : "Create Email Template"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label>Language</Label>
+              <div className="flex gap-2">
+                {(["en", "es"] as const).map((l) => (
+                  <button key={l} type="button" onClick={() => setForm({ ...form, lang: l })}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-all ${form.lang === l ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/50"}`}>
+                    <Globe className="w-4 h-4" />
+                    {l === "en" ? "🇺🇸 English" : "🇲🇽 Español"}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Template Name *</Label>
@@ -420,35 +603,42 @@ export default function EmailTemplates() {
             </div>
             <div className="space-y-1.5">
               <Label>Subject Line *</Label>
-              <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} placeholder="e.g., Welcome to LIOTA Institute!" />
+              <Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                placeholder={form.lang === "es" ? "ej., ¡Bienvenido al Instituto LIOTA!" : "e.g., Welcome to LIOTA Institute!"} />
             </div>
             <div className="space-y-1.5">
               <Label>Body *</Label>
-              <p className="text-xs text-muted-foreground">Use {"{{variable_name}}"} for dynamic content (e.g., {"{{student_name}}"}, {"{{program_name}}"})</p>
-              <Textarea
-                value={form.body}
-                onChange={(e) => setForm({ ...form, body: e.target.value })}
-                placeholder="Write your email body here..."
-                className="min-h-[300px] font-mono text-sm"
-              />
+              <p className="text-xs text-muted-foreground">
+                {form.lang === "es"
+                  ? "Usa {{nombre_variable}} para contenido dinámico (ej., {{student_name}}, {{program_name}})"
+                  : "Use {{variable_name}} for dynamic content (e.g., {{student_name}}, {{program_name}})"}
+              </p>
+              <Textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })}
+                placeholder={form.lang === "es" ? "Escribe el cuerpo del correo aquí..." : "Write your email body here..."}
+                className="min-h-[300px] font-mono text-sm" />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowDialog(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setShowDialog(false)}>
+              {form.lang === "es" ? "Cancelar" : "Cancel"}
+            </Button>
             <Button onClick={handleSubmit} disabled={createMutation.isPending || updateMutation.isPending}>
               {(createMutation.isPending || updateMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-              {editingId ? "Save Changes" : "Create Template"}
+              {editingId ? (form.lang === "es" ? "Guardar Cambios" : "Save Changes") : (form.lang === "es" ? "Crear Plantilla" : "Create Template")}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Preview Dialog */}
       <Dialog open={!!showPreview} onOpenChange={(v) => { if (!v) setShowPreview(null); }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Mail className="w-4 h-4" /> {showPreview?.name}
+              <Mail className="w-4 h-4" />
+              {showPreview?.displayName ?? showPreview?.name}
+              {showPreview?.lang && (
+                <Badge className={`text-[10px] px-1.5 h-5 ml-1 ${langBadge(showPreview.lang)}`}>{showPreview.lang.toUpperCase()}</Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-3 py-2">

@@ -21,7 +21,7 @@ const paymentStatusColors: Record<string, string> = {
 const paymentStatusLabels: Record<string, string> = { pending: "Pending", completed: "Completed", failed: "Failed", refunded: "Refunded" };
 const methodLabels: Record<string, string> = { paypal: "PayPal", card: "Credit/Debit Card", cash: "Cash", transfer: "Bank Transfer", stripe: "Stripe", zelle: "Zelle", dolla: "Dolla App (MX)" };
 const methodIcons: Record<string, string> = { paypal: "🅿️", card: "💳", cash: "💵", transfer: "🏦", stripe: "⚡", zelle: "💜", dolla: "🇲🇽" };
-const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", online: "Online", general: "General" };
+const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", nottingham: "Nottingham", online: "Online", general: "General" };
 
 const emptyPaymentForm = { studentId: "", programId: "", amount: "", currency: "USD", method: "stripe" as const, status: "pending" as const, description: "", invoiceNumber: "", dueDate: "" };
 const emptyExpenseForm = { category: "", description: "", amount: "", currency: "USD", campus: "general" as const, date: new Date().toISOString().split("T")[0] };

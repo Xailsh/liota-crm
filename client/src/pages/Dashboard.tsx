@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,63 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
+
+const GREETINGS = [
+  { word: "Hello", lang: "English" },
+  { word: "Hola", lang: "Español" },
+  { word: "Bonjour", lang: "Français" },
+  { word: "Bom Dia", lang: "Português" },
+  { word: "Guten Tag", lang: "Deutsch" },
+  { word: "مرحباً", lang: "العربية" },
+  { word: "Привет", lang: "Русский" },
+  { word: "Ba'ax ka wa'alik", lang: "Maya Yucateca" },
+];
+
+function AnimatedGreeting() {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % GREETINGS.length);
+        setVisible(true);
+      }, 400);
+    }, 2600);
+    return () => clearInterval(interval);
+  }, []);
+
+  const current = GREETINGS[index];
+  const isRTL = current?.lang === "العربية";
+
+  return (
+    <h1 className="text-2xl font-bold text-foreground flex items-baseline gap-2 flex-wrap">
+      <span
+        style={{
+          opacity: visible ? 1 : 0,
+          transform: visible ? "translateY(0)" : "translateY(-10px)",
+          transition: "opacity 0.4s ease, transform 0.4s ease",
+          color: "var(--primary)",
+          display: "inline-block",
+          direction: isRTL ? "rtl" : "ltr",
+        }}
+      >
+        {current?.word},
+      </span>
+      <span className="text-foreground">LIOTA Institute</span>
+      <span
+        className="text-xs font-normal text-muted-foreground ml-1"
+        style={{
+          opacity: visible ? 0.65 : 0,
+          transition: "opacity 0.4s ease",
+        }}
+      >
+        ({current?.lang})
+      </span>
+    </h1>
+  );
+}
 
 const campusLabels: Record<string, string> = {
   merida: "Mérida",
@@ -138,9 +196,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-foreground">
-            Welcome, {user?.name?.split(" ")[0] ?? "Administrator"}
-          </h1>
+          <AnimatedGreeting />
           <p className="text-muted-foreground text-sm mt-0.5">
             Control Panel · LIOTA Institute — Language Institute Of The Americas
           </p>

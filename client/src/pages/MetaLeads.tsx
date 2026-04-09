@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import {
   Zap, RefreshCw, AlertTriangle, BookOpen, CheckCircle, XCircle, Clock,
-  Loader2, Play, Pause, Trash2, Eye, AlertCircle, Info, Shield
+  Loader2, Play, Pause, Trash2, Eye, AlertCircle, Info, Shield, Bot, Code2, Brain, Globe, Copy, Plus
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 
@@ -448,9 +448,118 @@ function ErrorLogsTab() {
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-import { Plus } from "lucide-react";
+// ─── AI Front Door Tab ───────────────────────────────────────────────────────
+function AiFrontDoorTab() {
+  const [copied, setCopied] = useState(false);
+  const embedSnippet = `<!-- LIOTA Institute AI Front Door -->
+<script src="https://liotacrm-yzzjutco.manus.space/ai-widget.js" data-app-id="liota-ai" async></script>
+<div id="liota-ai-widget"></div>`;
 
+  const copySnippet = () => {
+    navigator.clipboard.writeText(embedSnippet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const knowledgeBase = [
+    { topic: "ESL Program", description: "English as a Second Language, A1–C2 levels, all ages, online & on-site" },
+    { topic: "SSL Program", description: "Spanish as a Second Language, A1–C2 levels, Mérida campus focus" },
+    { topic: "Polyglot Program", description: "3+ languages simultaneously, advanced learners, immersive approach" },
+    { topic: "STEAM Integration", description: "Language learning combined with Science, Technology, Engineering, Arts, Math" },
+    { topic: "Business Language", description: "Professional communication for corporate clients, B1–C2" },
+    { topic: "Seasonal Camps", description: "Winter, Spring, Summer, Fall immersive camps for children & teens" },
+    { topic: "Campuses", description: "Mérida (MXN), Dallas (USD), Denver (USD), Vienna (EUR), Online" },
+    { topic: "Pricing", description: "200 MXN/hr in Mexico · $20 USD/hr in USA · Packages available" },
+    { topic: "CEFR Levels", description: "A1, A2, B1, B2, C1, C2 — all levels accepted, placement test available" },
+    { topic: "Enrollment", description: "Open enrollment year-round, free trial class available" },
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200 dark:border-indigo-800 rounded-xl p-5">
+        <div className="flex items-start gap-4">
+          <div className="w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center shrink-0">
+            <Bot className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">AI Front Door</h2>
+            <p className="text-sm text-muted-foreground mt-1">
+              An AI-powered customer service chatbot for the LIOTA Institute website. It answers questions about programs,
+              pricing, enrollment, and campuses — and captures leads automatically.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Embed snippet */}
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Code2 className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-semibold">Embed on Your Website</span>
+          </div>
+          <span className="text-xs text-muted-foreground">2-line snippet — paste before &lt;/body&gt;</span>
+        </div>
+        <div className="relative">
+          <pre className="text-xs bg-gray-950 text-green-400 p-4 overflow-x-auto font-mono leading-relaxed">{embedSnippet}</pre>
+          <button
+            onClick={copySnippet}
+            className="absolute top-3 right-3 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs transition-colors"
+          >
+            <Copy className="w-3.5 h-3.5" />
+            {copied ? "Copied!" : "Copy"}
+          </button>
+        </div>
+      </div>
+
+      {/* Knowledge base */}
+      <div className="border border-border rounded-xl overflow-hidden">
+        <div className="px-4 py-3 border-b border-border bg-muted/30 flex items-center gap-2">
+          <Brain className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-semibold">AI Knowledge Base</span>
+          <span className="ml-auto text-xs text-muted-foreground">{knowledgeBase.length} topics loaded</span>
+        </div>
+        <div className="divide-y divide-border">
+          {knowledgeBase.map((item) => (
+            <div key={item.topic} className="flex items-start gap-3 px-4 py-3">
+              <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1.5 shrink-0" />
+              <div>
+                <div className="text-sm font-medium text-foreground">{item.topic}</div>
+                <div className="text-xs text-muted-foreground mt-0.5">{item.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Languages */}
+      <div className="border border-border rounded-xl p-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Globe className="w-4 h-4 text-muted-foreground" />
+          <span className="text-sm font-semibold">Supported Languages</span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {["English", "Español", "Français", "Português", "Deutsch", "العربية", "Русский", "Maya Yucateca"].map((lang) => (
+            <span key={lang} className="px-3 py-1 rounded-full bg-muted text-xs font-medium">{lang}</span>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground mt-3">The AI automatically detects the visitor's language and responds accordingly.</p>
+      </div>
+
+      {/* Status */}
+      <div className="flex items-center gap-3 px-4 py-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl">
+        <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+        <p className="text-sm text-amber-800 dark:text-amber-300">
+          <strong>Sandbox Mode:</strong> The AI widget is currently in sandbox mode. To activate it on your live website,
+          add the embed snippet above to your LIOTA Institute website HTML.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 export default function MetaLeads() {
   const { t } = useLanguage();
 
@@ -463,22 +572,24 @@ export default function MetaLeads() {
         <p className="text-sm text-muted-foreground mt-0.5">Facebook & Instagram lead capture integration and monitoring</p>
       </div>
 
-      <Tabs defaultValue="setup">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="setup" className="gap-2">
-            <BookOpen className="w-4 h-4" /> Setup Guide
+       <Tabs defaultValue="setup">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="setup" className="gap-1.5 text-xs">
+            <BookOpen className="w-3.5 h-3.5" /> Setup Guide
           </TabsTrigger>
-          <TabsTrigger value="webhooks" className="gap-2">
-            <Zap className="w-4 h-4" /> Webhook Events
+          <TabsTrigger value="webhooks" className="gap-1.5 text-xs">
+            <Zap className="w-3.5 h-3.5" /> Webhooks
           </TabsTrigger>
-          <TabsTrigger value="sync" className="gap-2">
-            <RefreshCw className="w-4 h-4" /> Sync Jobs
+          <TabsTrigger value="sync" className="gap-1.5 text-xs">
+            <RefreshCw className="w-3.5 h-3.5" /> Sync Jobs
           </TabsTrigger>
-          <TabsTrigger value="errors" className="gap-2">
-            <AlertTriangle className="w-4 h-4" /> Error Logs
+          <TabsTrigger value="errors" className="gap-1.5 text-xs">
+            <AlertTriangle className="w-3.5 h-3.5" /> Error Logs
+          </TabsTrigger>
+          <TabsTrigger value="ai-front-door" className="gap-1.5 text-xs">
+            <Bot className="w-3.5 h-3.5" /> AI Front Door
           </TabsTrigger>
         </TabsList>
-
         <TabsContent value="setup" className="mt-4">
           <SetupGuide />
         </TabsContent>
@@ -490,6 +601,9 @@ export default function MetaLeads() {
         </TabsContent>
         <TabsContent value="errors" className="mt-4">
           <ErrorLogsTab />
+        </TabsContent>
+        <TabsContent value="ai-front-door" className="mt-4">
+          <AiFrontDoorTab />
         </TabsContent>
       </Tabs>
     </div>

@@ -25,6 +25,10 @@ import EmailTemplates from "./pages/EmailTemplates";
 import MetaLeads from "./pages/MetaLeads";
 import Integrations from "./pages/Integrations";
 import AdminPanel from "./pages/AdminPanel";
+import BulkEmail from "./pages/BulkEmail";
+import DripCampaigns from "./pages/DripCampaigns";
+import BookCatalog from "./pages/BookCatalog";
+import StudyAbroad from "./pages/StudyAbroad";
 import LiotaLayout from "./components/LiotaLayout";
 
 function Router() {
@@ -51,6 +55,10 @@ function Router() {
         <Route path="/meta-leads" component={MetaLeads} />
         <Route path="/integrations" component={Integrations} />
         <Route path="/admin" component={AdminPanel} />
+        <Route path="/bulk-email" component={BulkEmail} />
+        <Route path="/drip-campaigns" component={DripCampaigns} />
+        <Route path="/book-catalog" component={BookCatalog} />
+        <Route path="/study-abroad" component={StudyAbroad} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />
       </Switch>

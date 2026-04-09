@@ -31,10 +31,17 @@ import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
+function createDb() {
+  if (process.env.DATABASE_URL) {
+    return drizzle(process.env.DATABASE_URL);
+  }
+  return null;
+}
+
 export async function getDb() {
   if (!_db && process.env.DATABASE_URL) {
     try {
-      _db = drizzle(process.env.DATABASE_URL);
+      _db = createDb();
     } catch (error) {
       console.warn("[Database] Failed to connect:", error);
       _db = null;
@@ -46,8 +53,7 @@ export async function getDb() {
 // ─── Users ───────────────────────────────────────────────────────────────────
 export async function upsertUser(user: InsertUser): Promise<void> {
   if (!user.openId) throw new Error("User openId is required for upsert");
-  const db = await getDb();
-  if (!db) return;
+
   const values: InsertUser = { openId: user.openId };
   const updateSet: Record<string, unknown> = {};
   const textFields = ["name", "email", "loginMethod"] as const;
@@ -71,7 +77,25 @@ export async function upsertUser(user: InsertUser): Promise<void> {
   }
   if (!values.lastSignedIn) values.lastSignedIn = new Date();
   if (Object.keys(updateSet).length === 0) updateSet.lastSignedIn = new Date();
-  await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+
+  // Retry up to 3 times on ECONNRESET (transient DB connection drop)
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const db = await getDb();
+      if (!db) return;
+      await db.insert(users).values(values).onDuplicateKeyUpdate({ set: updateSet });
+      return; // success
+    } catch (err: any) {
+      const isConnReset = err?.cause?.code === "ECONNRESET" || err?.message?.includes("ECONNRESET") || err?.cause?.message?.includes("ECONNRESET");
+      if (isConnReset && attempt < 3) {
+        console.warn(`[Database] ECONNRESET on upsertUser attempt ${attempt}, retrying...`);
+        _db = null; // force reconnect
+        await new Promise((r) => setTimeout(r, 200 * attempt));
+      } else {
+        throw err;
+      }
+    }
+  }
 }
 
 export async function getUserByOpenId(openId: string) {
@@ -991,7 +1015,7 @@ export async function getAllUsers() {
   return db.select().from(users).orderBy(users.createdAt);
 }
 
-export async function updateUserRole(userId: number, role: "user" | "editor" | "admin") {
+export async function updateUserRole(userId: number, role: "user" | "admin" | "instructor" | "coordinator" | "receptionist") {
   const db = await getDb();
   if (!db) return;
   await db.update(users).set({ role: role as any, updatedAt: new Date() }).where(eq(users.id, userId));

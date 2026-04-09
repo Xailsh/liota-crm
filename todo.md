@@ -34,7 +34,7 @@
 
 ## Security & UX
 - [x] PIN modal component (4-digit entry) for financial dashboard
-- [x] Blur effect on financial figures (visible/intentional)
+- [x] Blur effect on financial figures (visible/intentional black blur)
 - [x] Role-based access control (admin vs user)
 - [x] Admin-only guard for financial dashboard route
 
@@ -72,16 +72,83 @@
 - [x] Add all new modules to sidebar navigation
 
 ## Phase 4 - Templates, Meta Leads, Integrations & Admin
-- [ ] Language toggle button (EN/ES) in sidebar/header
-- [ ] Admin-only black blur on finance income figures (not for editor role)
-- [ ] Email Templates standalone management page
-- [ ] WhatsApp Templates module with response templates
-- [ ] Voice Templates module
-- [ ] Meta Leads: Setup Guide page
-- [ ] Meta Leads: Webhook Events page
-- [ ] Meta Leads: Sync Jobs page
-- [ ] Meta Leads: Error Logs page
-- [ ] Integrations: Inbound Webhook page
-- [ ] Admin panel section
-- [ ] Update sidebar navigation with all new sections (Templates, Meta Leads, Integrations, Admin)
-- [ ] DB tables: whatsapp_templates, voice_templates, webhook_events, sync_jobs, error_logs, inbound_webhooks
+- [x] Language toggle button (EN/ES) in sidebar/header
+- [x] Admin-only black blur on finance income figures (not for editor role)
+- [x] Email Templates standalone management page
+- [x] WhatsApp Templates module with response templates
+- [x] Voice Templates module
+- [x] Meta Leads: Setup Guide page
+- [x] Meta Leads: Webhook Events page
+- [x] Meta Leads: Sync Jobs page
+- [x] Meta Leads: Error Logs page
+- [x] Integrations: Inbound Webhook page
+- [x] Admin panel section
+- [x] Update sidebar navigation with all new sections (Templates, Meta Leads, Integrations, Admin)
+- [x] DB tables: whatsapp_templates, voice_templates, webhook_events, sync_jobs, error_logs, inbound_webhooks
+
+## Phase 5 - Role Permissions Matrix
+- [ ] Add Role Permissions Matrix table to Admin Panel (Admin, Instructor, Coordinator, Receptionist)
+- [ ] Define all LIOTA-specific permissions (View Dashboard, Manage Students, View Classes, Create Classes, Manage Leads, Email Marketing, Accounting, Financial Dashboard, Scholarships, Camps, Events, Analytics, Manage Users, Audit Log, etc.)
+- [ ] Update DB user role enum to include instructor, coordinator, receptionist
+- [ ] Enforce role-based access in backend procedures
+- [ ] Add Team Members section below the matrix
+
+## Phase 5 - Role Permissions Matrix & AI Front Door
+- [ ] Role Permissions Matrix in Admin Panel (Admin, Instructor, Coordinator, Receptionist)
+- [ ] Update user role enum: instructor, coordinator, receptionist
+- [ ] Team Members section in Admin Panel
+- [ ] AI Front Door: public embeddable chat widget page (/chat)
+- [ ] AI Front Door: tRPC procedure with LLM + LIOTA knowledge base (STEAM, ESL, SSL, Polyglot, pricing, campuses)
+- [ ] AI Front Door: streaming chat responses
+- [ ] AI Front Door: 2-line embed snippet (script tag + div)
+- [ ] AI Front Door: widget config page in CRM (customize greeting, colors, avatar)
+- [ ] AI Front Door: lead capture (name + email before chat starts)
+- [ ] AI Front Door: auto-save conversations as leads in CRM pipeline
+- [ ] Dashboard greeting cycles through: Hola, Hello, Bonjour, Bom Dia (animated)
+- [ ] Replace user name in greeting with "LIOTA Institute"
+- [ ] Add Portuguese, Maya Yucateca, French, German, Arabic, Russian to greeting cycle
+- [ ] Add all 8 languages to SSL/program options throughout the CRM
+
+## Phase 6 - Bulk Email, Drip System & Integrations
+- [ ] Bulk Email page: recipient selector with checkboxes, phase filter, Select All
+- [ ] Bulk Email page: compose panel with template loader dropdown
+- [ ] Bulk Email page: EN/ES language toggle on compose panel
+- [ ] Bulk Email page: subject + body with {{name}} {{first_name}} personalization tokens
+- [ ] Bulk Email page: attachments (Image/PDF, Upload Audio, Voice Template) max 5 files
+- [ ] Bulk Email page: send delay selector (spam protection)
+- [ ] Bulk Email page: Send Test Email + Send to X Recipients buttons
+- [ ] Bulk Email page: CAN-SPAM/GDPR unsubscribe footer auto-included notice
+- [ ] Drip System: DB tables for drip_sequences and drip_steps
+- [ ] Drip System: Welcome to LIOTA Institute template (Day 0)
+- [ ] Drip System: Week 1 - Programs Overview email
+- [ ] Drip System: Week 2 - Free Trial Class offer
+- [ ] Drip System: Week 3 - Student Success Stories
+- [ ] Drip System: Week 4 - Enrollment CTA
+- [ ] Drip System: Meta Leads trigger (auto-enroll new Meta leads into drip)
+- [ ] Drip System: management UI (view sequences, steps, edit, pause/resume)
+- [ ] Gmail SMTP: install Nodemailer, configure theliotainstitute@gmail.com
+- [ ] Gmail SMTP: request Gmail App Password secret
+- [ ] Fix OAuth callback error
+- [ ] Connect Stripe sandbox
+- [ ] Connect PayPal sandbox
+- [ ] Connect Cash App/Square sandbox
+- [x] Add AI Front Door tab to MetaLeads page
+
+## Session 2 - Business Updates
+- [x] Fix Buba Davis (buba.aragon@gmail.com) to Admin role in DB
+- [x] Add Nottingham, England campus to all campus lists
+- [x] Update residency/study abroad pricing: $1500 USD (Mérida/Dallas/Denver), £1500 (Nottingham), €1500 (Vienna)
+- [x] Add Book Catalog module (60 books for sale)
+- [x] Add Travel Abroad / Study Abroad module (3-month programs with passport travel)
+- [ ] Update programs: English for Children (5-12), Teens (13-17), Adults (18+), Business English
+- [ ] Update Packages & Rates page to reflect real LIOTA pricing
+- [x] Update sidebar navigation to include Book Catalog and Travel Abroad
+- [ ] Update all campus dropdowns to include Nottingham
+
+## Session 3 - Bilingual Email Templates & Fixes
+- [x] Fix LanguageContext TS error (nottingham key missing from Spanish translations)
+- [x] Fix StudyAbroad DialogTitle accessibility error
+- [x] Email Templates: add EN/ES language toggle to create/edit form
+- [x] Email Templates: add Spanish versions of all preset templates
+- [x] Email Templates: show language badge (EN/ES) on template cards
+- [x] Email Templates: filter templates by language

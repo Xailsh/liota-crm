@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { BookOpen, Plus, Users, MapPin, Monitor, Building, Loader2, Edit2, Calendar } from "lucide-react";
 
-const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", online: "Online" };
+const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", nottingham: "Nottingham", online: "Online" };
 const statusColors: Record<string, string> = {
   scheduled: "bg-blue-100 text-blue-700 border-blue-200",
   active: "bg-emerald-100 text-emerald-700 border-emerald-200",

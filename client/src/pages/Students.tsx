@@ -15,7 +15,7 @@ import {
   Edit2, Trash2, Loader2, User, BookOpen, X
 } from "lucide-react";
 
-const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", online: "Online" };
+const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", nottingham: "Nottingham", online: "Online" };
 const ageGroupLabels: Record<string, string> = { children: "Children", teens: "Teens", adults: "Adults" };
 const statusLabels: Record<string, string> = { active: "Active", trial: "Trial", inactive: "Inactive", graduated: "Graduated", suspended: "Suspended" };
 const statusColors: Record<string, string> = {

@@ -4,6 +4,8 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import { invokeLLM } from "./_core/llm";
+import { getDb } from "./db";
 import {
   createAssessment,
   createCampaign,
@@ -149,7 +151,7 @@ export const appRouter = router({
           dateOfBirth: z.string().optional(),
           ageGroup: z.enum(["children", "teens", "adults"]),
           programId: z.number().optional(),
-          campus: z.enum(["merida", "dallas", "denver", "vienna", "online"]),
+          campus: z.enum(["merida", "dallas", "denver", "vienna", "nottingham", "online"]),
           mcerLevel: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).optional(),
           enrollmentStatus: z.enum(["active", "inactive", "trial", "graduated", "suspended"]).default("trial"),
           parentName: z.string().optional(),
@@ -173,7 +175,7 @@ export const appRouter = router({
           phone: z.string().optional(),
           ageGroup: z.enum(["children", "teens", "adults"]).optional(),
           programId: z.number().optional(),
-          campus: z.enum(["merida", "dallas", "denver", "vienna", "online"]).optional(),
+          campus: z.enum(["merida", "dallas", "denver", "vienna", "nottingham", "online"]).optional(),
           mcerLevel: z.enum(["A1", "A2", "B1", "B2", "C1", "C2"]).optional(),
           enrollmentStatus: z.enum(["active", "inactive", "trial", "graduated", "suspended"]).optional(),
           parentName: z.string().optional(),
@@ -245,7 +247,7 @@ export const appRouter = router({
           name: z.string().min(1),
           email: z.string().email().optional(),
           phone: z.string().optional(),
-          campus: z.enum(["merida", "dallas", "denver", "vienna", "online"]),
+          campus: z.enum(["merida", "dallas", "denver", "vienna", "nottingham", "online"]),
           specialization: z.string().optional(),
           certifications: z.string().optional(),
         })
@@ -274,7 +276,7 @@ export const appRouter = router({
           name: z.string().min(1),
           programId: z.number().optional(),
           instructorId: z.number().optional(),
-          campus: z.enum(["merida", "dallas", "denver", "vienna", "online"]),
+          campus: z.enum(["merida", "dallas", "denver", "vienna", "nottingham", "online"]),
           modality: z.enum(["online", "onsite"]).default("onsite"),
           maxStudents: z.number().default(6),
           schedule: z.string().optional(),
@@ -325,7 +327,7 @@ export const appRouter = router({
           phone: z.string().optional(),
           ageGroup: z.enum(["children", "teens", "adults"]).optional(),
           interestedProgram: z.enum(["children", "teens", "adults", "business", "polyglot", "immersion", "homeschool"]).optional(),
-          preferredCampus: z.enum(["merida", "dallas", "denver", "vienna", "online"]).optional(),
+          preferredCampus: z.enum(["merida", "dallas", "denver", "vienna", "nottingham", "online"]).optional(),
           stage: z.enum(["new_lead", "contacted", "trial_scheduled", "trial_done", "proposal_sent", "enrolled", "lost"]).default("new_lead"),
           source: z.string().optional(),
           notes: z.string().optional(),
@@ -425,7 +427,7 @@ export const appRouter = router({
           description: z.string().optional(),
           amount: z.string(),
           currency: z.string().default("USD"),
-          campus: z.enum(["merida", "dallas", "denver", "vienna", "online", "general"]).default("general"),
+          campus: z.enum(["merida", "dallas", "denver", "vienna", "nottingham", "online", "general"]).default("general"),
           date: z.string(),
         })
       )
@@ -448,7 +450,7 @@ export const appRouter = router({
           body: z.string().min(1),
           templateType: z.enum(["promotion", "reminder", "newsletter", "welcome", "progress_report"]).default("newsletter"),
           segmentProgram: z.enum(["children", "teens", "adults", "business", "polyglot", "immersion", "homeschool", "all"]).default("all"),
-          segmentCampus: z.enum(["merida", "dallas", "denver", "vienna", "online", "all"]).default("all"),
+          segmentCampus: z.enum(["merida", "dallas", "denver", "vienna", "nottingham", "online", "all"]).default("all"),
           segmentAgeGroup: z.enum(["children", "teens", "adults", "all"]).default("all"),
         })
       )
@@ -673,7 +675,7 @@ export const appRouter = router({
         features: z.string().optional(),
         isActive: z.boolean().default(true),
         maxStudents: z.number().default(6),
-        campus: z.enum(["merida","dallas","denver","vienna","online","all"]).default("all"),
+        campus: z.enum(["merida","dallas","denver","vienna","nottingham","online","all"]).default("all"),
       }))
       .mutation(async ({ input }) => { await createLanguagePackage(input as any); return { success: true }; }),
     update: adminProcedure
@@ -696,7 +698,7 @@ export const appRouter = router({
         year: z.number(),
         startDate: z.string(),
         endDate: z.string(),
-        campus: z.enum(["merida","dallas","denver","vienna","online","all"]),
+        campus: z.enum(["merida","dallas","denver","vienna","nottingham","online","all"]),
         ageGroup: z.enum(["kids","teens","adults","mixed"]).default("mixed"),
         capacity: z.number().default(20),
         priceUSD: z.number().optional(),
@@ -727,7 +729,7 @@ export const appRouter = router({
         date: z.string(),
         startTime: z.string().optional(),
         endTime: z.string().optional(),
-        campus: z.enum(["merida","dallas","denver","vienna","online","all"]),
+        campus: z.enum(["merida","dallas","denver","vienna","nottingham","online","all"]),
         capacity: z.number().optional(),
         priceUSD: z.number().default(0),
         priceMXN: z.number().default(0),
@@ -878,11 +880,129 @@ export const appRouter = router({
         return { verified: true };
       }),
   }),
+  // ─── AI Front Door ─────────────────────────────────────────────────────────────
+  ai: router({
+    chat: publicProcedure
+      .input(z.object({
+        messages: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })),
+        visitorName: z.string().optional(),
+        visitorEmail: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => {
+        const LIOTA_SYSTEM_PROMPT = `You are LIOTA Assistant, the friendly AI customer service representative for LIOTA Institute — Language Institute Of The Americas.
+
+Your role is to help prospective students, parents, and visitors learn about LIOTA's programs and guide them toward enrollment.
+
+ABOUT LIOTA INSTITUTE:
+- Full name: Language Institute Of The Americas (LIOTA)
+- Tagline: "The Institute · El Instituto"
+- Campuses: Mérida (Mexico), Dallas (TX), Denver (CO), Vienna (Austria), Nottingham (England), and Online
+- Website: https://languageinstituteoftheamericas.com
+- Languages taught: English, Spanish, French, Portuguese, Mandarin, and more
+
+PROGRAMS OFFERED:
+1. ESL (English as a Second Language) — For non-native English speakers who want to learn English for work, study, or daily life.
+2. SSL (Spanish as a Second Language) — For English speakers learning Spanish, ideal for travel, business, or living in Latin America.
+3. Polyglot Program — Multi-language immersion for students who want to learn 2 or more languages simultaneously. Packages: 1-Language, 2-Language, Full Polyglot.
+4. STEAM Language Integration — Science, Technology, Engineering, Arts & Math taught through language immersion. Perfect for children and teens.
+5. Children's Program — Ages 4–12, fun and interactive, CEFR Pre-A1 to A2.
+6. Teenagers Program — Ages 13–17, CEFR A1 to B2, includes academic English.
+7. Adults Program — CEFR A1 to C2, flexible scheduling, online and in-person.
+8. Business English — Corporate communication, presentations, negotiations, CEFR B1–C1.
+
+CEFR LEVELS: Pre-A1 → A1 → A2 → B1 → B2 → C1 → C2
+
+PRICING:
+- Mexico (Mérida): 200 MXN per hour (classes) | $1,500 USD for 3-month Study Abroad Residency
+- USA (Dallas, Denver): $20 USD per hour (classes) | $1,500 USD for 3-month Residency
+- UK (Nottingham): £20 per hour (classes) | £1,500 for 3-month Residency
+- Austria (Vienna): €20 per hour (classes) | €1,500 for 3-month Residency
+- Online: $18 USD per hour
+- Packages available: Starter (10 hrs), Standard (20 hrs), Intensive (40 hrs), Polyglot Full Package (custom)
+- Scholarships available for qualifying students
+STUDY ABROAD / RESIDENCY PROGRAMS:
+- 3-month immersive residency programs at all campuses
+- Includes housing, language classes, cultural immersion, and passport travel
+- Prices: $1,500 USD (Mérida/Dallas/Denver) | £1,500 (Nottingham) | €1,500 (Vienna)
+- Students travel to partner countries with LIOTA passport program
+- Destinations include Mexico, USA, UK, Austria, and more
+BOOK CATALOG:
+- LIOTA publishes and sells a catalog of 60 language learning books
+- Covers ESL, SSL, Polyglot, Business English, STEAM integration
+- Available for purchase online and at campus bookstores
+- Textbooks, workbooks, grammar guides, conversation practice books
+
+SEASONAL CAMPS:
+- Winter Camp (December–January)
+- Spring Camp (March–April)
+- Summer Camp (June–August) — most popular
+- Fall Camp (October–November)
+- Special Events: Cultural workshops, graduation ceremonies, language competitions
+
+CLASS FORMAT:
+- Maximum 6 students per group (small group learning)
+- Online via Zoom/Google Meet or in-person at campus
+- Free trial class available for all new students
+- Flexible scheduling: mornings, afternoons, evenings, weekends
+
+HOW TO ENROLL:
+1. Schedule a free trial class
+2. Take a placement test to determine CEFR level
+3. Choose a program and package
+4. Complete enrollment form
+5. Make first payment (Stripe, Zelle, Dolla App, PayPal, cash)
+
+CONTACT:
+- Visit: https://languageinstituteoftheamericas.com
+- Available campuses: Mérida, Dallas, Denver, Vienna, Nottingham, Online
+
+GUIDELINES:
+- Be warm, encouraging, and professional
+- Answer in the same language the user writes in (English or Spanish)
+- If asked about pricing, give the rates above
+- Always encourage booking a FREE trial class
+- If a user wants to enroll, ask for their name and email to connect them with an advisor
+- Keep responses concise (2-4 sentences max unless detailed info is needed)
+- Use emojis sparingly to keep a professional tone
+- Never make up information not listed above`;
+
+        const response = await invokeLLM({
+          messages: [
+            { role: "system", content: LIOTA_SYSTEM_PROMPT },
+            ...input.messages.map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+          ],
+        });
+
+        const reply = (response as any)?.choices?.[0]?.message?.content ?? "I'm sorry, I couldn't process your request. Please try again.";
+
+        // Auto-save as lead if email provided
+        if (input.visitorEmail && input.messages.length === 1) {
+          try {
+            const db = await getDb();
+            if (db) {
+              const { leads } = await import("../drizzle/schema");
+              await db.insert(leads).values({
+                name: input.visitorName ?? "Website Visitor",
+                email: input.visitorEmail,
+                source: "website",
+                stage: "new_lead",
+                notes: `AI Front Door chat initiated. First message: ${input.messages[0]?.content?.slice(0, 200)}`,
+              } as any).onDuplicateKeyUpdate({ set: { updatedAt: new Date() } });
+            }
+          } catch (e) {
+            // Non-critical: don't fail the chat if lead save fails
+          }
+        }
+
+        return { reply };
+      }),
+  }),
+
   // ─── Admin Panel ──────────────────────────────────────────────────────────────
   admin: router({
     listUsers: adminProcedure.query(async () => getAllUsers()),
     updateUserRole: adminProcedure
-      .input(z.object({ userId: z.number(), role: z.enum(["user", "editor", "admin"]) }))
+      .input(z.object({ userId: z.number(), role: z.enum(["user", "admin", "instructor", "coordinator", "receptionist"]) }))
       .mutation(async ({ input }) => { await updateUserRole(input.userId, input.role); return { success: true }; }),
     systemStats: adminProcedure.query(async () => getSystemStats()),
     updateFinancialPin: adminProcedure
