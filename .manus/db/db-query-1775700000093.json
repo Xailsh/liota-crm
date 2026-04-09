@@ -1,0 +1,9 @@
+{
+  "query": "CREATE TABLE `assessments` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`studentId` int NOT NULL,\n\t`assessmentDate` date NOT NULL,\n\t`mcerLevel` enum('A1','A2','B1','B2','C1','C2') NOT NULL,\n\t`speakingScore` int,\n\t`listeningScore` int,\n\t`readingScore` int,\n\t`writingScore` int,\n\t`overallScore` int,\n\t`notes` text,\n\t`assessedBy` varchar(128),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `assessments_id` PRIMARY KEY(`id`)\n)",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway05.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2HkwpY45f9QmLg9.469c1175074f --database YzZjuTcos3se78oWJYxJkp --execute CREATE TABLE `assessments` (\n\t`id` int AUTO_INCREMENT NOT NULL,\n\t`studentId` int NOT NULL,\n\t`assessmentDate` date NOT NULL,\n\t`mcerLevel` enum('A1','A2','B1','B2','C1','C2') NOT NULL,\n\t`speakingScore` int,\n\t`listeningScore` int,\n\t`readingScore` int,\n\t`writingScore` int,\n\t`overallScore` int,\n\t`notes` text,\n\t`assessedBy` varchar(128),\n\t`createdAt` timestamp NOT NULL DEFAULT (now()),\n\tCONSTRAINT `assessments_id` PRIMARY KEY(`id`)\n)",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 490
+}

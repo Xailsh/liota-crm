@@ -4,34 +4,45 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
-import Home from "./pages/Home";
+import Dashboard from "./pages/Dashboard";
+import Students from "./pages/Students";
+import Classes from "./pages/Classes";
+import EmailMarketing from "./pages/EmailMarketing";
+import Accounting from "./pages/Accounting";
+import LeadsPipeline from "./pages/LeadsPipeline";
+import AcademicProgress from "./pages/AcademicProgress";
+import Contacts from "./pages/Contacts";
+import Analytics from "./pages/Analytics";
+import FinancialDashboard from "./pages/FinancialDashboard";
+import LiotaLayout from "./components/LiotaLayout";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
   return (
-    <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path={"/404"} component={NotFound} />
-      {/* Final fallback route */}
-      <Route component={NotFound} />
-    </Switch>
+    <LiotaLayout>
+      <Switch>
+        <Route path="/" component={Dashboard} />
+        <Route path="/students" component={Students} />
+        <Route path="/classes" component={Classes} />
+        <Route path="/email-marketing" component={EmailMarketing} />
+        <Route path="/accounting" component={Accounting} />
+        <Route path="/leads" component={LeadsPipeline} />
+        <Route path="/academic-progress" component={AcademicProgress} />
+        <Route path="/contacts" component={Contacts} />
+        <Route path="/analytics" component={Analytics} />
+        <Route path="/financial" component={FinancialDashboard} />
+        <Route path="/404" component={NotFound} />
+        <Route component={NotFound} />
+      </Switch>
+    </LiotaLayout>
   );
 }
-
-// NOTE: About Theme
-// - First choose a default theme according to your design style (dark or light bg), than change color palette in index.css
-//   to keep consistent foreground/background color across components
-// - If you want to make theme switchable, pass `switchable` ThemeProvider and use `useTheme` hook
 
 function App() {
   return (
     <ErrorBoundary>
-      <ThemeProvider
-        defaultTheme="light"
-        // switchable
-      >
+      <ThemeProvider defaultTheme="light">
         <TooltipProvider>
-          <Toaster />
+          <Toaster richColors position="top-right" />
           <Router />
         </TooltipProvider>
       </ThemeProvider>
