@@ -217,3 +217,9 @@
 - [ ] Wire Resend into bulk email sending procedure
 - [ ] Test invitation email end-to-end
 - [ ] Save checkpoint
+
+## Admin Panel - Staff Invitations Fix
+- [ ] Restore Permissions tab in Admin Panel
+- [ ] Add prominent "Invite Staff" section at top of Users & Roles tab
+- [ ] Show invite form (email + role + message) inline without needing a dialog
+- [ ] Show pending invitations list with copy link / revoke actions

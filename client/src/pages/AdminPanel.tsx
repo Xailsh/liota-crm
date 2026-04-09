@@ -222,6 +222,44 @@ function UsersTab() {
 
   return (
     <div className="space-y-4">
+      {/* Invite Staff Card */}
+      <Card className="border-2 border-primary/20 bg-primary/5">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <UserPlus className="w-5 h-5 text-primary" /> Invite Staff Member
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">Send an invitation link to a new team member. They'll click it to access the LIOTA CRM with the role you assign.</p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-1">
+              <Label className="text-xs mb-1 block">Email Address *</Label>
+              <Input type="email" placeholder="teacher@liota.institute" value={inviteForm.email} onChange={e => setInviteForm(f => ({ ...f, email: e.target.value }))} />
+            </div>
+            <div>
+              <Label className="text-xs mb-1 block">Role</Label>
+              <Select value={inviteForm.role} onValueChange={v => setInviteForm(f => ({ ...f, role: v }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="admin">Admin — Full access</SelectItem>
+                  <SelectItem value="instructor">Instructor — Classes & students</SelectItem>
+                  <SelectItem value="coordinator">Coordinator — Students, leads, events</SelectItem>
+                  <SelectItem value="receptionist">Receptionist — Front desk</SelectItem>
+                  <SelectItem value="user">User — Basic access</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex items-end">
+              <Button className="w-full gap-2" onClick={() => { if (!inviteForm.email) { toast.error("Email is required"); return; } createInviteMutation.mutate({ ...inviteForm, origin: window.location.origin }); }} disabled={createInviteMutation.isPending}>
+                {createInviteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+                Send Invitation
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-2">An invitation link will be generated (valid for 7 days). Copy and share it via WhatsApp, email, or any channel.</p>
+        </CardContent>
+      </Card>
+
       {/* Invite Success Banner */}
       {showInviteSuccess && lastInviteUrl && (
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
@@ -675,7 +713,7 @@ export default function AdminPanel() {
         </p>
       </div>
 
-      <Tabs defaultValue="permissions">
+      <Tabs defaultValue="users">
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="permissions" className="gap-2">
             <Shield className="w-4 h-4" /> Permissions
