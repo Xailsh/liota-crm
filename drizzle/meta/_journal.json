@@ -78,6 +78,13 @@
       "when": 1775810171212,
       "tag": "0010_sudden_scarlet_witch",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1775811532187,
+      "tag": "0011_perpetual_red_hulk",
+      "breakpoints": true
     }
   ]
 }

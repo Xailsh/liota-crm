@@ -46,7 +46,7 @@ export default function TakeTest() {
   const [currentQ, setCurrentQ] = useState(0);
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [result, setResult] = useState<{ score: number; maxScore: number; percent: number; cefrResult: string } | null>(null);
+  const [result, setResult] = useState<{ score: number; maxScore: number; percent: number; cefrResult: string; certificateUrl?: string | null } | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Initialize timer
@@ -199,6 +199,15 @@ export default function TakeTest() {
             <Progress value={result.percent} className="h-3" />
           </div>
 
+          {result.certificateUrl && (
+            <div className="text-center mb-5">
+              <a href={result.certificateUrl} target="_blank" rel="noopener noreferrer">
+                <button className="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 px-6 rounded-xl transition-colors flex items-center justify-center gap-2">
+                  🏅 Download Your Certificate (PDF)
+                </button>
+              </a>
+            </div>
+          )}
           <div className="text-center text-sm text-muted-foreground">
             <p>Your results have been sent to LIOTA Institute.</p>
             <p className="mt-1">Your instructor will be in touch soon to discuss your placement.</p>

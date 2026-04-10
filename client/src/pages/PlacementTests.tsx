@@ -417,15 +417,165 @@ function TestFormDialog({
   );
 }
 
+// ─── Submission Detail Panel ─────────────────────────────────────────────────
+function SubmissionDetailPanel({ submission, testId, onClose }: { submission: any; testId: number; onClose: () => void }) {
+  const utils = trpc.useUtils();
+  const [noteText, setNoteText] = useState("");
+  const { data: analytics } = trpc.placementTests.getQuestionAnalytics.useQuery({ testId }, { enabled: !!testId });
+  const { data: notes, isLoading: notesLoading } = trpc.placementTests.listNotes.useQuery({ submissionId: submission.id });
+  const addNote = trpc.placementTests.addNote.useMutation({
+    onSuccess: () => { utils.placementTests.listNotes.invalidate({ submissionId: submission.id }); setNoteText(""); toast.success("Note added"); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteNote = trpc.placementTests.deleteNote.useMutation({
+    onSuccess: () => { utils.placementTests.listNotes.invalidate({ submissionId: submission.id }); toast.success("Note deleted"); },
+  });
+
+  const answers: Record<string, string> = submission.answers ? JSON.parse(submission.answers) : {};
+
+  return (
+    <div className="fixed inset-0 z-50 flex">
+      <div className="flex-1 bg-black/40" onClick={onClose} />
+      <div className="w-[680px] bg-background border-l shadow-2xl flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="p-5 border-b flex items-center justify-between">
+          <div>
+            <h2 className="text-lg font-bold">{submission.recipientName}</h2>
+            <p className="text-sm text-muted-foreground">{submission.recipientEmail}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            {submission.cefrResult && <Badge className={CEFR_COLORS[submission.cefrResult]}>{submission.cefrResult}</Badge>}
+            {submission.certificateUrl && (
+              <a href={submission.certificateUrl} target="_blank" rel="noopener noreferrer">
+                <Button size="sm" variant="outline" className="gap-1"><Eye className="h-3 w-3" /> Certificate</Button>
+              </a>
+            )}
+            <Button size="sm" variant="ghost" onClick={onClose}>✕</Button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto">
+          <Tabs defaultValue="analytics" className="p-5">
+            <TabsList className="w-full mb-4">
+              <TabsTrigger value="analytics" className="flex-1">Question Analytics</TabsTrigger>
+              <TabsTrigger value="notes" className="flex-1">Staff Notes ({notes?.length ?? 0})</TabsTrigger>
+            </TabsList>
+
+            {/* Analytics Tab */}
+            <TabsContent value="analytics" className="space-y-4">
+              {!analytics || analytics.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">No analytics data yet — complete submissions needed.</p>
+              ) : (
+                analytics.map((q) => {
+                  const total = q.totalSubmissions || 1;
+                  const studentAnswer = answers[String(q.questionId)];
+                  return (
+                    <div key={q.questionId} className="border rounded-lg p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1">
+                          <p className="font-medium text-sm">{q.questionText}</p>
+                          <div className="flex gap-2 mt-1">
+                            <Badge variant="outline" className={SKILL_COLORS[q.skill] ?? ""}>{q.skill}</Badge>
+                            <Badge variant="outline" className={CEFR_COLORS[q.cefrLevel] ?? ""}>{q.cefrLevel}</Badge>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {q.options.map((opt) => {
+                          const count = q.counts[opt] ?? 0;
+                          const pct = Math.round((count / total) * 100);
+                          const isCorrect = opt === q.correctAnswer;
+                          const isStudentAnswer = opt === studentAnswer;
+                          return (
+                            <div key={opt} className="space-y-1">
+                              <div className="flex items-center justify-between text-xs">
+                                <span className={`flex items-center gap-1 ${isCorrect ? "font-semibold text-green-700" : isStudentAnswer ? "font-semibold text-red-600" : "text-muted-foreground"}` }>
+                                  {isCorrect && <CheckCircle className="h-3 w-3 text-green-600" />}
+                                  {isStudentAnswer && !isCorrect && <span className="text-red-500">✗</span>}
+                                  {opt}
+                                </span>
+                                <span className="text-muted-foreground">{count} ({pct}%)</span>
+                              </div>
+                              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${isCorrect ? "bg-green-500" : isStudentAnswer ? "bg-red-400" : "bg-blue-300"}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </TabsContent>
+
+            {/* Notes Tab */}
+            <TabsContent value="notes" className="space-y-4">
+              <div className="space-y-2">
+                <Textarea
+                  placeholder="Add an internal note about this submission..."
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  rows={3}
+                />
+                <Button
+                  size="sm"
+                  onClick={() => addNote.mutate({ submissionId: submission.id, content: noteText })}
+                  disabled={!noteText.trim() || addNote.isPending}
+                  className="bg-amber-500 hover:bg-amber-600 text-white"
+                >
+                  Add Note
+                </Button>
+              </div>
+              {notesLoading ? (
+                <p className="text-muted-foreground text-sm">Loading notes...</p>
+              ) : notes && notes.length > 0 ? (
+                <div className="space-y-3">
+                  {notes.map((note) => (
+                    <div key={note.id} className="border rounded-lg p-3 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-muted-foreground">{note.authorName ?? "Staff"}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-muted-foreground">{new Date(note.createdAt).toLocaleString()}</span>
+                          <Button size="sm" variant="ghost" className="h-6 w-6 p-0 text-red-500 hover:text-red-700" onClick={() => deleteNote.mutate({ id: note.id })}>
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">{note.content}</p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-6 text-sm">No notes yet. Add the first internal note above.</p>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Submissions Table ────────────────────────────────────────────────────────
 function SubmissionsTab() {
   const { data: submissions } = trpc.placementTests.listSubmissions.useQuery({});
   const { data: tests } = trpc.placementTests.list.useQuery();
+  const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
 
   const testMap = Object.fromEntries((tests ?? []).map((t) => [t.id, t.title]));
 
   return (
     <div className="space-y-4">
+      {selectedSubmission && (
+        <SubmissionDetailPanel
+          submission={selectedSubmission}
+          testId={selectedSubmission.testId}
+          onClose={() => setSelectedSubmission(null)}
+        />
+      )}
       <div className="grid grid-cols-4 gap-4">
         {[
           { label: "Total Sent", value: submissions?.length ?? 0, icon: Send, color: "text-blue-500" },
@@ -455,6 +605,7 @@ function SubmissionsTab() {
               <th className="text-left p-3 font-medium">Score</th>
               <th className="text-left p-3 font-medium">Sent</th>
               <th className="text-left p-3 font-medium">Completed</th>
+              <th className="text-left p-3 font-medium">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -485,10 +636,22 @@ function SubmissionsTab() {
                 <td className="p-3 text-muted-foreground text-xs">
                   {s.completedAt ? new Date(s.completedAt).toLocaleDateString() : "—"}
                 </td>
+                <td className="p-3">
+                  <div className="flex gap-1">
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setSelectedSubmission(s)}>
+                      <Eye className="h-3 w-3 mr-1" /> Details
+                    </Button>
+                    {s.certificateUrl && (
+                      <a href={s.certificateUrl} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-amber-600">PDF</Button>
+                      </a>
+                    )}
+                  </div>
+                </td>
               </tr>
             ))}
             {(!submissions || submissions.length === 0) && (
-              <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No test submissions yet. Send a test to get started.</td></tr>
+              <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No test submissions yet. Send a test to get started.</td></tr>
             )}
           </tbody>
         </table>

@@ -620,6 +620,7 @@ export const testSubmissions = mysqlTable("testSubmissions", {
   completedAt: timestamp("completedAt"),
   expiresAt: timestamp("expiresAt").notNull(),
   notes: text("notes"),
+  certificateUrl: text("certificateUrl"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 });
 export type TestSubmission = typeof testSubmissions.$inferSelect;
@@ -641,3 +642,15 @@ export const testSchedules = mysqlTable("testSchedules", {
 });
 export type TestSchedule = typeof testSchedules.$inferSelect;
 export type InsertTestSchedule = typeof testSchedules.$inferInsert;
+
+// ─── Submission Notes (staff internal comments) ───────────────────────────────
+export const submissionNotes = mysqlTable("submissionNotes", {
+  id: int("id").autoincrement().primaryKey(),
+  submissionId: int("submissionId").notNull().references(() => testSubmissions.id, { onDelete: "cascade" }),
+  authorId: int("authorId").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SubmissionNote = typeof submissionNotes.$inferSelect;
+export type InsertSubmissionNote = typeof submissionNotes.$inferInsert;

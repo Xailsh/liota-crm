@@ -11,11 +11,14 @@ import {
   testQuestions,
   testSubmissions,
   testSchedules,
+  submissionNotes,
   students,
+  users,
 } from "../../drizzle/schema";
-import { eq, desc, and, lte, isNull, or } from "drizzle-orm";
+import { eq, desc, and, lte, sql } from "drizzle-orm";
 import { Resend } from "resend";
 import crypto from "crypto";
+import { generateCertificate } from "../certificateGenerator";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -494,7 +497,26 @@ export const placementTestsRouter = router({
         await db.update(students).set({ mcerLevel: cefrResult }).where(eq(students.id, submission.studentId));
       }
 
-      return { score, maxScore, percent, cefrResult };
+      // Generate PDF certificate
+      let certificateUrl: string | null = null;
+      try {
+        const [testRow] = await db.select().from(placementTests).where(eq(placementTests.id, submission.testId));
+        certificateUrl = await generateCertificate({
+          studentName: submission.recipientName ?? "Student",
+          cefrLevel: cefrResult,
+          testTitle: testRow?.title ?? "English Placement Test",
+          score: percent,
+          completedAt: new Date(),
+          submissionId: submission.id,
+        });
+        await db.update(testSubmissions)
+          .set({ certificateUrl })
+          .where(eq(testSubmissions.token, input.token));
+      } catch (certErr) {
+        console.error("Certificate generation failed:", certErr);
+      }
+
+      return { score, maxScore, percent, cefrResult, certificateUrl };
     }),
 
   // ─── List submissions (admin) ────────────────────────────────────────────
@@ -678,5 +700,112 @@ export const placementTestsRouter = router({
       }
 
       return { sent, errors, total: due.length };
+    }),
+
+  // ─── Per-question analytics ───────────────────────────────────────────────
+  getQuestionAnalytics: protectedProcedure
+    .input(z.object({ testId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+
+      // Get all questions for this test
+      const questions = await db
+        .select()
+        .from(testQuestions)
+        .where(eq(testQuestions.testId, input.testId))
+        .orderBy(testQuestions.orderIndex);
+
+      // Get all completed submissions for this test
+      const submissions = await db
+        .select({ answers: testSubmissions.answers })
+        .from(testSubmissions)
+        .where(and(
+          eq(testSubmissions.testId, input.testId),
+          eq(testSubmissions.status, "completed")
+        ));
+
+      const totalSubmissions = submissions.length;
+
+      // Aggregate answers per question
+      const analytics = questions.map((q) => {
+        const opts: string[] = JSON.parse(q.options);
+        const counts: Record<string, number> = {};
+        for (const opt of opts) counts[opt] = 0;
+
+        for (const sub of submissions) {
+          if (!sub.answers) continue;
+          const answers: Record<string, string> = JSON.parse(sub.answers);
+          const chosen = answers[String(q.id)];
+          if (chosen && counts[chosen] !== undefined) counts[chosen]++;
+          else if (chosen) counts[chosen] = (counts[chosen] ?? 0) + 1;
+        }
+
+        return {
+          questionId: q.id,
+          questionText: q.questionText,
+          options: opts,
+          correctAnswer: q.correctAnswer,
+          skill: q.skill,
+          cefrLevel: q.cefrLevel,
+          counts,
+          totalSubmissions,
+        };
+      });
+
+      return analytics;
+    }),
+
+  // ─── Submission Notes (staff internal comments) ───────────────────────────
+  listNotes: protectedProcedure
+    .input(z.object({ submissionId: z.number() }))
+    .query(async ({ input }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const notes = await db
+        .select({
+          id: submissionNotes.id,
+          submissionId: submissionNotes.submissionId,
+          content: submissionNotes.content,
+          createdAt: submissionNotes.createdAt,
+          authorId: submissionNotes.authorId,
+          authorName: users.name,
+        })
+        .from(submissionNotes)
+        .leftJoin(users, eq(submissionNotes.authorId, users.id))
+        .where(eq(submissionNotes.submissionId, input.submissionId))
+        .orderBy(desc(submissionNotes.createdAt));
+      return notes;
+    }),
+
+  addNote: protectedProcedure
+    .input(z.object({
+      submissionId: z.number(),
+      content: z.string().min(1).max(2000),
+    }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      await db.insert(submissionNotes).values({
+        submissionId: input.submissionId,
+        authorId: ctx.user.id,
+        content: input.content,
+      });
+      return { success: true };
+    }),
+
+  deleteNote: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ input, ctx }) => {
+      const db = await getDb();
+      if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "DB unavailable" });
+      const [note] = await db.select().from(submissionNotes).where(eq(submissionNotes.id, input.id));
+      if (!note) throw new TRPCError({ code: "NOT_FOUND" });
+      // Only the author or admin can delete
+      if (note.authorId !== ctx.user.id && ctx.user.role !== "admin") {
+        throw new TRPCError({ code: "FORBIDDEN" });
+      }
+      await db.delete(submissionNotes).where(eq(submissionNotes.id, input.id));
+      return { success: true };
     }),
 });

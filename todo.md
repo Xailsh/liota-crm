@@ -300,4 +300,20 @@
 - [x] Route: /placement-tests and /test/:token registered in App.tsx
 - [x] Vitest: 8 tests (list RBAC, invalid token, seed RBAC) — 48 total passing
 - [x] Add Placement Tests tab to Student detail page (CEFR badge, test history, send button) — click any student card to open profile sheet
+- [x] Save checkpoint (v43b7d7bd)
+
+## Session 9 - Certificate, Analytics & Staff Notes
+
+- [ ] Add submission_notes table (submissionId, authorId, content, createdAt)
+- [ ] Add certificateUrl column to test_submissions table
+- [ ] Backend: placementTests.generateCertificate (PDF via pdfkit, upload to S3, save URL)
+- [ ] Auto-trigger certificate generation when submitAnswers completes
+- [ ] Backend: placementTests.getQuestionAnalytics (per-question option distribution across all submissions)
+- [ ] Backend: placementTests.addNote, listNotes, deleteNote (staff notes on a submission)
+- [ ] Frontend: Submissions tab — add "View Details" button opening a detail panel/dialog
+- [ ] Frontend: Detail panel — show per-question analytics (bar chart or option count per A/B/C/D)
+- [ ] Frontend: Detail panel — show staff notes thread (add/delete notes, author + timestamp)
+- [ ] Frontend: Detail panel — show certificate download link if available
+- [ ] Frontend: TakeTest page — show certificate download button after completion
+- [ ] Write Vitest tests for new procedures
 - [ ] Save checkpoint
