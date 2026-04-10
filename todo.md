@@ -223,3 +223,31 @@
 - [ ] Add prominent "Invite Staff" section at top of Users & Roles tab
 - [ ] Show invite form (email + role + message) inline without needing a dialog
 - [ ] Show pending invitations list with copy link / revoke actions
+
+## Session 5 - Meta Sync, Outreach Hub, WhatsApp Sending
+
+### Meta Lead Form Real Sync
+- [x] Add meta_leads table to schema (formId, leadId, fullName, email, phone, source, status, rawData, syncedAt)
+- [ ] Build Express webhook endpoint POST /api/meta/webhook (verify token + receive leads) — planned next
+- [x] Build tRPC procedures: metaLeads.list, metaLeads.syncFromMeta, metaLeads.stats, metaLeads.updateStatus
+- [x] Update MetaLeads page: add Live Leads tab showing synced leads from DB with sync dialog
+- [x] Add Meta credentials form to OutreachHub (App ID, App Secret, Page Access Token)
+- [ ] Auto-create contact/lead record when Meta lead arrives via webhook — planned next
+
+### Multi-Channel Social Credentials Table
+- [x] Add social_credentials table (platform, handle, accessToken, appId, appSecret, status, lastVerified)
+- [x] Build tRPC procedures: socialCredentials.list, upsert, delete, updateStatus
+- [x] Build OutreachHub page with platform connections table (Email, WhatsApp, Meta, Instagram, TikTok, YouTube, X, LinkedIn)
+- [x] Add OutreachHub to sidebar navigation under Integrations & Admin
+
+### WhatsApp Sending from Bulk Outreach
+- [ ] Add WhatsApp channel option to BulkEmail/Outreach page — planned next
+- [ ] Build backend procedure: outreach.sendWhatsApp (via WhatsApp Business API or Twilio) — planned next
+- [ ] Add voice memo upload + send flow in outreach compose panel — planned next
+- [x] Add per-message delay timer wired to real backend send (outreach.sendEmail with delayMs)
+- [x] Add outreach_messages table with per-recipient status (sent/failed/pending)
+
+### Session 5 Tests
+- [x] Vitest: metaLeads.list, stats, RBAC (non-admin blocked from syncFromMeta)
+- [x] Vitest: socialCredentials.list, upsert+delete cycle, RBAC (non-admin blocked)
+- [x] Vitest: outreach.history, sendEmail invalid email rejection

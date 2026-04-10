@@ -103,6 +103,20 @@ import {
   markBillPaid,
   deleteRecurringBill,
   getBillsDueForReminder,
+  // Meta Leads
+  getMetaLeads,
+  upsertMetaLead,
+  updateMetaLeadStatus,
+  getMetaLeadsStats,
+  // Social Credentials
+  getSocialCredentials,
+  upsertSocialCredential,
+  deleteSocialCredential,
+  updateSocialCredentialStatus,
+  // Outreach Messages
+  createOutreachMessage,
+  getOutreachMessages,
+  updateOutreachMessageStatus,
 } from "./db";
 // Admin guard middlewaree
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -1174,6 +1188,132 @@ GUIDELINES:
     deleteInvitation: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => { await deleteInvitation(input.id); return { success: true }; }),
+  }),
+
+  // ─── Meta Leads (Real Sync) ──────────────────────────────────────────────────
+  metaLeads: router({
+    list: protectedProcedure
+      .input(z.object({ status: z.string().optional(), search: z.string().optional() }).optional())
+      .query(async ({ input }) => getMetaLeads(input ?? {})),
+    stats: protectedProcedure.query(async () => getMetaLeadsStats()),
+    updateStatus: protectedProcedure
+      .input(z.object({ id: z.number(), status: z.enum(["new", "contacted", "enrolled", "lost"]) }))
+      .mutation(async ({ input }) => { await updateMetaLeadStatus(input.id, input.status); return { success: true }; }),
+    // Manual sync from Meta Graph API
+    syncFromMeta: adminProcedure
+      .input(z.object({ formId: z.string(), accessToken: z.string() }))
+      .mutation(async ({ input }) => {
+        try {
+          const url = `https://graph.facebook.com/v19.0/${input.formId}/leads?access_token=${input.accessToken}&fields=id,full_name,email,phone_number,created_time`;
+          const resp = await fetch(url);
+          const json = await resp.json() as any;
+          if (json.error) throw new Error(json.error.message);
+          const leads = json.data ?? [];
+          let synced = 0;
+          for (const lead of leads) {
+            const fields: Record<string, string> = {};
+            for (const f of (lead.field_data ?? [])) {
+              fields[f.name] = f.values?.[0] ?? "";
+            }
+            await upsertMetaLead({
+              formId: input.formId,
+              leadId: lead.id,
+              fullName: fields.full_name ?? lead.full_name ?? null,
+              email: fields.email ?? null,
+              phone: fields.phone_number ?? null,
+              rawData: JSON.stringify(lead),
+              syncedAt: new Date(),
+            });
+            synced++;
+          }
+          return { success: true, synced, total: leads.length };
+        } catch (e: any) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: e.message });
+        }
+      }),
+  }),
+
+  // ─── Social Credentials ────────────────────────────────────────────────────────
+  socialCredentials: router({
+    list: protectedProcedure.query(async () => getSocialCredentials()),
+    upsert: adminProcedure
+      .input(z.object({
+        platform: z.enum(["email", "whatsapp", "meta", "instagram", "tiktok", "youtube", "x", "linkedin"]),
+        handle: z.string().optional(),
+        appId: z.string().optional(),
+        appSecret: z.string().optional(),
+        accessToken: z.string().optional(),
+        refreshToken: z.string().optional(),
+        pageId: z.string().optional(),
+        phoneNumberId: z.string().optional(),
+        webhookVerifyToken: z.string().optional(),
+        notes: z.string().optional(),
+      }))
+      .mutation(async ({ input }) => { await upsertSocialCredential(input); return { success: true }; }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => { await deleteSocialCredential(input.id); return { success: true }; }),
+    updateStatus: adminProcedure
+      .input(z.object({ id: z.number(), status: z.enum(["connected", "disconnected", "error", "pending"]) }))
+      .mutation(async ({ input }) => { await updateSocialCredentialStatus(input.id, input.status); return { success: true }; }),
+  }),
+
+  // ─── Outreach Messages ────────────────────────────────────────────────────────
+  outreach: router({
+    history: protectedProcedure
+      .input(z.object({ channel: z.string().optional(), campaignId: z.string().optional() }).optional())
+      .query(async ({ input }) => getOutreachMessages(input ?? {})),
+    sendEmail: protectedProcedure
+      .input(z.object({
+        recipients: z.array(z.object({
+          name: z.string().optional(),
+          email: z.string().email(),
+          phone: z.string().optional(),
+        })),
+        subject: z.string(),
+        body: z.string(),
+        templateId: z.number().optional(),
+        campaignId: z.string().optional(),
+        delayMs: z.number().default(5000),
+      }))
+      .mutation(async ({ input }) => {
+        const { sendEmail } = await import("./email");
+        let sent = 0;
+        let failed = 0;
+        const campaignId = input.campaignId ?? `campaign_${Date.now()}`;
+        for (let i = 0; i < input.recipients.length; i++) {
+          const r = input.recipients[i];
+          if (i > 0 && input.delayMs > 0) {
+            await new Promise(res => setTimeout(res, input.delayMs));
+          }
+          const msgId = (await createOutreachMessage({
+            channel: "email",
+            recipientName: r.name ?? null,
+            recipientEmail: r.email,
+            subject: input.subject,
+            body: input.body,
+            templateId: input.templateId ?? null,
+            campaignId,
+            status: "pending",
+          }));
+          try {
+            const personalizedBody = input.body
+              .replace(/\{\{name\}\}/g, r.name ?? "")
+              .replace(/\{\{first_name\}\}/g, r.name?.split(" ")[0] ?? "");
+            const result = await sendEmail({
+              to: r.email,
+              subject: input.subject,
+              html: `<div style="font-family:sans-serif;max-width:600px;margin:0 auto">${personalizedBody.replace(/\n/g, "<br>")}</div>`,
+            });
+            await updateOutreachMessageStatus(Number((msgId as any).insertId ?? 0), result.success ? "sent" : "failed", result.error);
+            if (result.success) sent++; else failed++;
+          } catch (e: any) {
+            await updateOutreachMessageStatus(Number((msgId as any).insertId ?? 0), "failed", e.message);
+            failed++;
+          }
+        }
+        return { success: true, sent, failed, campaignId };
+      }),
   }),
 
   // ─── Public: Accept Invitation ────────────────────────────────────────────

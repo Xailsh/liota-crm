@@ -14,8 +14,183 @@ import {
   Loader2, Play, Pause, Trash2, Eye, AlertCircle, Info, Shield, Bot, Code2, Brain, Globe, Copy, Plus
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+// ─── Live Leads Tab ───────────────────────────────────────────────────────────────
+function LiveLeadsTab() {
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [syncFormId, setSyncFormId] = useState("1652859402713081");
+  const [syncToken, setSyncToken] = useState("");
+  const [showSyncDialog, setShowSyncDialog] = useState(false);
 
-// ─── Setup Guide ─────────────────────────────────────────────────────────────
+  const { data: leads = [], refetch, isLoading } = trpc.metaLeads.list.useQuery(
+    { search: search || undefined, status: statusFilter || undefined },
+    { refetchInterval: 30000 }
+  );
+  const { data: stats } = trpc.metaLeads.stats.useQuery();
+  const updateStatusMutation = trpc.metaLeads.updateStatus.useMutation({
+    onSuccess: () => refetch(),
+    onError: (e) => toast.error(e.message),
+  });
+  const syncMutation = trpc.metaLeads.syncFromMeta.useMutation({
+    onSuccess: (data) => {
+      refetch();
+      setShowSyncDialog(false);
+      toast.success(`Synced ${data.synced} leads from Meta (Form ID: ${syncFormId})`);
+    },
+    onError: (e) => toast.error(`Sync failed: ${e.message}`),
+  });
+
+  const STATUS_COLORS: Record<string, string> = {
+    new: "bg-blue-100 text-blue-800",
+    contacted: "bg-yellow-100 text-yellow-800",
+    enrolled: "bg-green-100 text-green-800",
+    lost: "bg-red-100 text-red-800",
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        {[
+          { label: "Total Leads", value: stats?.total ?? 0, color: "text-foreground" },
+          { label: "New", value: stats?.new ?? 0, color: "text-blue-600" },
+          { label: "Contacted", value: stats?.contacted ?? 0, color: "text-yellow-600" },
+          { label: "Enrolled", value: stats?.enrolled ?? 0, color: "text-green-600" },
+          { label: "Lost", value: stats?.lost ?? 0, color: "text-red-600" },
+        ].map(s => (
+          <Card key={s.label}>
+            <CardContent className="pt-3 pb-3">
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Controls */}
+      <div className="flex flex-wrap gap-3 items-center">
+        <Input
+          placeholder="Search by name, email, phone..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="max-w-xs"
+        />
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-36">
+            <SelectValue placeholder="All statuses" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">All Statuses</SelectItem>
+            <SelectItem value="new">New</SelectItem>
+            <SelectItem value="contacted">Contacted</SelectItem>
+            <SelectItem value="enrolled">Enrolled</SelectItem>
+            <SelectItem value="lost">Lost</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className="ml-auto flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => refetch()}>
+            <RefreshCw className="w-3.5 h-3.5 mr-1" /> Refresh
+          </Button>
+          <Button size="sm" onClick={() => setShowSyncDialog(true)}>
+            <Zap className="w-3.5 h-3.5 mr-1" /> Sync from Meta
+          </Button>
+        </div>
+      </div>
+
+      {/* Leads Table */}
+      {isLoading ? (
+        <div className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto text-muted-foreground" /></div>
+      ) : leads.length === 0 ? (
+        <Card className="border-dashed">
+          <CardContent className="py-12 text-center">
+            <Zap className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
+            <p className="font-medium">No Meta leads yet</p>
+            <p className="text-sm text-muted-foreground mt-1">Click "Sync from Meta" to pull leads from your Facebook Lead Form.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/30">
+                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">Name</th>
+                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">Email</th>
+                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">Phone</th>
+                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">Status</th>
+                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">Synced</th>
+                    <th className="text-left py-2.5 px-4 font-medium text-muted-foreground">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(leads as any[]).map((lead: any) => (
+                    <tr key={lead.id} className="border-b hover:bg-muted/20">
+                      <td className="py-2.5 px-4 font-medium">{lead.fullName ?? "—"}</td>
+                      <td className="py-2.5 px-4 text-muted-foreground">{lead.email ?? "—"}</td>
+                      <td className="py-2.5 px-4 text-muted-foreground">{lead.phone ?? "—"}</td>
+                      <td className="py-2.5 px-4">
+                        <Select value={lead.status} onValueChange={(v) => updateStatusMutation.mutate({ id: lead.id, status: v as any })}>
+                          <SelectTrigger className="h-6 w-28 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="new">New</SelectItem>
+                            <SelectItem value="contacted">Contacted</SelectItem>
+                            <SelectItem value="enrolled">Enrolled</SelectItem>
+                            <SelectItem value="lost">Lost</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </td>
+                      <td className="py-2.5 px-4 text-xs text-muted-foreground">{new Date(lead.syncedAt).toLocaleDateString()}</td>
+                      <td className="py-2.5 px-4">
+                        <Badge className={`text-xs ${STATUS_COLORS[lead.status] ?? ""}`}>{lead.status}</Badge>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sync Dialog */}
+      <Dialog open={showSyncDialog} onOpenChange={setShowSyncDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="w-4 h-4 text-blue-600" /> Sync Leads from Meta
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <Label>Form ID</Label>
+              <Input value={syncFormId} onChange={e => setSyncFormId(e.target.value)} placeholder="1652859402713081" />
+              <p className="text-xs text-muted-foreground mt-1">Your Meta Lead Form ID. Default: 1652859402713081</p>
+            </div>
+            <div>
+              <Label>Page Access Token</Label>
+              <Input type="password" value={syncToken} onChange={e => setSyncToken(e.target.value)} placeholder="EAABx..." />
+              <p className="text-xs text-muted-foreground mt-1">Get this from Meta Business Suite → Settings → Page Access Tokens. Requires leads_retrieval permission.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSyncDialog(false)}>Cancel</Button>
+            <Button
+              onClick={() => syncMutation.mutate({ formId: syncFormId, accessToken: syncToken })}
+              disabled={!syncToken || syncMutation.isPending}
+            >
+              {syncMutation.isPending ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Syncing...</> : <><Zap className="w-3.5 h-3.5 mr-1" /> Sync Now</>}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Setup Guide ───────────────────────────────────────────────────────────────
 function SetupGuide() {
   const steps = [
     {
@@ -572,8 +747,11 @@ export default function MetaLeads() {
         <p className="text-sm text-muted-foreground mt-0.5">Facebook & Instagram lead capture integration and monitoring</p>
       </div>
 
-       <Tabs defaultValue="setup">
-        <TabsList className="grid w-full grid-cols-5">
+       <Tabs defaultValue="live-leads">
+        <TabsList className="grid w-full grid-cols-6">
+          <TabsTrigger value="live-leads" className="gap-1.5 text-xs">
+            <CheckCircle className="w-3.5 h-3.5" /> Live Leads
+          </TabsTrigger>
           <TabsTrigger value="setup" className="gap-1.5 text-xs">
             <BookOpen className="w-3.5 h-3.5" /> Setup Guide
           </TabsTrigger>
@@ -590,6 +768,9 @@ export default function MetaLeads() {
             <Bot className="w-3.5 h-3.5" /> AI Front Door
           </TabsTrigger>
         </TabsList>
+        <TabsContent value="live-leads" className="mt-4">
+          <LiveLeadsTab />
+        </TabsContent>
         <TabsContent value="setup" className="mt-4">
           <SetupGuide />
         </TabsContent>

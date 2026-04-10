@@ -510,3 +510,61 @@ export const invitations = mysqlTable("invitations", {
 });
 export type Invitation = typeof invitations.$inferSelect;
 export type InsertInvitation = typeof invitations.$inferInsert;
+
+// ─── Meta Leads ───────────────────────────────────────────────────────────────
+export const metaLeads = mysqlTable("metaLeads", {
+  id: int("id").autoincrement().primaryKey(),
+  formId: varchar("formId", { length: 128 }).notNull(),
+  leadId: varchar("leadId", { length: 128 }).notNull().unique(),
+  fullName: varchar("fullName", { length: 256 }),
+  email: varchar("email", { length: 320 }),
+  phone: varchar("phone", { length: 64 }),
+  source: varchar("source", { length: 128 }).default("meta_lead_form"),
+  status: mysqlEnum("status", ["new", "contacted", "enrolled", "lost"]).default("new").notNull(),
+  rawData: text("rawData"),
+  syncedAt: timestamp("syncedAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type MetaLead = typeof metaLeads.$inferSelect;
+export type InsertMetaLead = typeof metaLeads.$inferInsert;
+
+// ─── Social Credentials ───────────────────────────────────────────────────────
+export const socialCredentials = mysqlTable("socialCredentials", {
+  id: int("id").autoincrement().primaryKey(),
+  platform: mysqlEnum("platform", ["email", "whatsapp", "meta", "instagram", "tiktok", "youtube", "x", "linkedin"]).notNull(),
+  handle: varchar("handle", { length: 256 }),
+  appId: varchar("appId", { length: 256 }),
+  appSecret: varchar("appSecret", { length: 512 }),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  pageId: varchar("pageId", { length: 128 }),
+  phoneNumberId: varchar("phoneNumberId", { length: 128 }),
+  webhookVerifyToken: varchar("webhookVerifyToken", { length: 256 }),
+  status: mysqlEnum("status", ["connected", "disconnected", "error", "pending"]).default("disconnected").notNull(),
+  lastVerifiedAt: timestamp("lastVerifiedAt"),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type SocialCredential = typeof socialCredentials.$inferSelect;
+export type InsertSocialCredential = typeof socialCredentials.$inferInsert;
+
+// ─── Outreach Messages (Send History) ────────────────────────────────────────
+export const outreachMessages = mysqlTable("outreachMessages", {
+  id: int("id").autoincrement().primaryKey(),
+  channel: mysqlEnum("channel", ["email", "whatsapp", "sms"]).notNull(),
+  recipientName: varchar("recipientName", { length: 256 }),
+  recipientEmail: varchar("recipientEmail", { length: 320 }),
+  recipientPhone: varchar("recipientPhone", { length: 64 }),
+  subject: varchar("subject", { length: 512 }),
+  body: text("body"),
+  templateId: int("templateId"),
+  status: mysqlEnum("status", ["pending", "sent", "failed", "delivered"]).default("pending").notNull(),
+  errorMessage: text("errorMessage"),
+  sentAt: timestamp("sentAt"),
+  campaignId: varchar("campaignId", { length: 128 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type OutreachMessage = typeof outreachMessages.$inferSelect;
+export type InsertOutreachMessage = typeof outreachMessages.$inferInsert;

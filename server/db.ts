@@ -28,6 +28,12 @@ import {
   inboundWebhooks,
   recurringBills,
   invitations,
+  metaLeads,
+  socialCredentials,
+  outreachMessages,
+  InsertMetaLead,
+  InsertSocialCredential,
+  InsertOutreachMessage,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -1268,4 +1274,102 @@ export async function deleteInvitation(id: number) {
   const db = await getDb();
   if (!db) throw new Error("DB not available");
   await db.delete(invitations).where(eq(invitations.id, id));
+}
+
+// ─── Meta Leads ───────────────────────────────────────────────────────────────
+export async function getMetaLeads(filters?: { status?: string; search?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(metaLeads).orderBy(sql`createdAt DESC`);
+  if (!filters) return rows;
+  return rows.filter(r => {
+    if (filters.status && r.status !== filters.status) return false;
+    if (filters.search) {
+      const s = filters.search.toLowerCase();
+      return (r.fullName?.toLowerCase().includes(s) || r.email?.toLowerCase().includes(s) || r.phone?.includes(s));
+    }
+    return true;
+  });
+}
+export async function upsertMetaLead(data: InsertMetaLead) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const existing = await db.select().from(metaLeads).where(eq(metaLeads.leadId, data.leadId));
+  if (existing.length > 0) {
+    await db.update(metaLeads).set({ ...data, updatedAt: new Date() }).where(eq(metaLeads.leadId, data.leadId));
+  } else {
+    await db.insert(metaLeads).values(data);
+  }
+}
+export async function updateMetaLeadStatus(id: number, status: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(metaLeads).set({ status: status as any, updatedAt: new Date() }).where(eq(metaLeads.id, id));
+}
+export async function getMetaLeadsStats() {
+  const db = await getDb();
+  if (!db) return { total: 0, new: 0, contacted: 0, enrolled: 0, lost: 0 };
+  const rows = await db.select().from(metaLeads);
+  return {
+    total: rows.length,
+    new: rows.filter(r => r.status === 'new').length,
+    contacted: rows.filter(r => r.status === 'contacted').length,
+    enrolled: rows.filter(r => r.status === 'enrolled').length,
+    lost: rows.filter(r => r.status === 'lost').length,
+  };
+}
+
+// ─── Social Credentials ───────────────────────────────────────────────────────
+export async function getSocialCredentials() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(socialCredentials).orderBy(sql`platform ASC`);
+}
+export async function upsertSocialCredential(data: Partial<InsertSocialCredential> & { platform: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const existing = await db.select().from(socialCredentials).where(eq(socialCredentials.platform, data.platform as any));
+  if (existing.length > 0) {
+    await db.update(socialCredentials).set({ ...data, updatedAt: new Date() } as any).where(eq(socialCredentials.platform, data.platform as any));
+  } else {
+    await db.insert(socialCredentials).values(data as InsertSocialCredential);
+  }
+}
+export async function deleteSocialCredential(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.delete(socialCredentials).where(eq(socialCredentials.id, id));
+}
+export async function updateSocialCredentialStatus(id: number, status: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(socialCredentials)
+    .set({ status: status as any, lastVerifiedAt: new Date(), updatedAt: new Date() })
+    .where(eq(socialCredentials.id, id));
+}
+
+// ─── Outreach Messages ───────────────────────────────────────────────────────
+export async function createOutreachMessage(data: InsertOutreachMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  const result = await db.insert(outreachMessages).values(data);
+  return result;
+}
+export async function getOutreachMessages(filters?: { channel?: string; campaignId?: string }) {
+  const db = await getDb();
+  if (!db) return [];
+  const rows = await db.select().from(outreachMessages).orderBy(sql`createdAt DESC`);
+  if (!filters) return rows;
+  return rows.filter(r => {
+    if (filters.channel && r.channel !== filters.channel) return false;
+    if (filters.campaignId && r.campaignId !== filters.campaignId) return false;
+    return true;
+  });
+}
+export async function updateOutreachMessageStatus(id: number, status: string, errorMessage?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(outreachMessages)
+    .set({ status: status as any, sentAt: status === 'sent' ? new Date() : undefined, errorMessage: errorMessage ?? null })
+    .where(eq(outreachMessages.id, id));
 }

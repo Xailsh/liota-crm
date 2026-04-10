@@ -76,6 +76,8 @@ const buildNavItems = (t: (k: any) => string) => [
   {
     group: "Integrations & Admin",
     items: [
+      { href: "/outreach-hub", icon: Zap, label: "Outreach Hub", description: "Social media connections" },
+      { href: "/bulk-email", icon: Mail, label: "Bulk Email", description: "Mass outreach & campaigns" },
       { href: "/integrations", icon: Link2, label: t("integrations"), description: "Webhooks & connections" },
       { href: "/admin", icon: Shield, label: t("admin"), description: "System administration", adminOnly: true },
     ],

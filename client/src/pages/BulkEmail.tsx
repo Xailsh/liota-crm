@@ -11,6 +11,7 @@ import {
   ArrowLeft, Send, Paperclip, Mic, Image, ShieldCheck, Loader2, TestTube2, Globe
 } from "lucide-react";
 import { Link } from "wouter";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const SEND_DELAYS = [
   { value: "5", label: "5 seconds (recommended)" },
@@ -46,6 +47,7 @@ export default function BulkEmail() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [isSendingTest, setIsSendingTest] = useState(false);
+  const { user } = useAuth();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const audioInputRef = useRef<HTMLInputElement>(null);
 
@@ -169,15 +171,37 @@ export default function BulkEmail() {
     setAttachments((prev) => prev.filter((_, i) => i !== idx));
   };
 
+  const sendEmailMutation = trpc.outreach.sendEmail.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Sent to ${data.sent} recipient${data.sent !== 1 ? "s" : ""}${data.failed > 0 ? ` (${data.failed} failed)` : ""}`);
+      setSelectedIds(new Set());
+    },
+    onError: (e) => toast.error(`Send failed: ${e.message}`),
+  });
+
   const handleSendTest = async () => {
     if (!drafts[language].subject || !drafts[language].body) {
       toast.error("Please fill in subject and body first");
       return;
     }
+    if (!user?.email) {
+      toast.error("Cannot determine your email address");
+      return;
+    }
     setIsSendingTest(true);
-    await new Promise((r) => setTimeout(r, 1500));
-    setIsSendingTest(false);
-    toast.success("Test email sent to your address!");
+    try {
+      await sendEmailMutation.mutateAsync({
+        recipients: [{ name: user.name ?? "Test", email: user.email }],
+        subject: `[TEST] ${drafts[language].subject}`,
+        body: drafts[language].body,
+        delayMs: 0,
+      });
+      toast.success(`Test email sent to ${user.email}`);
+    } catch {
+      // error handled by mutation
+    } finally {
+      setIsSendingTest(false);
+    }
   };
 
   const handleSend = async () => {
@@ -189,12 +213,22 @@ export default function BulkEmail() {
       toast.error("Please fill in subject and body");
       return;
     }
+    const recipients = filteredRecipients
+      .filter((r) => selectedIds.has(r.id))
+      .map((r) => ({ name: r.name, email: r.email }));
     setIsSending(true);
-    // Simulate send with delay
-    await new Promise((r) => setTimeout(r, 2000));
-    setIsSending(false);
-    toast.success(`Email sent to ${selectedIds.size} recipient${selectedIds.size !== 1 ? "s" : ""}!`);
-    setSelectedIds(new Set());
+    try {
+      await sendEmailMutation.mutateAsync({
+        recipients,
+        subject: drafts[language].subject,
+        body: drafts[language].body,
+        delayMs: parseInt(sendDelay) * 1000,
+      });
+    } catch {
+      // error handled by mutation
+    } finally {
+      setIsSending(false);
+    }
   };
 
   const currentDraft = drafts[language];
