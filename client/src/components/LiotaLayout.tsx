@@ -17,6 +17,37 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const LOGO_URL = "https://d2xsxph8kpxj0f.cloudfront.net/310519663079010352/YzZjuTcos3se78oWJYxJkp/liota-logo_0110e626.jpeg";
 
+// Role-based access: which nav hrefs each role can see
+// admin sees everything; roles not listed here fall back to full access
+const ROLE_ALLOWED: Record<string, string[]> = {
+  instructor: [
+    "/", "/students", "/classes", "/academic-progress", "/placement-tests",
+    "/email-templates", "/whatsapp-templates", "/voice-templates",
+    "/onboarding-guide",
+  ],
+  coordinator: [
+    "/", "/students", "/classes", "/academic-progress", "/placement-tests",
+    "/leads", "/email-marketing", "/contacts", "/bulk-email", "/meta-leads",
+    "/email-templates", "/whatsapp-templates", "/voice-templates",
+    "/onboarding-guide",
+  ],
+  sales: [
+    "/", "/leads", "/contacts", "/email-marketing", "/bulk-email",
+    "/meta-leads", "/placement-tests",
+    "/email-templates", "/whatsapp-templates",
+    "/onboarding-guide",
+  ],
+  finance: [
+    "/", "/accounting", "/bills", "/financial",
+    "/scholarships", "/packages",
+    "/onboarding-guide",
+  ],
+  receptionist: [
+    "/", "/students", "/classes", "/contacts",
+    "/leads", "/email-templates", "/onboarding-guide",
+  ],
+};
+
 const buildNavItems = (t: (k: any) => string) => [
   {
     group: "Main",
@@ -156,8 +187,12 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-4">
         {navItems.map((group) => {
+          const allowedHrefs = user?.role && user.role !== "admin" && ROLE_ALLOWED[user.role]
+            ? ROLE_ALLOWED[user.role]
+            : null; // null = show all
           const visibleItems = group.items.filter((item) => {
             if ((item as any).adminOnly && user?.role !== "admin") return false;
+            if (allowedHrefs && !allowedHrefs.includes(item.href)) return false;
             return true;
           });
           if (visibleItems.length === 0) return null;
@@ -220,7 +255,7 @@ export default function LiotaLayout({ children }: LiotaLayoutProps) {
                     : "bg-sidebar-accent text-sidebar-accent-foreground"
                 )}
               >
-                {user?.role === "admin" ? "Admin" : "User"}
+                {user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : "User"}
               </Badge>
             </div>
           </div>

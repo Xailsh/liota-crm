@@ -1,122 +1,119 @@
-import { useState, useRef } from "react";
+import { useState, useCallback } from "react";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
-  BookOpen, GraduationCap, Users, DollarSign, ShieldCheck,
-  PlayCircle, Edit3, Download, CheckCircle2, AlertCircle, Info,
-  ChevronRight, Lock, Eye, FileText, Mail, BarChart3, Calendar,
-  UserPlus, Settings, Zap, ClipboardList
+  BookOpen, CheckCircle2, Circle, Download, Edit2, GraduationCap,
+  Users2, DollarSign, Shield, Play, RefreshCw, ChevronDown, ChevronRight,
+  Zap, Mail, BarChart3, Star, ClipboardList,
 } from "lucide-react";
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface Section {
-  key: string;
-  title: string;
-  icon: React.ReactNode;
-  steps: string[];
-  note?: string;
-  restricted?: boolean;
-}
-
-interface RoleConfig {
+// ─── Role definitions ──────────────────────────────────────────────────────────
+type ChecklistItem = { key: string; label: string };
+type Section = {
   id: string;
-  label: string;
-  color: string;
-  icon: React.ReactNode;
+  title: string;
+  icon: React.ElementType;
   description: string;
-  accessSummary: string[];
-  sections: Section[];
-}
+  items: ChecklistItem[];
+  videoKey: string;
+};
 
-// ─── Role Definitions ─────────────────────────────────────────────────────────
-const ROLES: RoleConfig[] = [
+const ROLES: { id: string; label: string; icon: React.ElementType; color: string; sections: Section[] }[] = [
   {
     id: "instructor",
-    label: "Instructor / Teacher",
-    color: "bg-blue-500",
-    icon: <GraduationCap className="h-5 w-5" />,
-    description: "Teachers and language instructors who manage classes, track student progress, and run placement tests.",
-    accessSummary: ["View Students", "View & Manage Classes", "Academic Progress", "Placement Tests", "Contacts (view)"],
+    label: "Instructor",
+    icon: GraduationCap,
+    color: "bg-blue-100 text-blue-700",
     sections: [
       {
-        key: "instructor_login",
+        id: "inst-login",
         title: "1. Logging In",
-        icon: <ShieldCheck className="h-4 w-4" />,
-        steps: [
-          "Open the LIOTA CRM in your browser.",
-          "Click 'Sign in with Google' to use your Google account, or enter your email and password if you set one when accepting your invitation.",
-          "If you haven't received an invitation yet, ask your Admin to send one to your email.",
-          "Once logged in, you will see the main sidebar on the left. Your role is shown at the bottom as 'Instructor'.",
+        icon: Shield,
+        description: "Access the CRM using your invitation link and set up your account.",
+        videoKey: "instructor-login",
+        items: [
+          { key: "inst-login-1", label: "Open your invitation email and click the Accept Invitation link" },
+          { key: "inst-login-2", label: "Choose your sign-in method: Google or set an email/password" },
+          { key: "inst-login-3", label: "Confirm your name and complete account setup" },
+          { key: "inst-login-4", label: "Bookmark the CRM URL for quick access" },
         ],
       },
       {
-        key: "instructor_students",
-        title: "2. Viewing Your Students",
-        icon: <Users className="h-4 w-4" />,
-        steps: [
-          "Click 'Students' in the left sidebar under the STUDENTS section.",
-          "You can search by name, filter by campus, age group, or enrollment status.",
-          "Click on any student card to open their profile sheet on the right side.",
-          "The profile shows their contact info, CEFR level, enrollment status, and test history.",
-          "You can view but NOT delete students — only Admins and Coordinators can do that.",
+        id: "inst-students",
+        title: "2. Viewing Students",
+        icon: GraduationCap,
+        description: "Browse student profiles and check their enrollment details.",
+        videoKey: "instructor-students",
+        items: [
+          { key: "inst-students-1", label: "Navigate to Students in the left sidebar" },
+          { key: "inst-students-2", label: "Use the search bar to find a student by name" },
+          { key: "inst-students-3", label: "Click a student card to open their profile sheet" },
+          { key: "inst-students-4", label: "Review their CEFR level, program, and enrollment status" },
+          { key: "inst-students-5", label: "Check the Placement Tests tab for test history and scores" },
         ],
       },
       {
-        key: "instructor_classes",
-        title: "3. Managing Your Classes",
-        icon: <Calendar className="h-4 w-4" />,
-        steps: [
-          "Click 'Classes' in the sidebar.",
-          "You will see all classes at your campus. Use the filter to show only your classes.",
-          "Click a class to view its schedule, enrolled students, and attendance records.",
-          "To mark attendance, open the class and use the Attendance tab.",
-          "To update a class status (e.g., from Scheduled to Active), click the Edit button on the class card.",
+        id: "inst-classes",
+        title: "3. Managing Classes",
+        icon: BookOpen,
+        description: "View your assigned classes, schedules, and student rosters.",
+        videoKey: "instructor-classes",
+        items: [
+          { key: "inst-classes-1", label: "Go to Classes in the sidebar" },
+          { key: "inst-classes-2", label: "Review your class schedule and student count" },
+          { key: "inst-classes-3", label: "Check class status (Scheduled / Active / Completed)" },
+          { key: "inst-classes-4", label: "Note the campus and modality (online / onsite) for each class" },
         ],
       },
       {
-        key: "instructor_academic",
-        title: "4. Academic Progress & CEFR Assessments",
-        icon: <BarChart3 className="h-4 w-4" />,
-        steps: [
-          "Click 'Academic Progress' in the sidebar.",
-          "Select a student to view their full CEFR assessment history.",
-          "To add a new assessment, click 'Add Assessment', select the student, date, CEFR level, and scores for each skill (Speaking, Listening, Reading, Writing).",
-          "The system will automatically update the student's CEFR level on their profile.",
-          "You can add notes about the assessment for your records.",
+        id: "inst-academic",
+        title: "4. Academic Progress",
+        icon: BarChart3,
+        description: "Track student CEFR assessments and learning progress.",
+        videoKey: "instructor-academic",
+        items: [
+          { key: "inst-academic-1", label: "Navigate to Academic Progress in the sidebar" },
+          { key: "inst-academic-2", label: "Select a student to view their assessment history" },
+          { key: "inst-academic-3", label: "Review speaking, listening, reading, and writing scores" },
+          { key: "inst-academic-4", label: "Understand the CEFR scale: A1 (beginner) → C2 (mastery)" },
         ],
       },
       {
-        key: "instructor_placement",
+        id: "inst-placement",
         title: "5. Placement Tests",
-        icon: <ClipboardList className="h-4 w-4" />,
-        steps: [
-          "Click 'Placement Tests' in the sidebar.",
-          "To send a test to a student, click the 'Send Test' button on any test version.",
-          "Enter the student's name and email (or select from the student list), set an expiry date, and click Send.",
-          "The student will receive an email from contact@liota.institute with a link to take the test.",
-          "Once completed, the result appears in the Submissions tab with their CEFR score and a PDF certificate.",
-          "You can also open any student's profile and go to the 'Placement Tests' tab to send directly from there.",
+        icon: ClipboardList,
+        description: "Send English placement tests and review student results.",
+        videoKey: "instructor-placement",
+        items: [
+          { key: "inst-placement-1", label: "Go to Placement Tests in the sidebar" },
+          { key: "inst-placement-2", label: "Click Send Test to email a test link to a student" },
+          { key: "inst-placement-3", label: "Monitor the Submissions tab to see completed tests" },
+          { key: "inst-placement-4", label: "Click Details on a submission to see per-question analytics" },
+          { key: "inst-placement-5", label: "Add internal notes on a submission using the Staff Notes tab" },
+          { key: "inst-placement-6", label: "Download the student's PDF certificate from the submission details" },
         ],
       },
       {
-        key: "instructor_notes",
-        title: "6. Leaving Notes on Test Submissions",
-        icon: <FileText className="h-4 w-4" />,
-        steps: [
-          "In the Placement Tests page, click the Submissions tab.",
-          "Find the student's submission and click 'Details' to open the side panel.",
-          "Click the 'Staff Notes' tab inside the panel.",
-          "Type your note and click 'Add Note'. Notes are internal — students cannot see them.",
-          "You can delete your own notes but not notes left by other staff members.",
+        id: "inst-templates",
+        title: "6. Message Templates",
+        icon: Mail,
+        description: "Use pre-built email, WhatsApp, and voice templates for student communication.",
+        videoKey: "instructor-templates",
+        items: [
+          { key: "inst-templates-1", label: "Find Email Templates, WhatsApp Templates, and Voice Templates in the sidebar" },
+          { key: "inst-templates-2", label: "Browse templates by category (welcome, reminder, progress report)" },
+          { key: "inst-templates-3", label: "Copy a template and personalise it before sending" },
         ],
       },
     ],
@@ -124,180 +121,282 @@ const ROLES: RoleConfig[] = [
   {
     id: "coordinator",
     label: "Coordinator / Sales",
-    color: "bg-emerald-500",
-    icon: <Users className="h-5 w-5" />,
-    description: "Enrollment coordinators and sales staff who manage leads, communicate with prospects, and handle enrollments.",
-    accessSummary: ["Full Student Management", "Leads Pipeline", "Email Marketing", "Contacts", "Placement Tests", "Scholarships & Camps"],
+    icon: Users2,
+    color: "bg-green-100 text-green-700",
     sections: [
       {
-        key: "coord_login",
+        id: "coord-login",
         title: "1. Logging In",
-        icon: <ShieldCheck className="h-4 w-4" />,
-        steps: [
-          "Open the LIOTA CRM in your browser.",
-          "Sign in with Google or your email/password from your invitation.",
-          "Your role shows as 'Coordinator' at the bottom of the sidebar.",
-          "You have access to all student and sales features but NOT finance or admin settings.",
+        icon: Shield,
+        description: "Access the CRM using your invitation link.",
+        videoKey: "coordinator-login",
+        items: [
+          { key: "coord-login-1", label: "Open your invitation email and click the Accept Invitation link" },
+          { key: "coord-login-2", label: "Choose Google Sign-In or set an email/password" },
+          { key: "coord-login-3", label: "Bookmark the CRM URL for quick access" },
         ],
       },
       {
-        key: "coord_leads",
-        title: "2. Managing the Leads Pipeline",
-        icon: <Zap className="h-4 w-4" />,
-        steps: [
-          "Click 'Leads Pipeline' in the sidebar under SALES & MARKETING.",
-          "The Kanban board shows leads in stages: New Lead → Contacted → Trial Scheduled → Trial Done → Proposal Sent → Enrolled → Lost.",
-          "Drag and drop a lead card to move it to the next stage.",
-          "Click a lead card to view details, add notes, or schedule a trial.",
-          "To add a new lead, click the '+ Add Lead' button at the top right.",
-          "Fill in the lead's name, email, phone, interested program, preferred campus, and source (e.g., Meta, Referral, Walk-in).",
+        id: "coord-leads",
+        title: "2. Leads Pipeline",
+        icon: Users2,
+        description: "Manage prospective students from first contact to enrollment.",
+        videoKey: "coordinator-leads",
+        items: [
+          { key: "coord-leads-1", label: "Go to Leads Pipeline in the sidebar" },
+          { key: "coord-leads-2", label: "Understand the 7 pipeline stages: New Lead → Enrolled / Lost" },
+          { key: "coord-leads-3", label: "Click Add Lead to manually enter a new prospect" },
+          { key: "coord-leads-4", label: "Drag a lead card to move it to the next stage" },
+          { key: "coord-leads-5", label: "Click a lead to edit details, add notes, or schedule a trial" },
+          { key: "coord-leads-6", label: "Set the Assigned To field to track ownership" },
         ],
       },
       {
-        key: "coord_students",
-        title: "3. Enrolling & Managing Students",
-        icon: <GraduationCap className="h-4 w-4" />,
-        steps: [
-          "Click 'Students' in the sidebar.",
-          "To add a new student, click '+ Add Student' and fill in all required fields.",
-          "Set the Enrollment Status to 'Trial' for new students, then update to 'Active' once they enroll.",
-          "Assign the correct campus, age group (Children / Teens / Adults), and program.",
-          "For children and teens, fill in the Parent/Guardian information fields.",
-          "Use the Tags field to add labels like 'VIP', 'Scholarship', or 'Referral'.",
+        id: "coord-contacts",
+        title: "3. Contacts",
+        icon: Users2,
+        description: "Manage parents, guardians, and prospective student contacts.",
+        videoKey: "coordinator-contacts",
+        items: [
+          { key: "coord-contacts-1", label: "Navigate to Contacts in the sidebar" },
+          { key: "coord-contacts-2", label: "Add a new contact with name, email, phone, and relationship" },
+          { key: "coord-contacts-3", label: "Link contacts to student records where applicable" },
+          { key: "coord-contacts-4", label: "Use the search bar to find contacts quickly" },
         ],
       },
       {
-        key: "coord_email",
-        title: "4. Email Marketing & Bulk Outreach",
-        icon: <Mail className="h-4 w-4" />,
-        steps: [
-          "Click 'Email Marketing' in the sidebar.",
-          "To send a bulk email, click 'Bulk Email' or go to the Bulk Email page.",
-          "Select recipients using the checkboxes (filter by campus, program, or status).",
-          "Choose a template from the dropdown or write a custom subject and body.",
-          "Use {{name}} and {{first_name}} tokens to personalize the message.",
-          "Set a send delay (5–30 seconds between emails) to avoid spam filters.",
-          "Click 'Send Test Email' first to preview, then 'Send to X Recipients' to send.",
+        id: "coord-email",
+        title: "4. Email Marketing",
+        icon: Mail,
+        description: "Create and send email campaigns to students and leads.",
+        videoKey: "coordinator-email",
+        items: [
+          { key: "coord-email-1", label: "Go to Email Marketing in the sidebar" },
+          { key: "coord-email-2", label: "Click New Campaign and fill in subject, body, and audience segment" },
+          { key: "coord-email-3", label: "Use the Send Test button to preview before sending" },
+          { key: "coord-email-4", label: "Schedule or send immediately; monitor open and click rates" },
         ],
       },
       {
-        key: "coord_contacts",
-        title: "5. Managing Contacts",
-        icon: <Users className="h-4 w-4" />,
-        steps: [
-          "Click 'Contacts' in the sidebar.",
-          "Contacts are parents, guardians, and other non-student contacts.",
-          "Click '+ Add Contact' to create a new contact with name, email, phone, and tags.",
-          "Open a contact to view their communication history and add notes.",
-          "Use the Tags field to categorize contacts (e.g., 'Parent', 'Corporate', 'Partner').",
+        id: "coord-bulk",
+        title: "5. Bulk Email / Outreach",
+        icon: Zap,
+        description: "Send mass personalised emails with delay timers to avoid spam filters.",
+        videoKey: "coordinator-bulk",
+        items: [
+          { key: "coord-bulk-1", label: "Go to Bulk Email in the sidebar" },
+          { key: "coord-bulk-2", label: "Compose your message and select recipients (students or leads)" },
+          { key: "coord-bulk-3", label: "Set the per-message delay (5–30 seconds) to avoid spam detection" },
+          { key: "coord-bulk-4", label: "Click Send to All — monitor the live status log" },
+          { key: "coord-bulk-5", label: "Review send history in the Outreach History tab" },
         ],
       },
       {
-        key: "coord_placement",
-        title: "6. Sending Placement Tests to Leads",
-        icon: <ClipboardList className="h-4 w-4" />,
-        steps: [
-          "Go to 'Placement Tests' in the sidebar.",
-          "Click 'Send Test' on the appropriate test version (Starter, Intermediate, or Advanced).",
-          "Enter the lead's name and email, set expiry to 7 days, and click Send.",
-          "The lead receives a branded email with a test link. Once completed, you see their CEFR level in the Submissions tab.",
-          "Use this result to recommend the right program level when following up.",
+        id: "coord-meta",
+        title: "6. Meta Leads",
+        icon: Star,
+        description: "View and manage leads captured from Facebook and Instagram forms.",
+        videoKey: "coordinator-meta",
+        items: [
+          { key: "coord-meta-1", label: "Go to Meta Leads in the sidebar" },
+          { key: "coord-meta-2", label: "Review the Live Leads tab for synced Facebook/Instagram leads" },
+          { key: "coord-meta-3", label: "Update lead status (New / Contacted / Qualified / Enrolled / Lost)" },
+          { key: "coord-meta-4", label: "Use Sync from Meta to pull the latest leads manually" },
         ],
       },
       {
-        key: "coord_scholarships",
-        title: "7. Scholarships & Camps",
-        icon: <BookOpen className="h-4 w-4" />,
-        steps: [
-          "Click 'Scholarships' to view and manage scholarship applications and awards.",
-          "Click 'Seasonal Camps' to view and manage Winter, Spring, Summer, and Fall camp registrations.",
-          "Click 'Special Events' to manage workshops, open houses, and other events.",
-          "To add a new scholarship, click '+ Add Scholarship' and fill in the student, amount, and program details.",
+        id: "coord-placement",
+        title: "7. Placement Tests",
+        icon: ClipboardList,
+        description: "Send English placement tests to leads and new students.",
+        videoKey: "coordinator-placement",
+        items: [
+          { key: "coord-placement-1", label: "Go to Placement Tests in the sidebar" },
+          { key: "coord-placement-2", label: "Click Send Test and enter the student's email" },
+          { key: "coord-placement-3", label: "Set the expiry window (e.g. 7 days)" },
+          { key: "coord-placement-4", label: "Monitor the Submissions tab for completed results" },
+          { key: "coord-placement-5", label: "Set up recurring test schedules in the Scheduler tab" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "sales",
+    label: "Sales",
+    icon: Star,
+    color: "bg-orange-100 text-orange-700",
+    sections: [
+      {
+        id: "sales-login",
+        title: "1. Logging In & Your Access",
+        icon: Shield,
+        description: "Sign in and understand what you can access as a Sales team member.",
+        videoKey: "sales-login",
+        items: [
+          { key: "sales-login-1", label: "Open your invitation email and click the Accept Invitation link" },
+          { key: "sales-login-2", label: "Choose Google Sign-In or set an email/password" },
+          { key: "sales-login-3", label: "Your access: Leads, Contacts, Email Marketing, Bulk Email, Meta Leads, Placement Tests" },
+          { key: "sales-login-4", label: "Finance, Admin Panel, and Analytics are not accessible to your role" },
+          { key: "sales-login-5", label: "Bookmark the CRM URL for quick access" },
+        ],
+      },
+      {
+        id: "sales-leads",
+        title: "2. Leads Pipeline — Your Primary Tool",
+        icon: Users2,
+        description: "The leads pipeline is your main workspace. Track every prospect from first contact to enrollment.",
+        videoKey: "sales-leads",
+        items: [
+          { key: "sales-leads-1", label: "Go to Leads Pipeline in the sidebar" },
+          { key: "sales-leads-2", label: "Understand the 7 stages: New Lead → Contacted → Trial Scheduled → Trial Done → Proposal Sent → Enrolled → Lost" },
+          { key: "sales-leads-3", label: "Add a new lead manually with Add Lead button" },
+          { key: "sales-leads-4", label: "Drag lead cards between columns to update their stage" },
+          { key: "sales-leads-5", label: "Click a lead to add notes, set trial date, and assign to yourself" },
+          { key: "sales-leads-6", label: "Always update the stage after each interaction — this drives your pipeline metrics" },
+        ],
+      },
+      {
+        id: "sales-contacts",
+        title: "3. Contacts",
+        icon: Users2,
+        description: "Keep parent and student contact information organised.",
+        videoKey: "sales-contacts",
+        items: [
+          { key: "sales-contacts-1", label: "Go to Contacts in the sidebar" },
+          { key: "sales-contacts-2", label: "Add parents, guardians, or adult students as contacts" },
+          { key: "sales-contacts-3", label: "Always include email and phone for follow-up" },
+          { key: "sales-contacts-4", label: "Link contacts to their student record when available" },
+        ],
+      },
+      {
+        id: "sales-meta",
+        title: "4. Meta Leads (Facebook & Instagram)",
+        icon: Star,
+        description: "Leads from your Facebook and Instagram ads land here automatically.",
+        videoKey: "sales-meta",
+        items: [
+          { key: "sales-meta-1", label: "Go to Meta Leads in the sidebar" },
+          { key: "sales-meta-2", label: "New leads from Facebook/Instagram forms appear in the Live Leads tab" },
+          { key: "sales-meta-3", label: "Contact each new lead within 24 hours — update status to Contacted" },
+          { key: "sales-meta-4", label: "Move qualified leads into the Leads Pipeline for full tracking" },
+          { key: "sales-meta-5", label: "Use Sync from Meta if you don't see a recent lead" },
+        ],
+      },
+      {
+        id: "sales-email",
+        title: "5. Email Outreach",
+        icon: Mail,
+        description: "Send follow-up emails and campaigns to your leads.",
+        videoKey: "sales-email",
+        items: [
+          { key: "sales-email-1", label: "Use Email Marketing for scheduled campaigns to your lead list" },
+          { key: "sales-email-2", label: "Use Bulk Email for personalised one-to-many outreach with delay timers" },
+          { key: "sales-email-3", label: "Always use the Send Test button before sending to your full list" },
+          { key: "sales-email-4", label: "Check the Outreach History tab to confirm delivery status" },
+        ],
+      },
+      {
+        id: "sales-placement",
+        title: "6. Sending Placement Tests",
+        icon: ClipboardList,
+        description: "Send placement tests to new leads to qualify their English level before enrollment.",
+        videoKey: "sales-placement",
+        items: [
+          { key: "sales-placement-1", label: "Go to Placement Tests in the sidebar" },
+          { key: "sales-placement-2", label: "Click Send Test and enter the lead's email address" },
+          { key: "sales-placement-3", label: "The lead receives a timed test link by email" },
+          { key: "sales-placement-4", label: "Check the Submissions tab to see their CEFR result" },
+          { key: "sales-placement-5", label: "Use the CEFR result to recommend the right program level" },
+        ],
+      },
+      {
+        id: "sales-tips",
+        title: "7. Sales Best Practices",
+        icon: Star,
+        description: "Key habits to maximise your conversion rate using the CRM.",
+        videoKey: "sales-tips",
+        items: [
+          { key: "sales-tips-1", label: "Update every lead's stage after each call or email — never leave it stale" },
+          { key: "sales-tips-2", label: "Add a note to every lead interaction (date, what was discussed, next step)" },
+          { key: "sales-tips-3", label: "Send a placement test to every new lead within 48 hours of first contact" },
+          { key: "sales-tips-4", label: "Follow up with a trial class offer once you have their CEFR result" },
+          { key: "sales-tips-5", label: "Use the Bulk Email delay timer (10–15s) to avoid spam filters on mass outreach" },
+          { key: "sales-tips-6", label: "Check Meta Leads every morning for overnight Facebook/Instagram form submissions" },
         ],
       },
     ],
   },
   {
     id: "finance",
-    label: "Finance / Accounting",
-    color: "bg-amber-500",
-    icon: <DollarSign className="h-5 w-5" />,
-    description: "Finance staff who manage payments, invoices, bills, and financial reporting.",
-    accessSummary: ["Accounting (full)", "Bills Tracker", "Financial Dashboard (PIN)", "View Students", "View Reports"],
+    label: "Finance",
+    icon: DollarSign,
+    color: "bg-yellow-100 text-yellow-700",
     sections: [
       {
-        key: "finance_login",
+        id: "fin-login",
         title: "1. Logging In",
-        icon: <ShieldCheck className="h-4 w-4" />,
-        steps: [
-          "Open the LIOTA CRM and sign in with your credentials.",
-          "Your role shows as 'Finance' or 'User' in the sidebar.",
-          "You have access to all Accounting and Finance features.",
-          "The Financial Dashboard requires a 4-digit PIN — ask your Admin for the PIN.",
+        icon: Shield,
+        description: "Access the CRM using your invitation link.",
+        videoKey: "finance-login",
+        items: [
+          { key: "fin-login-1", label: "Open your invitation email and click the Accept Invitation link" },
+          { key: "fin-login-2", label: "Choose Google Sign-In or set an email/password" },
+          { key: "fin-login-3", label: "Bookmark the CRM URL for quick access" },
         ],
       },
       {
-        key: "finance_payments",
-        title: "2. Recording Payments",
-        icon: <DollarSign className="h-4 w-4" />,
-        steps: [
-          "Click 'Accounting' in the sidebar under FINANCE.",
-          "Click the 'Payments' tab to see all payment records.",
-          "To add a new payment, click '+ Add Payment'.",
-          "Select the student, enter the amount, currency (USD/MXN/EUR/GBP), and payment method (Stripe, Zelle, Cash, PayPal, Dolla, Card, Transfer).",
-          "Add an invoice number if applicable and set the status (Pending / Completed / Failed / Refunded).",
-          "Click Save. The payment appears in the list immediately.",
+        id: "fin-accounting",
+        title: "2. Accounting — Payments",
+        icon: DollarSign,
+        description: "Record and track student payments.",
+        videoKey: "finance-accounting",
+        items: [
+          { key: "fin-accounting-1", label: "Go to Accounting in the sidebar" },
+          { key: "fin-accounting-2", label: "Click Add Payment to record a new student payment" },
+          { key: "fin-accounting-3", label: "Select the student, amount, currency, and payment method" },
+          { key: "fin-accounting-4", label: "Set status to Completed once payment is confirmed" },
+          { key: "fin-accounting-5", label: "Add an invoice number for reference" },
+          { key: "fin-accounting-6", label: "Use the filter bar to view payments by campus or status" },
         ],
       },
       {
-        key: "finance_invoices",
-        title: "3. Generating Invoices",
-        icon: <FileText className="h-4 w-4" />,
-        steps: [
-          "In the Accounting page, click the 'Invoices' tab.",
-          "Click '+ Generate Invoice' to create a new invoice for a student.",
-          "Select the student, program, amount, and due date.",
-          "The system generates an invoice number automatically.",
-          "You can mark invoices as Paid once payment is received.",
+        id: "fin-bills",
+        title: "3. Bills & Expenses",
+        icon: DollarSign,
+        description: "Track recurring bills and operational expenses.",
+        videoKey: "finance-bills",
+        items: [
+          { key: "fin-bills-1", label: "Go to Bills & Expenses in the sidebar" },
+          { key: "fin-bills-2", label: "Add recurring bills (rent, utilities, software subscriptions)" },
+          { key: "fin-bills-3", label: "Set due dates and mark bills as paid when settled" },
+          { key: "fin-bills-4", label: "Review the Bills Due Soon alert to avoid missed payments" },
+          { key: "fin-bills-5", label: "Add one-time expenses with category and campus tags" },
         ],
       },
       {
-        key: "finance_bills",
-        title: "4. Managing Recurring Bills",
-        icon: <Calendar className="h-4 w-4" />,
-        steps: [
-          "Click 'Bills' in the sidebar under FINANCE.",
-          "The Bills page shows all recurring expenses (rent, utilities, software, marketing, etc.) per campus.",
-          "To mark a bill as paid, click the 'Mark Paid' button on the bill row.",
-          "To add a new recurring bill, click '+ Add Bill' and fill in the name, amount, currency, due day, campus, and category.",
-          "The system sends reminder notifications to the Admin 7, 3, and 1 day before each bill is due.",
-          "The Bills Dashboard at the top shows totals by category and campus.",
+        id: "fin-dashboard",
+        title: "4. Financial Dashboard",
+        icon: BarChart3,
+        description: "View revenue, expenses, and net profit across all campuses.",
+        videoKey: "finance-dashboard",
+        items: [
+          { key: "fin-dashboard-1", label: "Go to Financial Dashboard in the sidebar (admin/finance only)" },
+          { key: "fin-dashboard-2", label: "Review Total Revenue, Pending Collections, Total Expenses, and Net Profit" },
+          { key: "fin-dashboard-3", label: "Use the campus filter to view per-location financials" },
+          { key: "fin-dashboard-4", label: "Check the Revenue by Program chart for program performance" },
+          { key: "fin-dashboard-5", label: "Export or screenshot the dashboard for monthly reporting" },
         ],
       },
       {
-        key: "finance_dashboard",
-        title: "5. Financial Dashboard",
-        icon: <Lock className="h-4 w-4" />,
-        restricted: true,
-        steps: [
-          "Click 'Financial Dashboard' in the sidebar (PIN required).",
-          "Enter the 4-digit PIN provided by your Admin.",
-          "The dashboard shows total revenue, expenses, net income, and breakdowns by campus and program.",
-          "Revenue figures are blurred by default — click the eye icon to reveal them.",
-          "Use the date range filters to view monthly or quarterly reports.",
-          "This page is Admin/Finance only — other staff cannot access it.",
-        ],
-        note: "The Financial Dashboard PIN is set by the Admin. Keep it confidential.",
-      },
-      {
-        key: "finance_expenses",
-        title: "6. Recording Expenses",
-        icon: <BarChart3 className="h-4 w-4" />,
-        steps: [
-          "In the Accounting page, click the 'Expenses' tab.",
-          "Click '+ Add Expense' to record a new expense.",
-          "Select the category (Rent, Utilities, Marketing, Salaries, etc.), campus, amount, and date.",
-          "Expenses feed into the Financial Dashboard reports automatically.",
+        id: "fin-scholarships",
+        title: "5. Scholarships & Packages",
+        icon: Star,
+        description: "Manage financial aid and language package pricing.",
+        videoKey: "finance-scholarships",
+        items: [
+          { key: "fin-scholarships-1", label: "Go to Scholarships in the sidebar to view and create financial aid records" },
+          { key: "fin-scholarships-2", label: "Go to Language Packages to review and update program pricing" },
+          { key: "fin-scholarships-3", label: "Coordinate with admin before changing package prices" },
         ],
       },
     ],
@@ -305,414 +404,446 @@ const ROLES: RoleConfig[] = [
   {
     id: "admin",
     label: "Admin",
-    color: "bg-purple-500",
-    icon: <ShieldCheck className="h-5 w-5" />,
-    description: "System administrators with full access to all features, user management, integrations, and settings.",
-    accessSummary: ["Full Access to All Modules", "User & Staff Management", "Integrations & Webhooks", "Admin Panel", "Financial Dashboard", "Outreach Hub"],
+    icon: Shield,
+    color: "bg-purple-100 text-purple-700",
     sections: [
       {
-        key: "admin_login",
-        title: "1. Logging In as Admin",
-        icon: <ShieldCheck className="h-4 w-4" />,
-        steps: [
-          "Open the LIOTA CRM and sign in. Your role shows as 'Admin' in the sidebar.",
-          "As Admin, you have access to every module and every action in the system.",
-          "The Admin Panel is accessible from the sidebar under INTEGRATIONS & ADMIN.",
+        id: "admin-login",
+        title: "1. Logging In",
+        icon: Shield,
+        description: "Access the CRM as an administrator.",
+        videoKey: "admin-login",
+        items: [
+          { key: "admin-login-1", label: "Sign in with your Manus account (primary admin method) or Google" },
+          { key: "admin-login-2", label: "Confirm your role badge shows Admin in the sidebar" },
+          { key: "admin-login-3", label: "You have access to all modules including Finance, Admin Panel, and Analytics" },
         ],
       },
       {
-        key: "admin_invite",
+        id: "admin-staff",
         title: "2. Inviting Staff Members",
-        icon: <UserPlus className="h-4 w-4" />,
-        steps: [
-          "Click 'Admin Panel' in the sidebar.",
-          "Go to the 'Users & Roles' tab.",
-          "Click '+ Invite User' and enter the staff member's email address.",
-          "Select their role: Instructor, Coordinator, Finance, or Admin.",
-          "Optionally add a personal message. Click 'Send Invitation'.",
-          "The staff member receives an email from contact@liota.institute with a link.",
-          "They click the link and choose to sign in with Google or set a password.",
-          "Once accepted, they appear in the Users table with their role.",
-          "To revoke access, click 'Revoke' on their invitation or user row.",
+        icon: Users2,
+        description: "Add new team members and assign their roles.",
+        videoKey: "admin-staff",
+        items: [
+          { key: "admin-staff-1", label: "Go to Admin Panel → Users & Roles tab" },
+          { key: "admin-staff-2", label: "Click Invite Staff Member and enter their email" },
+          { key: "admin-staff-3", label: "Select their role: Instructor, Coordinator, Sales, Finance, or Admin" },
+          { key: "admin-staff-4", label: "They receive an email with an invitation link" },
+          { key: "admin-staff-5", label: "Monitor the Pending Invitations table to track acceptance" },
+          { key: "admin-staff-6", label: "Revoke an invitation if needed before it is accepted" },
         ],
       },
       {
-        key: "admin_outreach",
-        title: "3. Outreach Hub — Connecting Channels",
-        icon: <Zap className="h-4 w-4" />,
-        steps: [
-          "Click 'Outreach Hub' in the sidebar under INTEGRATIONS & ADMIN.",
-          "You will see 8 platform cards: Email (Resend), WhatsApp, Meta, Instagram, TikTok, YouTube, X (Twitter), LinkedIn.",
-          "Click 'Connect' or 'Edit' on any platform card to enter credentials.",
-          "For Email: the Resend API key is already configured. Domain liota.institute is verified.",
-          "For WhatsApp: enter your WhatsApp Business API phone number ID, access token, and business account ID.",
-          "For Meta: enter your App ID, App Secret, and Page Access Token.",
-          "Credentials are stored securely and masked in the UI.",
+        id: "admin-placement",
+        title: "3. Placement Tests — Full Control",
+        icon: ClipboardList,
+        description: "Create test versions, seed defaults, and manage the scheduler.",
+        videoKey: "admin-placement",
+        items: [
+          { key: "admin-placement-1", label: "Go to Placement Tests → click Seed Default Test to load the 30-question A1–C2 test" },
+          { key: "admin-placement-2", label: "Create custom test versions with the + New Test button" },
+          { key: "admin-placement-3", label: "Edit questions in the Question Editor accordion" },
+          { key: "admin-placement-4", label: "Set up recurring test schedules in the Scheduler tab" },
+          { key: "admin-placement-5", label: "Review all submissions and download PDF certificates" },
+          { key: "admin-placement-6", label: "Add staff notes on any submission" },
         ],
       },
       {
-        key: "admin_meta",
-        title: "4. Meta Leads Integration",
-        icon: <Eye className="h-4 w-4" />,
-        steps: [
-          "Click 'Meta Leads' in the sidebar.",
-          "Go to the 'Live Leads' tab to see all leads synced from your Meta Lead Forms.",
-          "To sync manually, click 'Sync from Meta', enter your Page Access Token and Form ID (1652859402713081), and click Sync.",
-          "The webhook URL for real-time lead capture is: [your CRM URL]/api/meta/webhook",
-          "In Meta Business Suite → Lead Ads → Webhooks, paste this URL and use the verify token set in your Admin secrets.",
-          "New leads from Meta will appear automatically in the Live Leads tab and be added to the Leads Pipeline.",
+        id: "admin-outreach",
+        title: "4. Outreach Hub & Integrations",
+        icon: Zap,
+        description: "Connect social media channels and manage API credentials.",
+        videoKey: "admin-outreach",
+        items: [
+          { key: "admin-outreach-1", label: "Go to Outreach Hub to connect Email, WhatsApp, Meta, Instagram, and other platforms" },
+          { key: "admin-outreach-2", label: "Click Connect on each platform and enter your API credentials" },
+          { key: "admin-outreach-3", label: "Go to Meta Leads → Setup Guide to configure your Facebook webhook" },
+          { key: "admin-outreach-4", label: "Go to Integrations to manage webhooks and sync jobs" },
         ],
       },
       {
-        key: "admin_placement",
-        title: "5. Managing Placement Tests",
-        icon: <ClipboardList className="h-4 w-4" />,
-        steps: [
-          "Go to 'Placement Tests' in the sidebar.",
-          "Click 'Seed Default Test' to load the pre-built 30-question A1–C2 test.",
-          "To create a custom test, click '+ New Test', fill in the title, target level, and duration.",
-          "Click 'Edit Questions' on any test to add/edit questions with A/B/C/D options, correct answer, CEFR tag, and skill tag.",
-          "Use the Scheduler tab to set up recurring tests for students (e.g., every 2 months).",
-          "View all submissions in the Submissions tab — click Details to see question analytics and leave staff notes.",
-          "Admins can edit YouTube tutorial videos for each section of this guide (see below).",
+        id: "admin-onboarding-videos",
+        title: "5. Adding Tutorial Videos to This Guide",
+        icon: Play,
+        description: "Add YouTube tutorial videos to each section of this guide.",
+        videoKey: "admin-onboarding-videos",
+        items: [
+          { key: "admin-videos-1", label: "Record a short screen-capture tutorial for each section (2–5 minutes recommended)" },
+          { key: "admin-videos-2", label: "Upload the video to YouTube (unlisted is fine)" },
+          { key: "admin-videos-3", label: "Click the Edit Video button on any section in this guide" },
+          { key: "admin-videos-4", label: "Paste the YouTube URL and click Save — it embeds immediately" },
+          { key: "admin-videos-5", label: "All staff can then watch the video directly in this guide" },
         ],
       },
       {
-        key: "admin_videos",
-        title: "6. Adding Tutorial Videos to This Guide",
-        icon: <PlayCircle className="h-4 w-4" />,
-        steps: [
-          "On this Onboarding Guide page, you will see a 'Edit Video' button (pencil icon) next to each section — visible only to Admins.",
-          "Click 'Edit Video' on any section.",
-          "Paste the YouTube video URL (e.g., https://www.youtube.com/watch?v=XXXX) and click Save.",
-          "The video will embed directly in that section for all staff to watch.",
-          "To remove a video, click 'Edit Video' again and clear the URL field.",
-          "Videos are stored in the database and persist across sessions.",
-        ],
-      },
-      {
-        key: "admin_panel",
-        title: "7. Admin Panel Overview",
-        icon: <Settings className="h-4 w-4" />,
-        steps: [
-          "The Admin Panel (sidebar → Admin Panel) has 4 tabs: Overview, Users & Roles, System Stats, and Permissions.",
-          "Overview: shows system health, total users, pending invitations, and recent activity.",
-          "Users & Roles: invite staff, view all users, change roles, revoke access.",
-          "System Stats: database record counts, storage usage, and API call metrics.",
-          "Permissions: role-based access matrix showing what each role can do.",
-        ],
-      },
-      {
-        key: "admin_pdf",
-        title: "8. Downloading This Guide as PDF",
-        icon: <Download className="h-4 w-4" />,
-        steps: [
-          "Click the 'Download as PDF' button at the top right of this page.",
-          "Your browser will open the print dialog. Select 'Save as PDF' as the destination.",
-          "Click Save and choose where to save the file.",
-          "The PDF includes all role tabs, sections, and any embedded video links.",
-          "You can share this PDF with new staff members before they log in for the first time.",
+        id: "admin-analytics",
+        title: "6. Analytics & Reporting",
+        icon: BarChart3,
+        description: "Monitor CRM-wide performance metrics.",
+        videoKey: "admin-analytics",
+        items: [
+          { key: "admin-analytics-1", label: "Go to Analytics in the sidebar" },
+          { key: "admin-analytics-2", label: "Review student growth, lead conversion, and revenue trends" },
+          { key: "admin-analytics-3", label: "Use the Financial Dashboard for detailed revenue/expense breakdown" },
+          { key: "admin-analytics-4", label: "Export or screenshot reports for board meetings" },
         ],
       },
     ],
   },
 ];
 
-// ─── YouTube Embed Helper ─────────────────────────────────────────────────────
+// ─── YouTube embed helper ──────────────────────────────────────────────────────
 function getYouTubeEmbedUrl(url: string): string | null {
   try {
     const u = new URL(url);
     let videoId: string | null = null;
-    if (u.hostname.includes("youtube.com")) {
-      videoId = u.searchParams.get("v");
-    } else if (u.hostname === "youtu.be") {
-      videoId = u.pathname.slice(1);
-    }
-    return videoId ? `https://www.youtube.com/embed/${videoId}` : null;
+    if (u.hostname.includes("youtu.be")) videoId = u.pathname.slice(1);
+    else if (u.hostname.includes("youtube.com")) videoId = u.searchParams.get("v");
+    if (!videoId) return null;
+    return `https://www.youtube.com/embed/${videoId}`;
   } catch {
     return null;
   }
 }
 
-// ─── Video Placeholder / Embed ────────────────────────────────────────────────
-function VideoBlock({
-  sectionKey,
+// ─── Section card ──────────────────────────────────────────────────────────────
+function SectionCard({
+  section,
+  completedItems,
+  onToggle,
+  videoUrl,
   isAdmin,
-  videoMap,
-  onEdit,
+  onEditVideo,
 }: {
-  sectionKey: string;
+  section: Section;
+  completedItems: Set<string>;
+  onToggle: (key: string) => void;
+  videoUrl?: string;
   isAdmin: boolean;
-  videoMap: Record<string, string>;
-  onEdit: (key: string, current: string) => void;
+  onEditVideo: (sectionKey: string, currentUrl: string) => void;
 }) {
-  const url = videoMap[sectionKey];
-  const embedUrl = url ? getYouTubeEmbedUrl(url) : null;
+  const [expanded, setExpanded] = useState(true);
+  const done = section.items.filter((i) => completedItems.has(i.key)).length;
+  const total = section.items.length;
+  const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+  const embedUrl = videoUrl ? getYouTubeEmbedUrl(videoUrl) : null;
 
   return (
-    <div className="mt-3">
-      {embedUrl ? (
-        <div className="relative rounded-lg overflow-hidden border border-border" style={{ paddingBottom: "56.25%", height: 0 }}>
-          <iframe
-            src={embedUrl}
-            title="Tutorial video"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            className="absolute top-0 left-0 w-full h-full"
-          />
+    <Card className="border border-border shadow-sm">
+      <CardHeader className="pb-2 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <section.icon className="w-4 h-4 text-primary" />
+            </div>
+            <div className="min-w-0">
+              <CardTitle className="text-sm font-semibold leading-tight">{section.title}</CardTitle>
+              <p className="text-xs text-muted-foreground mt-0.5 leading-tight">{section.description}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Badge variant={done === total ? "default" : "secondary"} className="text-xs">
+              {done}/{total}
+            </Badge>
+            {expanded ? <ChevronDown className="w-4 h-4 text-muted-foreground" /> : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
+          </div>
+        </div>
+        {total > 0 && (
+          <Progress value={pct} className="h-1 mt-2" />
+        )}
+      </CardHeader>
+
+      {expanded && (
+        <CardContent className="pt-0 space-y-4">
+          {/* Checklist */}
+          <div className="space-y-2">
+            {section.items.map((item) => {
+              const checked = completedItems.has(item.key);
+              return (
+                <div
+                  key={item.key}
+                  className="flex items-start gap-3 cursor-pointer group"
+                  onClick={() => onToggle(item.key)}
+                >
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={() => onToggle(item.key)}
+                    className="mt-0.5 flex-shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                  <span className={`text-sm leading-snug ${checked ? "line-through text-muted-foreground" : "text-foreground"}`}>
+                    {item.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          <Separator />
+
+          {/* Video section */}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1">
+                <Play className="w-3 h-3" /> Tutorial Video
+              </p>
+              {isAdmin && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 text-xs gap-1"
+                  onClick={(e) => { e.stopPropagation(); onEditVideo(section.videoKey, videoUrl ?? ""); }}
+                >
+                  <Edit2 className="w-3 h-3" /> Edit Video
+                </Button>
+              )}
+            </div>
+            {embedUrl ? (
+              <div className="rounded-lg overflow-hidden border border-border aspect-video">
+                <iframe
+                  src={embedUrl}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title={section.title}
+                />
+              </div>
+            ) : (
+              <div className="rounded-lg border-2 border-dashed border-border bg-muted/30 aspect-video flex flex-col items-center justify-center gap-2 text-muted-foreground">
+                <Play className="w-8 h-8 opacity-30" />
+                <p className="text-sm font-medium">Video coming soon</p>
+                {isAdmin && (
+                  <p className="text-xs">Click Edit Video to add a YouTube link</p>
+                )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+// ─── Role tab content ──────────────────────────────────────────────────────────
+function RoleTab({
+  role,
+  videos,
+  isAdmin,
+  onEditVideo,
+}: {
+  role: typeof ROLES[number];
+  videos: Record<string, string>;
+  isAdmin: boolean;
+  onEditVideo: (sectionKey: string, currentUrl: string) => void;
+}) {
+  const [completedItems, setCompletedItems] = useState<Set<string>>(new Set());
+  const [loaded, setLoaded] = useState(false);
+
+  const progressQuery = trpc.guide.getProgress.useQuery({ role: role.id });
+
+  // Load saved progress once on mount
+  if (!loaded && progressQuery.data) {
+    setCompletedItems(new Set(progressQuery.data.completedItems));
+    setLoaded(true);
+  }
+
+  const saveMutation = trpc.guide.saveProgress.useMutation();
+  const resetMutation = trpc.guide.resetProgress.useMutation({
+    onSuccess: () => {
+      setCompletedItems(new Set());
+      toast.success("Progress reset");
+    },
+  });
+
+  const handleToggle = useCallback((key: string) => {
+    setCompletedItems((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      saveMutation.mutate({ role: role.id, completedItems: Array.from(next) });
+      return next;
+    });
+  }, [role.id, saveMutation]);
+
+  const allItems = role.sections.flatMap((s) => s.items);
+  const totalItems = allItems.length;
+  const doneItems = allItems.filter((i) => completedItems.has(i.key)).length;
+  const overallPct = totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
+
+  return (
+    <div className="space-y-6">
+      {/* Overall progress header */}
+      <Card className="border-2 border-primary/20 bg-primary/5">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${role.color}`}>
+                <role.icon className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">{role.label} Onboarding Progress</p>
+                <p className="text-xs text-muted-foreground">{doneItems} of {totalItems} steps completed</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {overallPct === 100 && (
+                <Badge className="bg-green-500 text-white gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Complete!
+                </Badge>
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1 text-xs"
+                onClick={() => resetMutation.mutate({ role: role.id })}
+                disabled={resetMutation.isPending || doneItems === 0}
+              >
+                <RefreshCw className="w-3 h-3" /> Reset
+              </Button>
+            </div>
+          </div>
+          <Progress value={overallPct} className="h-3" />
+          <p className="text-right text-xs text-muted-foreground mt-1">{overallPct}%</p>
+        </CardContent>
+      </Card>
+
+      {/* Section cards */}
+      {progressQuery.isLoading ? (
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-32 rounded-lg bg-muted animate-pulse" />
+          ))}
         </div>
       ) : (
-        <div className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-muted/30 px-4 py-3">
-          <PlayCircle className="h-5 w-5 text-muted-foreground shrink-0" />
-          <span className="text-sm text-muted-foreground italic">
-            {isAdmin ? "No video added yet — click Edit Video to add a YouTube tutorial." : "Tutorial video coming soon."}
-          </span>
+        <div className="space-y-4">
+          {role.sections.map((section) => (
+            <SectionCard
+              key={section.id}
+              section={section}
+              completedItems={completedItems}
+              onToggle={handleToggle}
+              videoUrl={videos[section.videoKey]}
+              isAdmin={isAdmin}
+              onEditVideo={onEditVideo}
+            />
+          ))}
         </div>
-      )}
-      {isAdmin && (
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-1 h-7 text-xs text-muted-foreground hover:text-foreground"
-          onClick={() => onEdit(sectionKey, url ?? "")}
-        >
-          <Edit3 className="h-3 w-3 mr-1" />
-          {url ? "Edit Video" : "Add Video"}
-        </Button>
       )}
     </div>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function OnboardingGuide() {
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
-  const printRef = useRef<HTMLDivElement>(null);
 
-  const [activeRole, setActiveRole] = useState("instructor");
-  const [editDialog, setEditDialog] = useState<{ open: boolean; key: string; value: string }>({
-    open: false, key: "", value: "",
-  });
+  const [editVideoKey, setEditVideoKey] = useState<string | null>(null);
+  const [editVideoUrl, setEditVideoUrl] = useState("");
 
-  const { data: videos = [], refetch: refetchVideos } = trpc.guide.listVideos.useQuery();
-  const upsertVideo = trpc.guide.upsertVideo.useMutation({
+  const videosQuery = trpc.guide.listVideos.useQuery();
+  const upsertVideoMutation = trpc.guide.upsertVideo.useMutation({
     onSuccess: () => {
-      toast.success("Video saved successfully");
-      refetchVideos();
-      setEditDialog({ open: false, key: "", value: "" });
+      videosQuery.refetch();
+      setEditVideoKey(null);
+      toast.success("Video URL saved");
     },
     onError: (e) => toast.error(e.message),
   });
 
   const videoMap: Record<string, string> = {};
-  for (const v of videos) {
+  (videosQuery.data ?? []).forEach((v) => {
     if (v.youtubeUrl) videoMap[v.sectionKey] = v.youtubeUrl;
-  }
+  });
 
-  const handlePrint = () => {
-    window.print();
+  const handleEditVideo = (sectionKey: string, currentUrl: string) => {
+    setEditVideoKey(sectionKey);
+    setEditVideoUrl(currentUrl);
   };
 
-  const handleSaveVideo = () => {
-    upsertVideo.mutate({
-      sectionKey: editDialog.key,
-      youtubeUrl: editDialog.value.trim() || null,
-    });
-  };
+  const handlePrint = () => window.print();
 
-  const currentRole = ROLES.find((r) => r.id === activeRole)!;
+  // Default tab: match user's role, or first tab
+  const defaultTab = ROLES.find((r) => r.id === user?.role)?.id ?? ROLES[0].id;
 
   return (
-    <>
+    <div className="p-6 max-w-4xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <BookOpen className="w-6 h-6 text-primary" /> Onboarding Guide
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Role-specific instructions for using the LIOTA CRM. Check off each step as you complete it — your progress is saved automatically.
+          </p>
+        </div>
+        <Button variant="outline" size="sm" className="gap-2" onClick={handlePrint}>
+          <Download className="w-4 h-4" /> Download PDF
+        </Button>
+      </div>
+
+      {/* Role tabs */}
+      <Tabs defaultValue={defaultTab}>
+        <TabsList className="flex flex-wrap h-auto gap-1 bg-muted p-1">
+          {ROLES.map((role) => (
+            <TabsTrigger key={role.id} value={role.id} className="gap-1.5 text-xs">
+              <role.icon className="w-3.5 h-3.5" />
+              {role.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {ROLES.map((role) => (
+          <TabsContent key={role.id} value={role.id} className="mt-6">
+            <RoleTab
+              role={role}
+              videos={videoMap}
+              isAdmin={isAdmin}
+              onEditVideo={handleEditVideo}
+            />
+          </TabsContent>
+        ))}
+      </Tabs>
+
+      {/* Edit video dialog */}
+      <Dialog open={!!editVideoKey} onOpenChange={(o) => !o && setEditVideoKey(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Tutorial Video</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>YouTube URL</Label>
+              <Input
+                placeholder="https://www.youtube.com/watch?v=..."
+                value={editVideoUrl}
+                onChange={(e) => setEditVideoUrl(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Paste a YouTube video URL. It will be embedded in this section for all staff.</p>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setEditVideoKey(null)}>Cancel</Button>
+              <Button
+                onClick={() => upsertVideoMutation.mutate({ sectionKey: editVideoKey!, youtubeUrl: editVideoUrl || null })}
+                disabled={upsertVideoMutation.isPending}
+              >
+                {upsertVideoMutation.isPending ? "Saving..." : "Save Video"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Print styles */}
       <style>{`
         @media print {
-          .no-print { display: none !important; }
-          .print-break { page-break-before: always; }
-          body { font-size: 12pt; }
-          .sidebar, nav, header { display: none !important; }
+          aside, nav, button, .no-print { display: none !important; }
+          .print\\:block { display: block !important; }
+          body { background: white; }
         }
       `}</style>
-
-      <div ref={printRef} className="p-6 max-w-5xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <BookOpen className="h-6 w-6 text-primary" />
-              <h1 className="text-2xl font-bold">LIOTA CRM — Staff Onboarding Guide</h1>
-            </div>
-            <p className="text-muted-foreground text-sm">
-              Step-by-step instructions for each role. Select your role below to see what you can do and how to do it.
-            </p>
-          </div>
-          <Button onClick={handlePrint} variant="outline" className="no-print shrink-0">
-            <Download className="h-4 w-4 mr-2" />
-            Download as PDF
-          </Button>
-        </div>
-
-        {/* Role Tabs */}
-        <Tabs value={activeRole} onValueChange={setActiveRole}>
-          <TabsList className="flex flex-wrap h-auto gap-1 no-print">
-            {ROLES.map((role) => (
-              <TabsTrigger key={role.id} value={role.id} className="flex items-center gap-1.5">
-                {role.icon}
-                {role.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
-          {ROLES.map((role) => (
-            <TabsContent key={role.id} value={role.id} className="space-y-4 mt-4">
-              {/* Role Overview Card */}
-              <Card>
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2 rounded-lg ${role.color} text-white`}>
-                      {role.icon}
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg">{role.label}</CardTitle>
-                      <p className="text-sm text-muted-foreground mt-0.5">{role.description}</p>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    <span className="text-xs font-medium text-muted-foreground mr-1">Access:</span>
-                    {role.accessSummary.map((item) => (
-                      <Badge key={item} variant="secondary" className="text-xs">
-                        <CheckCircle2 className="h-3 w-3 mr-1 text-green-500" />
-                        {item}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Sections Accordion */}
-              <Accordion type="multiple" defaultValue={role.sections.map((s) => s.key)} className="space-y-2">
-                {role.sections.map((section) => (
-                  <AccordionItem
-                    key={section.key}
-                    value={section.key}
-                    className="border rounded-lg px-4 bg-card"
-                  >
-                    <AccordionTrigger className="hover:no-underline py-3">
-                      <div className="flex items-center gap-2 text-left">
-                        <span className="text-primary">{section.icon}</span>
-                        <span className="font-medium">{section.title}</span>
-                        {section.restricted && (
-                          <Badge variant="outline" className="text-xs ml-1">
-                            <Lock className="h-3 w-3 mr-1" />
-                            Restricted
-                          </Badge>
-                        )}
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pb-4 space-y-3">
-                      {/* Steps */}
-                      <ol className="space-y-2">
-                        {section.steps.map((step, i) => (
-                          <li key={i} className="flex gap-3 text-sm">
-                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/10 text-primary text-xs flex items-center justify-center font-semibold mt-0.5">
-                              {i + 1}
-                            </span>
-                            <span className="text-foreground/90 leading-relaxed">{step}</span>
-                          </li>
-                        ))}
-                      </ol>
-
-                      {/* Note */}
-                      {section.note && (
-                        <div className="flex gap-2 rounded-md bg-amber-500/10 border border-amber-500/20 px-3 py-2">
-                          <AlertCircle className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                          <p className="text-xs text-amber-700 dark:text-amber-400">{section.note}</p>
-                        </div>
-                      )}
-
-                      {/* Video block */}
-                      <VideoBlock
-                        sectionKey={section.key}
-                        isAdmin={isAdmin}
-                        videoMap={videoMap}
-                        onEdit={(key, current) => setEditDialog({ open: true, key, value: current })}
-                      />
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-
-              {/* Quick Tips */}
-              <Card className="border-blue-500/20 bg-blue-500/5">
-                <CardContent className="pt-4 pb-4">
-                  <div className="flex gap-2">
-                    <Info className="h-4 w-4 text-blue-500 shrink-0 mt-0.5" />
-                    <div className="space-y-1">
-                      <p className="text-sm font-medium text-blue-700 dark:text-blue-400">Quick Tips for {role.label}</p>
-                      <ul className="text-xs text-muted-foreground space-y-1">
-                        <li className="flex items-center gap-1"><ChevronRight className="h-3 w-3" /> Use the search bar at the top of each list page to quickly find records.</li>
-                        <li className="flex items-center gap-1"><ChevronRight className="h-3 w-3" /> Changes are saved automatically — no need to click a global Save button.</li>
-                        <li className="flex items-center gap-1"><ChevronRight className="h-3 w-3" /> If you see a "Forbidden" error, that feature requires a higher role — contact your Admin.</li>
-                        <li className="flex items-center gap-1"><ChevronRight className="h-3 w-3" /> The language toggle (EN/ES) in the sidebar switches the interface language.</li>
-                      </ul>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          ))}
-        </Tabs>
-
-        {/* Footer */}
-        <div className="text-center text-xs text-muted-foreground pt-4 border-t">
-          LIOTA — Language Institute of the Americas · CRM Onboarding Guide · {new Date().getFullYear()}
-          <br />
-          For support, contact your system administrator.
-        </div>
-      </div>
-
-      {/* Edit Video Dialog */}
-      <Dialog open={editDialog.open} onOpenChange={(o) => !o && setEditDialog({ open: false, key: "", value: "" })}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add / Edit Tutorial Video</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 py-2">
-            <div>
-              <Label htmlFor="yt-url">YouTube Video URL</Label>
-              <Input
-                id="yt-url"
-                placeholder="https://www.youtube.com/watch?v=..."
-                value={editDialog.value}
-                onChange={(e) => setEditDialog((d) => ({ ...d, value: e.target.value }))}
-                className="mt-1"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Paste a full YouTube URL. Leave blank to remove the video.
-              </p>
-            </div>
-            {editDialog.value && getYouTubeEmbedUrl(editDialog.value) && (
-              <div className="rounded-md overflow-hidden border" style={{ paddingBottom: "40%", position: "relative", height: 0 }}>
-                <iframe
-                  src={getYouTubeEmbedUrl(editDialog.value)!}
-                  className="absolute top-0 left-0 w-full h-full"
-                  title="Preview"
-                  allowFullScreen
-                />
-              </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setEditDialog({ open: false, key: "", value: "" })}>Cancel</Button>
-            <Button onClick={handleSaveVideo} disabled={upsertVideo.isPending}>
-              {upsertVideo.isPending ? "Saving..." : "Save Video"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+    </div>
   );
 }

@@ -1364,6 +1364,66 @@ GUIDELINES:
           .onDuplicateKeyUpdate({ set: { youtubeUrl: input.youtubeUrl ?? undefined, updatedBy: ctx.user.id } });
         return { success: true };
       }),
+
+    // ── Onboarding Progress (per-user checklist tracking) ──────────────────
+    getProgress: protectedProcedure
+      .input(z.object({ role: z.string() }))
+      .query(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) return { completedItems: [] as string[] };
+        const { onboardingProgress } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        const rows = await db.select().from(onboardingProgress)
+          .where(and(eq(onboardingProgress.userId, ctx.user.id), eq(onboardingProgress.role, input.role)))
+          .limit(1);
+        if (rows.length === 0) return { completedItems: [] as string[] };
+        try {
+          return { completedItems: JSON.parse(rows[0].completedItems) as string[] };
+        } catch {
+          return { completedItems: [] as string[] };
+        }
+      }),
+
+    saveProgress: protectedProcedure
+      .input(z.object({
+        role: z.string(),
+        completedItems: z.array(z.string()),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const { onboardingProgress } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        const existing = await db.select({ id: onboardingProgress.id })
+          .from(onboardingProgress)
+          .where(and(eq(onboardingProgress.userId, ctx.user.id), eq(onboardingProgress.role, input.role)))
+          .limit(1);
+        const itemsJson = JSON.stringify(input.completedItems);
+        if (existing.length === 0) {
+          await db.insert(onboardingProgress).values({
+            userId: ctx.user.id,
+            role: input.role,
+            completedItems: itemsJson,
+          });
+        } else {
+          await db.update(onboardingProgress)
+            .set({ completedItems: itemsJson })
+            .where(and(eq(onboardingProgress.userId, ctx.user.id), eq(onboardingProgress.role, input.role)));
+        }
+        return { success: true };
+      }),
+
+    resetProgress: protectedProcedure
+      .input(z.object({ role: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const { onboardingProgress } = await import("../drizzle/schema");
+        const { eq, and } = await import("drizzle-orm");
+        await db.delete(onboardingProgress)
+          .where(and(eq(onboardingProgress.userId, ctx.user.id), eq(onboardingProgress.role, input.role)));
+        return { success: true };
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;

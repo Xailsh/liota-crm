@@ -20,7 +20,7 @@ export const users = mysqlTable("users", {
   passwordHash: varchar("passwordHash", { length: 256 }),
   googleId: varchar("googleId", { length: 128 }),
   avatarUrl: text("avatarUrl"),
-  role: mysqlEnum("role", ["user", "admin", "instructor", "coordinator", "receptionist"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "instructor", "coordinator", "receptionist", "sales"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -500,7 +500,7 @@ export type InsertRecurringBill = typeof recurringBills.$inferInsert;
 export const invitations = mysqlTable("invitations", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 256 }).notNull(),
-  role: mysqlEnum("role", ["admin", "user", "instructor", "coordinator", "receptionist"]).notNull().default("user"),
+  role: mysqlEnum("role", ["admin", "user", "instructor", "coordinator", "receptionist", "sales"]).notNull().default("user"),
   token: varchar("token", { length: 128 }).notNull().unique(),
   status: mysqlEnum("status", ["pending", "accepted", "revoked", "expired"]).notNull().default("pending"),
   invitedByName: varchar("invitedByName", { length: 256 }),
@@ -665,3 +665,14 @@ export const guideVideos = mysqlTable("guideVideos", {
 });
 export type GuideVideo = typeof guideVideos.$inferSelect;
 export type InsertGuideVideo = typeof guideVideos.$inferInsert;
+
+// ─── Onboarding Progress (per-user checklist tracking) ───────────────────────
+export const onboardingProgress = mysqlTable("onboardingProgress", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  role: varchar("role", { length: 50 }).notNull(), // instructor | coordinator | finance | admin
+  completedItems: text("completedItems").notNull().default("[]"), // JSON array of item keys
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
+export type InsertOnboardingProgress = typeof onboardingProgress.$inferInsert;

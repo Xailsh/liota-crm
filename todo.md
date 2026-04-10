@@ -328,4 +328,30 @@
 - [x] PDF download button (browser print-to-PDF styled output)
 - [x] Add Onboarding Guide to sidebar navigation (Integrations & Admin group)
 - [x] Register /onboarding-guide route in App.tsx
+- [x] Save checkpoint (v2510a7a5)
+
+## Session 11 - Onboarding Checklists
+- [ ] Add onboarding_progress table (userId, role, completedItems JSON, updatedAt)
+- [ ] Backend: guide.getProgress (protected, returns current user's completed items)
+- [ ] Backend: guide.saveProgress (protected, upsert completed items array)
+- [ ] Backend: guide.resetProgress (protected, clear own progress)
+- [ ] Frontend: Add checkbox to every checklist item in each role tab
+- [ ] Frontend: Overall progress bar per role tab (X of Y steps completed)
+- [ ] Frontend: Per-section mini progress indicator (e.g. 2/4 steps done)
+- [ ] Frontend: Progress persists across sessions (loaded from DB on mount)
+- [ ] Frontend: "Reset Progress" button per tab
+- [ ] Frontend: Completed items visually struck-through / greyed out
+- [ ] Write Vitest tests for getProgress and saveProgress
+- [ ] Save checkpoint
+
+## Session 11b - Sales Role & Permissions
+- [ ] Add "sales" to users role enum in schema + migrate
+- [ ] Sales role access: Leads Pipeline, Contacts, Email Marketing, Bulk Email, Meta Leads, Placement Tests (send only), Outreach Hub (view only)
+- [ ] Sales role blocked from: Financial Dashboard, Accounting, Bills, Admin Panel, Analytics, Staff management
+- [ ] Backend: protectedProcedure RBAC guards for finance/admin-only procedures (check sales cannot access)
+- [ ] Sidebar: hide Finance group items (Financial Dashboard) from sales role
+- [ ] Sidebar: hide Admin Panel from sales role
+- [ ] Sidebar: hide Analytics from sales role
+- [ ] Admin Panel: add "sales" as selectable role when inviting staff
+- [ ] Onboarding Guide: add Sales tab with role-specific instructions
 - [ ] Save checkpoint
