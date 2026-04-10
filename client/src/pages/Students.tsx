@@ -1,18 +1,20 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import {
-  GraduationCap, Plus, Search, Filter, MapPin, Mail, Phone,
-  Edit2, Trash2, Loader2, User, BookOpen, X
+  GraduationCap, Plus, Search, MapPin, Mail, Phone,
+  Edit2, Trash2, Loader2, User, X, Send, CheckCircle, Clock, Eye
 } from "lucide-react";
 
 const campusLabels: Record<string, string> = { merida: "Mérida", dallas: "Dallas", denver: "Denver", vienna: "Vienna", nottingham: "Nottingham", online: "Online" };
@@ -33,6 +35,11 @@ const mcerColors: Record<string, string> = {
   C1: "bg-amber-100 text-amber-700 border-amber-200",
   C2: "bg-purple-100 text-purple-700 border-purple-200",
 };
+const CEFR_COLORS: Record<string, string> = {
+  A1: "bg-slate-100 text-slate-700", A2: "bg-blue-100 text-blue-700",
+  B1: "bg-teal-100 text-teal-700", B2: "bg-green-100 text-green-700",
+  C1: "bg-amber-100 text-amber-700", C2: "bg-purple-100 text-purple-700",
+};
 
 const emptyForm = {
   firstName: "", lastName: "", email: "", phone: "", dateOfBirth: "",
@@ -41,6 +48,185 @@ const emptyForm = {
   enrollmentStatus: "trial" as const, parentName: "", parentEmail: "", parentPhone: "", notes: "", tags: "",
 };
 
+// ─── Student Profile Sheet ────────────────────────────────────────────────────
+function StudentProfileSheet({ student, onClose }: { student: any; onClose: () => void }) {
+  const utils = trpc.useUtils();
+  const { data: tests } = trpc.placementTests.list.useQuery();
+  const { data: submissions } = trpc.placementTests.listSubmissions.useQuery({ studentId: student.id });
+  const [selectedTestId, setSelectedTestId] = useState("");
+  const [expiryDays, setExpiryDays] = useState("7");
+
+  const sendMutation = trpc.placementTests.sendToStudent.useMutation({
+    onSuccess: () => {
+      utils.placementTests.listSubmissions.invalidate();
+      toast.success("Test sent to " + student.email);
+      setSelectedTestId("");
+    },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const handleSend = () => {
+    if (!selectedTestId) return toast.error("Select a test first");
+    if (!student.email) return toast.error("Student has no email address");
+    sendMutation.mutate({
+      testId: Number(selectedTestId),
+      studentId: student.id,
+      recipientEmail: student.email,
+      recipientName: `${student.firstName} ${student.lastName}`,
+      expiryDays: Number(expiryDays),
+      origin: window.location.origin,
+    });
+  };
+
+  return (
+    <Sheet open onOpenChange={onClose}>
+      <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
+        <SheetHeader className="mb-4">
+          <SheetTitle className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-sm font-bold text-primary">{student.firstName[0]}{student.lastName[0]}</span>
+            </div>
+            <div>
+              <p className="font-bold text-lg">{student.firstName} {student.lastName}</p>
+              <p className="text-sm text-muted-foreground font-normal">{student.email ?? "No email"}</p>
+            </div>
+          </SheetTitle>
+        </SheetHeader>
+
+        <Tabs defaultValue="placement">
+          <TabsList className="w-full">
+            <TabsTrigger value="info" className="flex-1">Info</TabsTrigger>
+            <TabsTrigger value="placement" className="flex-1">Placement Tests</TabsTrigger>
+          </TabsList>
+
+          {/* Info Tab */}
+          <TabsContent value="info" className="mt-4 space-y-3">
+            <div className="grid grid-cols-2 gap-3 text-sm">
+              <div><p className="text-muted-foreground text-xs">Campus</p><p className="font-medium">{campusLabels[student.campus] ?? student.campus}</p></div>
+              <div><p className="text-muted-foreground text-xs">Age Group</p><p className="font-medium">{ageGroupLabels[student.ageGroup] ?? student.ageGroup}</p></div>
+              <div>
+                <p className="text-muted-foreground text-xs">Status</p>
+                <Badge className={`text-xs mt-0.5 ${statusColors[student.enrollmentStatus] ?? ""}`}>{statusLabels[student.enrollmentStatus]}</Badge>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">CEFR Level</p>
+                {student.mcerLevel
+                  ? <Badge className={`text-xs mt-0.5 ${CEFR_COLORS[student.mcerLevel] ?? ""}`}>{student.mcerLevel}</Badge>
+                  : <span className="text-muted-foreground text-xs">Not set</span>}
+              </div>
+              {student.phone && <div><p className="text-muted-foreground text-xs">Phone</p><p className="font-medium">{student.phone}</p></div>}
+              {student.parentName && <div><p className="text-muted-foreground text-xs">Parent</p><p className="font-medium">{student.parentName}</p></div>}
+              {student.parentEmail && <div><p className="text-muted-foreground text-xs">Parent Email</p><p className="font-medium text-xs">{student.parentEmail}</p></div>}
+              {student.parentPhone && <div><p className="text-muted-foreground text-xs">Parent Phone</p><p className="font-medium">{student.parentPhone}</p></div>}
+            </div>
+            {student.notes && (
+              <div>
+                <p className="text-muted-foreground text-xs mb-1">Notes</p>
+                <p className="text-sm bg-muted rounded p-2">{student.notes}</p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Placement Tests Tab */}
+          <TabsContent value="placement" className="mt-4 space-y-4">
+            {/* CEFR Badge */}
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border">
+              <GraduationCap className="h-8 w-8 text-primary flex-shrink-0" />
+              <div>
+                <p className="text-xs text-muted-foreground">Current CEFR Level</p>
+                {student.mcerLevel ? (
+                  <Badge className={`text-sm font-bold px-3 py-1 mt-0.5 ${CEFR_COLORS[student.mcerLevel] ?? ""}`}>{student.mcerLevel}</Badge>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Not yet assessed — send a placement test</p>
+                )}
+              </div>
+            </div>
+
+            {/* Send Test */}
+            <div className="rounded-lg border p-4 space-y-3">
+              <p className="font-medium text-sm">Send Placement Test</p>
+              {!student.email && (
+                <p className="text-xs text-destructive bg-destructive/10 rounded p-2">No email on record — add one first.</p>
+              )}
+              <div>
+                <Label className="text-xs mb-1 block">Test Version</Label>
+                <Select value={selectedTestId} onValueChange={setSelectedTestId} disabled={!student.email}>
+                  <SelectTrigger><SelectValue placeholder="Choose a test version..." /></SelectTrigger>
+                  <SelectContent>
+                    {(tests ?? []).map((t: any) => (
+                      <SelectItem key={t.id} value={String(t.id)}>{t.title} ({t.version})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <Label className="text-xs whitespace-nowrap">Expires in</Label>
+                <Select value={expiryDays} onValueChange={setExpiryDays}>
+                  <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 days</SelectItem>
+                    <SelectItem value="7">7 days</SelectItem>
+                    <SelectItem value="14">14 days</SelectItem>
+                    <SelectItem value="30">30 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                onClick={handleSend}
+                disabled={sendMutation.isPending || !student.email || !selectedTestId}
+                className="w-full bg-amber-500 hover:bg-amber-600 text-white"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {sendMutation.isPending ? "Sending..." : `Send Test to ${student.email ?? "student"}`}
+              </Button>
+            </div>
+
+            {/* Test History */}
+            <div>
+              <p className="font-medium text-sm mb-2">
+                Test History {submissions && submissions.length > 0 && <span className="text-muted-foreground font-normal">({submissions.length})</span>}
+              </p>
+              {!submissions || submissions.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground text-sm border-2 border-dashed rounded-lg">
+                  No tests sent yet
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {submissions.map((sub: any) => (
+                    <div key={sub.id} className="flex items-center justify-between p-3 rounded-lg border text-sm">
+                      <div className="flex items-center gap-2">
+                        {sub.status === "completed"
+                          ? <CheckCircle className="h-4 w-4 text-green-500 flex-shrink-0" />
+                          : <Clock className="h-4 w-4 text-amber-500 flex-shrink-0" />}
+                        <div>
+                          <p className="font-medium capitalize">{sub.status}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Sent: {sub.sentAt ? new Date(sub.sentAt).toLocaleDateString() : "—"}
+                            {sub.completedAt && ` · Done: ${new Date(sub.completedAt).toLocaleDateString()}`}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right flex-shrink-0">
+                        {sub.cefrResult && (
+                          <Badge className={`text-xs ${CEFR_COLORS[sub.cefrResult] ?? ""}`}>{sub.cefrResult}</Badge>
+                        )}
+                        {sub.score !== null && sub.score !== undefined && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{sub.score}%</p>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// ─── Main Students Page ───────────────────────────────────────────────────────
 export default function Students() {
   const [search, setSearch] = useState("");
   const [campus, setCampus] = useState("all");
@@ -50,6 +236,7 @@ export default function Students() {
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [viewStudent, setViewStudent] = useState<any | null>(null);
 
   const { data: students = [], isLoading, refetch } = trpc.students.list.useQuery({ search, campus, ageGroup, enrollmentStatus: status });
   const { data: programs = [] } = trpc.programs.list.useQuery();
@@ -158,7 +345,7 @@ export default function Students() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {students.map((s: any) => (
-            <Card key={s.id} className="border border-border card-shadow hover:card-shadow-lg transition-all group">
+            <Card key={s.id} className="border border-border card-shadow hover:card-shadow-lg transition-all group cursor-pointer" onClick={() => setViewStudent(s)}>
               <CardContent className="p-5">
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-3 min-w-0">
@@ -173,11 +360,11 @@ export default function Students() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                    <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(s)}>
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                    <Button variant="ghost" size="icon" className="w-7 h-7" onClick={() => openEdit(s)} title="Edit">
                       <Edit2 className="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(s.id)}>
+                    <Button variant="ghost" size="icon" className="w-7 h-7 text-destructive hover:text-destructive" onClick={() => setDeleteId(s.id)} title="Delete">
                       <Trash2 className="w-3.5 h-3.5" />
                     </Button>
                   </div>
@@ -217,10 +404,20 @@ export default function Students() {
                     </div>
                   )}
                 </div>
+
+                {/* View Profile hint */}
+                <div className="mt-3 pt-3 border-t border-border/50 flex items-center gap-1 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Eye className="w-3 h-3" /> View profile & placement tests
+                </div>
               </CardContent>
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Student Profile Sheet */}
+      {viewStudent && (
+        <StudentProfileSheet student={viewStudent} onClose={() => setViewStudent(null)} />
       )}
 
       {/* Create/Edit Dialog */}
@@ -229,35 +426,24 @@ export default function Students() {
           <DialogHeader>
             <DialogTitle>{editId ? "Edit Student" : "New Student"}</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-4 py-2">
-            <div className="space-y-1.5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
               <Label>First Name *</Label>
-              <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} placeholder="First name" />
+              <Input value={form.firstName} onChange={(e) => setForm({ ...form, firstName: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
+            <div>
               <Label>Last Name *</Label>
-              <Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} placeholder="Last name" />
+              <Input value={form.lastName} onChange={(e) => setForm({ ...form, lastName: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
+            <div>
               <Label>Email</Label>
-              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="email@ejemplo.com" />
+              <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
+            <div>
               <Label>Phone</Label>
-              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="+52 999 123 4567" />
+              <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
-              <Label>Age Group *</Label>
-              <Select value={form.ageGroup} onValueChange={(v: any) => setForm({ ...form, ageGroup: v })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="children">Children (5-12)</SelectItem>
-                  <SelectItem value="teens">Teens (13-17)</SelectItem>
-                  <SelectItem value="adults">Adults (18+)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
+            <div>
               <Label>Campus *</Label>
               <Select value={form.campus} onValueChange={(v: any) => setForm({ ...form, campus: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -266,26 +452,17 @@ export default function Students() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>Program</Label>
-              <Select value={form.programId?.toString() ?? ""} onValueChange={(v) => setForm({ ...form, programId: v ? Number(v) : undefined })}>
-                <SelectTrigger><SelectValue placeholder="Select program" /></SelectTrigger>
+            <div>
+              <Label>Age Group *</Label>
+              <Select value={form.ageGroup} onValueChange={(v: any) => setForm({ ...form, ageGroup: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  {programs.map((p: any) => <SelectItem key={p.id} value={p.id.toString()}>{p.name}</SelectItem>)}
+                  {Object.entries(ageGroupLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label>CEFR Level</Label>
-              <Select value={form.mcerLevel ?? ""} onValueChange={(v) => setForm({ ...form, mcerLevel: v || undefined })}>
-                <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
-                <SelectContent>
-                  {["A1", "A2", "B1", "B2", "C1", "C2"].map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Enrollment Status</Label>
+            <div>
+              <Label>Status *</Label>
               <Select value={form.enrollmentStatus} onValueChange={(v: any) => setForm({ ...form, enrollmentStatus: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
@@ -293,26 +470,49 @@ export default function Students() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
+            <div>
+              <Label>CEFR Level</Label>
+              <Select value={form.mcerLevel ?? ""} onValueChange={(v) => setForm({ ...form, mcerLevel: v || undefined })}>
+                <SelectTrigger><SelectValue placeholder="Not set" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Not set</SelectItem>
+                  {["A1", "A2", "B1", "B2", "C1", "C2"].map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Program</Label>
+              <Select value={form.programId ? String(form.programId) : ""} onValueChange={(v) => setForm({ ...form, programId: v ? Number(v) : undefined })}>
+                <SelectTrigger><SelectValue placeholder="None" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  {programs.map((p: any) => <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Date of Birth</Label>
+              <Input type="date" value={form.dateOfBirth} onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value })} />
+            </div>
+          </div>
+          <Separator className="my-2" />
+          <div className="grid grid-cols-3 gap-4">
+            <div>
               <Label>Parent Name</Label>
-              <Input value={form.parentName} onChange={(e) => setForm({ ...form, parentName: e.target.value })} placeholder="For minor students" />
+              <Input value={form.parentName} onChange={(e) => setForm({ ...form, parentName: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
+            <div>
               <Label>Parent Email</Label>
-              <Input value={form.parentEmail} onChange={(e) => setForm({ ...form, parentEmail: e.target.value })} placeholder="padre@email.com" />
+              <Input type="email" value={form.parentEmail} onChange={(e) => setForm({ ...form, parentEmail: e.target.value })} />
             </div>
-            <div className="space-y-1.5">
+            <div>
               <Label>Parent Phone</Label>
-              <Input value={form.parentPhone} onChange={(e) => setForm({ ...form, parentPhone: e.target.value })} placeholder="+52 999 000 0000" />
+              <Input value={form.parentPhone} onChange={(e) => setForm({ ...form, parentPhone: e.target.value })} />
             </div>
-            <div className="col-span-2 space-y-1.5">
-              <Label>Notes</Label>
-              <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Additional notes about the student..." rows={3} />
-            </div>
-            <div className="col-span-2 space-y-1.5">
-              <Label>Tags</Label>
-              <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="active,children,online (comma separated)" />
-            </div>
+          </div>
+          <div>
+            <Label>Notes</Label>
+            <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} />
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>

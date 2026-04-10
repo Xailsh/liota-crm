@@ -251,3 +251,53 @@
 - [x] Vitest: metaLeads.list, stats, RBAC (non-admin blocked from syncFromMeta)
 - [x] Vitest: socialCredentials.list, upsert+delete cycle, RBAC (non-admin blocked)
 - [x] Vitest: outreach.history, sendEmail invalid email rejection
+
+## Session 6 - Meta Webhook Setup
+- [ ] Add META_WEBHOOK_VERIFY_TOKEN secret to project env
+- [ ] Add Express route GET /api/meta/webhook (hub.challenge verification)
+- [ ] Add Express route POST /api/meta/webhook (receive leadgen events)
+- [ ] Parse lead fields from Meta Graph API using page access token from social_credentials
+- [ ] Save each lead to meta_leads table (deduplicate by leadId)
+- [ ] Auto-create CRM lead record in leads table when Meta lead arrives
+- [ ] Show webhook URL in MetaLeads Setup Guide and OutreachHub
+- [ ] Write Vitest tests for webhook handler logic
+- [ ] Save checkpoint
+
+## Session 7 - Staff Invitations & Multi-Auth Login
+- [x] Audit current auth: users table, invitations table, login page, OAuth flow
+- [x] Add passwordHash column to users table (for email/password login)
+- [x] Add googleId column to users table (for Google OAuth)
+- [x] Add avatarUrl column to users table
+- [x] Backend: POST /api/staff-auth/set-password (accept invite token + set password → session)
+- [x] Backend: POST /api/staff-auth/login (email + password → session cookie)
+- [x] Backend: GET /api/staff-auth/google (redirect to Google OAuth)
+- [x] Backend: GET /api/staff-auth/google/callback (exchange code, upsert user, issue session)
+- [x] Frontend: Login page updated with 3 methods: Manus OAuth, Google Sign-In, Email/Password
+- [x] Frontend: /invite/:token page rebuilt — shows invitation details, lets staff choose Google or set password
+- [x] Admin Panel → Users & Roles tab already existed with invite form + pending invitations table
+- [ ] Wire Google OAuth client credentials (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET) — needs user to provide
+- [x] Write Vitest tests for new auth procedures (6 tests, all passing)
+- [ ] Save checkpoint
+
+## Session 8 - English Placement Test System (COMPLETED)
+- [x] Add placement_tests table (title, description, version, targetLevel, durationMinutes, isActive)
+- [x] Add test_questions table (questionText, options JSON, correctAnswer, points, skill, cefrLevel, orderIndex)
+- [x] Add test_submissions table (token, recipientEmail, recipientName, status, answers JSON, score, cefrResult, sentAt, completedAt, expiresAt)
+- [x] Add test_schedules table (studentId, testId, scheduledAt, isRecurring, intervalMonths, nextSendAt, lastSentAt, status)
+- [x] Backend: placementTests.list, create, update, delete, getWithQuestions, saveQuestions
+- [x] Backend: placementTests.sendToStudent (token, Resend email from contact@liota.institute)
+- [x] Backend: placementTests.getByToken (public — validates token, returns test+questions)
+- [x] Backend: placementTests.submitAnswers (auto-scores, CEFR map, updates student mcerLevel, saves completedAt)
+- [x] Backend: placementTests.listSubmissions, listSchedules, createSchedule, updateSchedule, deleteSchedule, runDueSchedules
+- [x] Backend: placementTests.seedDefaults (30-question default A1-C2 test)
+- [x] Frontend: PlacementTests admin page (/placement-tests) with 3 tabs: Tests, Scheduler, Submissions
+- [x] Frontend: Test builder — create/edit test, question editor with accordion, CEFR/skill tags per question
+- [x] Frontend: Send Test dialog — choose existing student or custom email, set expiry days
+- [x] Frontend: TakeTest public page (/test/:token) — countdown timer, question navigator, A/B/C/D options, results with CEFR badge
+- [x] Frontend: TestScheduler tab — one-time and recurring schedules, pause/resume/delete, Run Due Now
+- [x] Frontend: Submissions tab — stats cards, full table with status/CEFR/score/dates
+- [x] Sidebar: Placement Tests added under Students group
+- [x] Route: /placement-tests and /test/:token registered in App.tsx
+- [x] Vitest: 8 tests (list RBAC, invalid token, seed RBAC) — 48 total passing
+- [x] Add Placement Tests tab to Student detail page (CEFR badge, test history, send button) — click any student card to open profile sheet
+- [ ] Save checkpoint

@@ -20,5 +20,5 @@ describe("Resend API Key Validation", () => {
     expect(data).toBeDefined();
     // Should have at least one domain (liota.institute)
     expect(Array.isArray(data?.data)).toBe(true);
-  });
+  }, 15000);
 });

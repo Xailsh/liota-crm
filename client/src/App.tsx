@@ -32,6 +32,8 @@ import Bills from "./pages/Bills";
 import StudyAbroad from "./pages/StudyAbroad";
 import AcceptInvite from "./pages/AcceptInvite";
 import OutreachHub from "./pages/OutreachHub";
+import PlacementTests from "./pages/PlacementTests";
+import TakeTest from "./pages/TakeTest";
 import LiotaLayout from "./components/LiotaLayout";
 
 function Router() {
@@ -64,6 +66,8 @@ function Router() {
         <Route path="/bills" component={Bills} />
         <Route path="/study-abroad" component={StudyAbroad} />
         <Route path="/outreach-hub" component={OutreachHub} />
+        <Route path="/placement-tests" component={PlacementTests} />
+        <Route path="/test/:token" component={TakeTest} />
         <Route path="/invite/:token" component={AcceptInvite} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />

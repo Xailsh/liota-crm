@@ -1,4 +1,5 @@
 import { TRPCError } from "@trpc/server";
+import { placementTestsRouter } from "./routers/placementTests";
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -1340,5 +1341,6 @@ GUIDELINES:
         return { success: true, email: inv.email, role: inv.role };
       }),
   }),
+  placementTests: placementTestsRouter,
 });
 export type AppRouter = typeof appRouter;

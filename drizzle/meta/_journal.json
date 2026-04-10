@@ -64,6 +64,20 @@
       "when": 1775785334172,
       "tag": "0008_dusty_squadron_sinister",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1775805842809,
+      "tag": "0009_daffy_lilith",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1775810171212,
+      "tag": "0010_sudden_scarlet_witch",
+      "breakpoints": true
     }
   ]
 }

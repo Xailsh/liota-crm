@@ -17,6 +17,9 @@ export const users = mysqlTable("users", {
   name: text("name"),
   email: varchar("email", { length: 320 }),
   loginMethod: varchar("loginMethod", { length: 64 }),
+  passwordHash: varchar("passwordHash", { length: 256 }),
+  googleId: varchar("googleId", { length: 128 }),
+  avatarUrl: text("avatarUrl"),
   role: mysqlEnum("role", ["user", "admin", "instructor", "coordinator", "receptionist"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -568,3 +571,73 @@ export const outreachMessages = mysqlTable("outreachMessages", {
 });
 export type OutreachMessage = typeof outreachMessages.$inferSelect;
 export type InsertOutreachMessage = typeof outreachMessages.$inferInsert;
+
+// ─── Placement Tests ──────────────────────────────────────────────────────────
+export const placementTests = mysqlTable("placementTests", {
+  id: int("id").autoincrement().primaryKey(),
+  title: varchar("title", { length: 256 }).notNull(),
+  description: text("description"),
+  version: varchar("version", { length: 64 }).notNull().default("v1"),
+  targetLevel: mysqlEnum("targetLevel", ["A1", "A2", "B1", "B2", "C1", "C2", "mixed"]).default("mixed").notNull(),
+  durationMinutes: int("durationMinutes").default(30).notNull(),
+  isActive: boolean("isActive").default(true).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type PlacementTest = typeof placementTests.$inferSelect;
+export type InsertPlacementTest = typeof placementTests.$inferInsert;
+
+export const testQuestions = mysqlTable("testQuestions", {
+  id: int("id").autoincrement().primaryKey(),
+  testId: int("testId").notNull().references(() => placementTests.id, { onDelete: "cascade" }),
+  orderIndex: int("orderIndex").notNull().default(0),
+  questionText: text("questionText").notNull(),
+  options: text("options").notNull(), // JSON array of strings
+  correctAnswer: varchar("correctAnswer", { length: 512 }).notNull(),
+  points: int("points").default(1).notNull(),
+  skill: mysqlEnum("skill", ["grammar", "vocabulary", "reading", "listening", "writing"]).default("grammar").notNull(),
+  cefrLevel: mysqlEnum("cefrLevel", ["A1", "A2", "B1", "B2", "C1", "C2"]).default("A1").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TestQuestion = typeof testQuestions.$inferSelect;
+export type InsertTestQuestion = typeof testQuestions.$inferInsert;
+
+export const testSubmissions = mysqlTable("testSubmissions", {
+  id: int("id").autoincrement().primaryKey(),
+  testId: int("testId").notNull().references(() => placementTests.id),
+  studentId: int("studentId").references(() => students.id),
+  recipientEmail: varchar("recipientEmail", { length: 320 }),
+  recipientName: varchar("recipientName", { length: 256 }),
+  token: varchar("token", { length: 128 }).notNull().unique(),
+  status: mysqlEnum("status", ["pending", "in_progress", "completed", "expired"]).default("pending").notNull(),
+  score: int("score"),
+  maxScore: int("maxScore"),
+  percentScore: int("percentScore"),
+  cefrResult: mysqlEnum("cefrResult", ["A1", "A2", "B1", "B2", "C1", "C2"]),
+  answers: text("answers"), // JSON: { questionId: selectedAnswer }
+  sentAt: timestamp("sentAt").defaultNow().notNull(),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type TestSubmission = typeof testSubmissions.$inferSelect;
+export type InsertTestSubmission = typeof testSubmissions.$inferInsert;
+
+export const testSchedules = mysqlTable("testSchedules", {
+  id: int("id").autoincrement().primaryKey(),
+  studentId: int("studentId").notNull().references(() => students.id, { onDelete: "cascade" }),
+  testId: int("testId").notNull().references(() => placementTests.id),
+  isRecurring: boolean("isRecurring").default(false).notNull(),
+  intervalMonths: int("intervalMonths").default(1),
+  scheduledAt: timestamp("scheduledAt").notNull(),
+  lastSentAt: timestamp("lastSentAt"),
+  nextSendAt: timestamp("nextSendAt"),
+  status: mysqlEnum("status", ["active", "paused", "completed", "cancelled"]).default("active").notNull(),
+  notes: text("notes"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type TestSchedule = typeof testSchedules.$inferSelect;
+export type InsertTestSchedule = typeof testSchedules.$inferInsert;
