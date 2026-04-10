@@ -317,3 +317,15 @@
 - [ ] Frontend: TakeTest page — show certificate download button after completion
 - [ ] Write Vitest tests for new procedures
 - [ ] Save checkpoint
+
+## Session 10 - Onboarding Guide
+- [x] Add guide_videos table to DB (sectionKey, youtubeUrl, updatedBy, updatedAt)
+- [x] Backend: guide.listVideos (public), guide.upsertVideo (admin only)
+- [x] Build OnboardingGuide page with role tabs (Instructor, Coordinator/Sales, Finance, Admin)
+- [x] Each role tab has sections with step-by-step instructions matching access level
+- [x] Each section has YouTube video embed (or placeholder if no URL set yet)
+- [x] Admin can click Edit Video to paste a YouTube URL per section
+- [x] PDF download button (browser print-to-PDF styled output)
+- [x] Add Onboarding Guide to sidebar navigation (Integrations & Admin group)
+- [x] Register /onboarding-guide route in App.tsx
+- [ ] Save checkpoint

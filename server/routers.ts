@@ -1342,5 +1342,28 @@ GUIDELINES:
       }),
   }),
   placementTests: placementTestsRouter,
+  guide: router({
+    listVideos: publicProcedure.query(async () => {
+      const db = await getDb();
+      if (!db) return [];
+      const { guideVideos } = await import("../drizzle/schema");
+      return db.select().from(guideVideos);
+    }),
+    upsertVideo: protectedProcedure
+      .input(z.object({
+        sectionKey: z.string().min(1).max(100),
+        youtubeUrl: z.string().max(500).nullable(),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role !== "admin") throw new TRPCError({ code: "FORBIDDEN", message: "Admin only" });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const { guideVideos } = await import("../drizzle/schema");
+        await db.insert(guideVideos)
+          .values({ sectionKey: input.sectionKey, youtubeUrl: input.youtubeUrl ?? undefined, updatedBy: ctx.user.id })
+          .onDuplicateKeyUpdate({ set: { youtubeUrl: input.youtubeUrl ?? undefined, updatedBy: ctx.user.id } });
+        return { success: true };
+      }),
+  }),
 });
 export type AppRouter = typeof appRouter;

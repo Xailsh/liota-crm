@@ -5,7 +5,7 @@ import {
   BarChart3, BookOpen, ChevronRight, CreditCard, GraduationCap,
   LayoutDashboard, Lock, LogOut, Mail, Menu, TrendingUp, Users, Users2, X,
   Award, Package, Tent, Star, MessageSquare, Mic, Zap, Link2, Shield,
-  Globe, RefreshCw, AlertTriangle, Library, Plane, Receipt,
+  Globe, RefreshCw, AlertTriangle, Library, Plane, Receipt, HelpCircle,
 } from "lucide-react";
 import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
@@ -81,6 +81,7 @@ const buildNavItems = (t: (k: any) => string) => [
       { href: "/bulk-email", icon: Mail, label: "Bulk Email", description: "Mass outreach & campaigns" },
       { href: "/integrations", icon: Link2, label: t("integrations"), description: "Webhooks & connections" },
       { href: "/admin", icon: Shield, label: t("admin"), description: "System administration", adminOnly: true },
+      { href: "/onboarding-guide", icon: HelpCircle, label: "Onboarding Guide", description: "Role-based staff instructions" },
     ],
   },
   {

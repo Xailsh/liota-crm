@@ -654,3 +654,14 @@ export const submissionNotes = mysqlTable("submissionNotes", {
 });
 export type SubmissionNote = typeof submissionNotes.$inferSelect;
 export type InsertSubmissionNote = typeof submissionNotes.$inferInsert;
+
+// ─── Onboarding Guide Videos (admin-editable YouTube embeds per section) ─────
+export const guideVideos = mysqlTable("guideVideos", {
+  id: int("id").autoincrement().primaryKey(),
+  sectionKey: varchar("sectionKey", { length: 100 }).notNull().unique(),
+  youtubeUrl: varchar("youtubeUrl", { length: 500 }),
+  updatedBy: int("updatedBy").references(() => users.id),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type GuideVideo = typeof guideVideos.$inferSelect;
+export type InsertGuideVideo = typeof guideVideos.$inferInsert;
