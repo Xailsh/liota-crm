@@ -661,10 +661,15 @@ function RoleTab({
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
-      saveMutation.mutate({ role: role.id, completedItems: Array.from(next) });
+      const allKeys = role.sections.flatMap((s) => s.items.map((i) => i.key));
+      const isNowComplete = allKeys.length > 0 && allKeys.every((k) => next.has(k));
+      const itemsToSave = Array.from(next);
+      if (isNowComplete) itemsToSave.push('__complete__');
+      saveMutation.mutate({ role: role.id, completedItems: itemsToSave });
+      if (isNowComplete) toast.success('🎉 Onboarding complete! Your manager has been notified.');
       return next;
     });
-  }, [role.id, saveMutation]);
+  }, [role.id, role.sections, saveMutation]);
 
   const allItems = role.sections.flatMap((s) => s.items);
   const totalItems = allItems.length;

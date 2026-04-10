@@ -113,6 +113,7 @@ const buildNavItems = (t: (k: any) => string) => [
       { href: "/integrations", icon: Link2, label: t("integrations"), description: "Webhooks & connections" },
       { href: "/admin", icon: Shield, label: t("admin"), description: "System administration", adminOnly: true },
       { href: "/onboarding-guide", icon: HelpCircle, label: "Onboarding Guide", description: "Role-based staff instructions" },
+      { href: "/onboarding-dashboard", icon: BarChart3, label: "Onboarding Progress", description: "Track staff onboarding", adminOnly: true },
     ],
   },
   {

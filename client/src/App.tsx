@@ -35,6 +35,7 @@ import OutreachHub from "./pages/OutreachHub";
 import PlacementTests from "./pages/PlacementTests";
 import TakeTest from "./pages/TakeTest";
 import OnboardingGuide from "./pages/OnboardingGuide";
+import OnboardingDashboard from "./pages/OnboardingDashboard";
 import LiotaLayout from "./components/LiotaLayout";
 
 function Router() {
@@ -70,6 +71,7 @@ function Router() {
         <Route path="/placement-tests" component={PlacementTests} />
         <Route path="/test/:token" component={TakeTest} />
         <Route path="/onboarding-guide" component={OnboardingGuide} />
+        <Route path="/onboarding-dashboard" component={OnboardingDashboard} />
         <Route path="/invite/:token" component={AcceptInvite} />
         <Route path="/404" component={NotFound} />
         <Route component={NotFound} />

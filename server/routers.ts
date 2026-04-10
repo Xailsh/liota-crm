@@ -688,7 +688,7 @@ export const appRouter = router({
     list: protectedProcedure
       .input(z.object({ type: z.string().optional(), campus: z.string().optional(), isActive: z.boolean().optional() }))
       .query(async ({ input }) => getLanguagePackages(input)),
-    create: adminProcedure
+    create: protectedProcedure
       .input(z.object({
         name: z.string(),
         type: z.enum(["esl","ssl","one_language","two_language","polyglot","full_package","business_english","kids_package","teens_package","custom"]),
@@ -706,10 +706,16 @@ export const appRouter = router({
         maxStudents: z.number().default(6),
         campus: z.enum(["merida","dallas","denver","vienna","nottingham","online","all"]).default("all"),
       }))
-      .mutation(async ({ input }) => { await createLanguagePackage(input as any); return { success: true }; }),
-    update: adminProcedure
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'sales') throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin or Sales access required' });
+        await createLanguagePackage(input as any); return { success: true };
+      }),
+    update: protectedProcedure
       .input(z.object({ id: z.number(), data: z.record(z.string(), z.any()) }))
-      .mutation(async ({ input }) => { await updateLanguagePackage(input.id, input.data); return { success: true }; }),
+      .mutation(async ({ input, ctx }) => {
+        if (ctx.user.role !== 'admin' && ctx.user.role !== 'sales') throw new TRPCError({ code: 'FORBIDDEN', message: 'Admin or Sales access required' });
+        await updateLanguagePackage(input.id, input.data); return { success: true };
+      }),
     delete: adminProcedure
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => { await deleteLanguagePackage(input.id); return { success: true }; }),
@@ -1399,6 +1405,14 @@ GUIDELINES:
           .where(and(eq(onboardingProgress.userId, ctx.user.id), eq(onboardingProgress.role, input.role)))
           .limit(1);
         const itemsJson = JSON.stringify(input.completedItems);
+        // Check if this save crosses the 100% threshold for the first time
+        let wasAlreadyComplete = false;
+        if (existing.length > 0) {
+          try {
+            const prev = JSON.parse((existing[0] as any).completedItems || '[]') as string[];
+            wasAlreadyComplete = prev.length >= input.completedItems.length && input.completedItems.length > 0;
+          } catch { /* ignore */ }
+        }
         if (existing.length === 0) {
           await db.insert(onboardingProgress).values({
             userId: ctx.user.id,
@@ -1409,6 +1423,18 @@ GUIDELINES:
           await db.update(onboardingProgress)
             .set({ completedItems: itemsJson })
             .where(and(eq(onboardingProgress.userId, ctx.user.id), eq(onboardingProgress.role, input.role)));
+        }
+        // Notify admin when staff completes 100% of their onboarding checklist
+        // We detect completion by checking if the input includes a special sentinel item '__complete__'
+        // The frontend sends this when overallPct reaches 100
+        if (input.completedItems.includes('__complete__') && !wasAlreadyComplete) {
+          try {
+            const { notifyOwner } = await import("./_core/notification");
+            await notifyOwner({
+              title: `✅ Onboarding Complete: ${ctx.user.name || ctx.user.email}`,
+              content: `${ctx.user.name || ctx.user.email} has completed 100% of the ${input.role} onboarding checklist.`,
+            });
+          } catch { /* notification failure should not break the save */ }
         }
         return { success: true };
       }),
@@ -1423,6 +1449,35 @@ GUIDELINES:
         await db.delete(onboardingProgress)
           .where(and(eq(onboardingProgress.userId, ctx.user.id), eq(onboardingProgress.role, input.role)));
         return { success: true };
+      }),
+
+    // Admin: get all staff onboarding progress
+    getAllProgress: protectedProcedure
+      .query(async ({ ctx }) => {
+        if (ctx.user.role !== 'admin') throw new TRPCError({ code: 'FORBIDDEN' });
+        const db = await getDb();
+        if (!db) throw new TRPCError({ code: 'INTERNAL_SERVER_ERROR' });
+        const { onboardingProgress, users } = await import('../drizzle/schema');
+        const { eq } = await import('drizzle-orm');
+        const rows = await db
+          .select({
+            progressId: onboardingProgress.id,
+            userId: onboardingProgress.userId,
+            role: onboardingProgress.role,
+            completedItems: onboardingProgress.completedItems,
+            updatedAt: onboardingProgress.updatedAt,
+            userName: users.name,
+            userEmail: users.email,
+            userRole: users.role,
+          })
+          .from(onboardingProgress)
+          .leftJoin(users, eq(onboardingProgress.userId, users.id));
+        return rows.map((r) => ({
+          ...r,
+          completedItems: (() => {
+            try { return JSON.parse(r.completedItems || '[]') as string[]; } catch { return [] as string[]; }
+          })(),
+        }));
       }),
   }),
 });

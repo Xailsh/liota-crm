@@ -355,3 +355,11 @@
 - [ ] Admin Panel: add "sales" as selectable role when inviting staff
 - [ ] Onboarding Guide: add Sales tab with role-specific instructions
 - [ ] Save checkpoint
+
+## Session 12 - Follow-up Tasks
+- [ ] Create reusable LIOTA CRM skill via skill-creator
+- [ ] Notify admin when staff member completes onboarding checklist (100% progress trigger)
+- [ ] Build onboarding progress dashboard for admins (all staff progress table + stats)
+- [ ] Allow Sales role to create and edit language packages
+- [ ] Write tests for new features
+- [ ] Save checkpoint

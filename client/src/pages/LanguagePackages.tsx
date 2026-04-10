@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { BookOpen, Plus, Loader2, DollarSign, Clock, Globe, Star } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 const PRESET_PACKAGES = [
   { name: "Single Language - Starter", type: "single_language", languages: 1, hours: 20, priceUSD: 400, priceMXN: 8000, description: "20 hours of instruction in one language. Perfect for beginners." },
@@ -37,6 +38,9 @@ export default function LanguagePackages() {
     totalHours: "", sessionsPerWeek: "", sessionDurationMinutes: "60",
     languagesIncluded: "1", isActive: true, isOnline: true, isOnsite: true,
   });
+
+  const { user } = useAuth();
+  const canEdit = user?.role === 'admin' || user?.role === 'sales';
 
   const { data: packages, isLoading, refetch } = trpc.packages.list.useQuery({});
   const createMutation = trpc.packages.create.useMutation({
@@ -91,7 +95,7 @@ export default function LanguagePackages() {
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">Manage course packages, pricing, and hourly rates</p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        {canEdit && <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button size="sm" className="gap-2"><Plus className="w-4 h-4" /> New Package</Button>
           </DialogTrigger>
@@ -184,7 +188,7 @@ export default function LanguagePackages() {
               </div>
             </div>
           </DialogContent>
-        </Dialog>
+        </Dialog>}
       </div>
 
       {/* Hourly Rates Banner */}
