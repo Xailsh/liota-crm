@@ -18,6 +18,10 @@ import {
   ArrowUpRight,
   Loader2,
   RefreshCw,
+  Target,
+  MousePointerClick,
+  Eye,
+  Megaphone,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -363,6 +367,113 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Marketing Analytics — visible to marketing and admin only */}
+      {(user?.role === "marketing" || user?.role === "admin") && (
+        <Card className="border border-border card-shadow">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <Megaphone className="w-4 h-4 text-pink-600" />
+                Marketing Analytics
+              </CardTitle>
+              <Badge variant="outline" className="text-xs bg-pink-50 text-pink-700 border-pink-200">
+                Marketing & Admin
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+              {[
+                {
+                  label: "Active Campaigns",
+                  value: metrics?.activeCampaigns ?? 0,
+                  icon: Mail,
+                  color: "text-amber-600",
+                  bg: "bg-amber-50",
+                  border: "border-amber-100",
+                  sub: "Running now",
+                },
+                {
+                  label: "Total Leads",
+                  value: metrics?.totalLeads ?? 0,
+                  icon: Target,
+                  color: "text-rose-600",
+                  bg: "bg-rose-50",
+                  border: "border-rose-100",
+                  sub: "In pipeline",
+                },
+                {
+                  label: "Conversion Rate",
+                  value: metrics?.totalLeads
+                    ? `${Math.round(((metrics?.totalStudents ?? 0) / (metrics?.totalLeads ?? 1)) * 100)}%`
+                    : "—",
+                  icon: MousePointerClick,
+                  color: "text-emerald-600",
+                  bg: "bg-emerald-50",
+                  border: "border-emerald-100",
+                  sub: "Leads → Students",
+                },
+                {
+                  label: "Satisfaction Rate",
+                  value: `${metrics?.satisfactionRate ?? 95}%`,
+                  icon: Star,
+                  color: "text-yellow-600",
+                  bg: "bg-yellow-50",
+                  border: "border-yellow-100",
+                  sub: "Based on assessments",
+                },
+              ].map((card) => (
+                <div
+                  key={card.label}
+                  className={`flex items-center gap-3 p-3 rounded-xl border ${card.border} ${card.bg}`}
+                >
+                  <div className={`w-9 h-9 rounded-lg ${card.bg} border ${card.border} flex items-center justify-center flex-shrink-0`}>
+                    <card.icon className={`w-4 h-4 ${card.color}`} />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground">{card.label}</p>
+                    <p className={`text-lg font-bold ${card.color}`}>{card.value}</p>
+                    <p className="text-xs text-muted-foreground">{card.sub}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Lead Stage Funnel */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lead Funnel</p>
+              {[
+                { stage: "New Lead", key: "new_lead", color: "bg-blue-500" },
+                { stage: "Contacted", key: "contacted", color: "bg-indigo-500" },
+                { stage: "Trial Scheduled", key: "trial_scheduled", color: "bg-violet-500" },
+                { stage: "Trial Done", key: "trial_done", color: "bg-amber-500" },
+                { stage: "Proposal Sent", key: "proposal_sent", color: "bg-orange-500" },
+                { stage: "Enrolled", key: "enrolled", color: "bg-emerald-500" },
+              ].map((s) => {
+                const count = (metrics?.recentLeads ?? []).filter((l: any) => l.stage === s.key).length;
+                const total = Math.max((metrics?.recentLeads ?? []).length, 1);
+                const pct = Math.round((count / total) * 100);
+                return (
+                  <div key={s.key} className="flex items-center gap-3">
+                    <span className="text-xs text-muted-foreground w-32 flex-shrink-0">{s.stage}</span>
+                    <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden">
+                      <div
+                        className={`h-2 rounded-full ${s.color} transition-all duration-500`}
+                        style={{ width: `${Math.max(pct, count > 0 ? 4 : 0)}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-semibold text-foreground w-6 text-right">{count}</span>
+                  </div>
+                );
+              })}
+              <p className="text-xs text-muted-foreground mt-1">
+                Showing distribution from the {(metrics?.recentLeads ?? []).length} most recent leads.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Campus Overview */}
       <Card className="border border-border card-shadow">

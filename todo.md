@@ -374,3 +374,33 @@
 - [x] Onboarding Guide: add Marketing tab with 8 sections and checklist items
 - [x] Write Vitest tests for Marketing RBAC (21 tests passing)
 - [x] Save checkpoint
+
+## Session 14 - Follow-up Tasks
+
+### Rol Ventas
+- [x] Add 'ventas' to users and invitations role enums in schema.ts
+- [x] Run drizzle-kit generate and apply DB migration for ventas role (migration 0015)
+- [x] Backend: allow ventas role on leads (read + write), contacts (read + write), email-marketing, bulk-email, meta-leads, placement tests (send only)
+- [x] Sidebar: Ventas sees Leads Pipeline, Contacts, Email Marketing, Bulk Email, Meta Leads, Placement Tests, Language Packages (read), Dashboard, Onboarding Guide
+- [x] Admin Panel: add Ventas to role SelectItem lists and permissions matrix column
+- [x] Onboarding Guide: add Ventas tab with checklist items
+- [x] Write Vitest tests for Ventas RBAC
+
+### Marketing Analytics Dashboard Section
+- [x] Frontend: add MarketingAnalytics section to Dashboard page, visible only to marketing and admin roles
+- [x] Show: active campaigns count, total leads, conversion rate (leads→students), lead funnel by stage, satisfaction rate
+
+### Email Notifications for Marketing Role
+- [x] Backend: extend leads.create procedure with notifyMarketing flag
+- [x] Backend: send email via Resend to all marketing users when a lead is created with notifyMarketing=true
+- [x] Email template: buildLeadAssignmentEmail with lead name, contact info, stage, source, notes, and CRM link
+- [x] Frontend: "Notify Marketing team by email" checkbox in lead creation form (visible to admin/coordinator/sales/ventas)
+
+### Skill Creator
+- [x] Read /skill-creator SKILL.md
+- [x] Create skill: liota-crm-role at /home/ubuntu/skills/liota-crm-role/SKILL.md
+
+## Session 14b - Onboarding Guide Bilingual Support
+- [x] Add EN/ES language toggle button to OnboardingGuide page header
+- [x] Add Spanish translations for all role tabs: Admin, Instructor, Coordinator, Finance, Sales, Marketing
+- [x] Persist language selection in localStorage so it survives page navigation (via LanguageContext)

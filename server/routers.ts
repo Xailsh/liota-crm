@@ -7,6 +7,9 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { invokeLLM } from "./_core/llm";
 import { getDb } from "./db";
+import { sendEmail, buildLeadAssignmentEmail } from "./email";
+import { users } from "../drizzle/schema";
+import { eq, inArray } from "drizzle-orm";
 import {
   createAssessment,
   createCampaign,
@@ -371,10 +374,53 @@ export const appRouter = router({
           notes: z.string().optional(),
           trialDate: z.string().optional(),
           assignedTo: z.string().optional(),
+          notifyMarketing: z.boolean().optional().default(false),
+          origin: z.string().optional(),
         })
       )
-      .mutation(async ({ input }) => {
-        await createLead(input as any);
+      .mutation(async ({ ctx, input }) => {
+        const { notifyMarketing, origin, ...leadData } = input;
+        await createLead(leadData as any);
+
+        // Send email notification to all marketing users when notifyMarketing is true
+        if (notifyMarketing) {
+          try {
+            const db = await getDb();
+            if (!db) throw new Error("DB not available");
+            const marketingUsers = await db
+              .select({ email: users.email, name: users.name })
+              .from(users)
+              .where(inArray(users.role, ["marketing"]))
+              .execute();
+
+            if (marketingUsers.length > 0) {
+              const emails = marketingUsers
+                .map((u: { email: string | null; name: string | null }) => u.email)
+                .filter((e): e is string => !!e);
+              if (emails.length > 0) {
+                const html = buildLeadAssignmentEmail({
+                  leadName: `${input.firstName} ${input.lastName}`,
+                  leadEmail: input.email,
+                  leadPhone: input.phone,
+                  stage: input.stage ?? "new_lead",
+                  source: input.source,
+                  notes: input.notes,
+                  assignerName: ctx.user.name ?? ctx.user.email ?? "Admin",
+                  crmUrl: origin,
+                });
+                await sendEmail({
+                  to: emails,
+                  subject: `📋 New Lead Assigned: ${input.firstName} ${input.lastName}`,
+                  html,
+                });
+              }
+            }
+          } catch (err) {
+            // Non-blocking: log but don't fail the lead creation
+            console.error("[Lead Notification] Failed to send marketing email:", err);
+          }
+        }
+
         return { success: true };
       }),
     update: protectedProcedure
@@ -1138,7 +1184,7 @@ GUIDELINES:
   admin: router({
     listUsers: adminProcedure.query(async () => getAllUsers()),
     updateUserRole: adminProcedure
-      .input(z.object({ userId: z.number(), role: z.enum(["user", "admin", "instructor", "coordinator", "receptionist", "sales", "marketing", "finance"]) }))
+      .input(z.object({ userId: z.number(), role: z.enum(["user", "admin", "instructor", "coordinator", "receptionist", "sales", "marketing", "finance", "ventas"]) }))
       .mutation(async ({ input }) => { await updateUserRole(input.userId, input.role); return { success: true }; }),
     systemStats: adminProcedure.query(async () => getSystemStats()),
     updateFinancialPin: adminProcedure
@@ -1155,7 +1201,7 @@ GUIDELINES:
     createInvitation: adminProcedure
       .input(z.object({
         email: z.string().email(),
-        role: z.enum(["admin", "user", "instructor", "coordinator", "receptionist", "sales", "marketing", "finance"]).default("user"),
+        role: z.enum(["admin", "user", "instructor", "coordinator", "receptionist", "sales", "marketing", "finance", "ventas"]).default("user"),
         message: z.string().optional(),
         origin: z.string(),
       }))

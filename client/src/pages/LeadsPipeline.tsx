@@ -1,15 +1,17 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Users2, Plus, Mail, Phone, MapPin, Calendar, ArrowRight, Loader2, Edit2, Trash2, ChevronRight } from "lucide-react";
+import { Users2, Plus, Mail, Phone, MapPin, Calendar, ArrowRight, Loader2, Edit2, Trash2, ChevronRight, Bell } from "lucide-react";
 
 const STAGES = [
   { key: "new_lead", label: "New Lead", color: "bg-slate-100 border-slate-300", badge: "bg-slate-100 text-slate-700 border-slate-300", dot: "bg-slate-400" },
@@ -32,9 +34,11 @@ const emptyForm = {
 };
 
 export default function LeadsPipeline() {
+  const { user } = useAuth();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [notifyMarketing, setNotifyMarketing] = useState(false);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [selectedLead, setSelectedLead] = useState<any>(null);
 
@@ -59,8 +63,11 @@ export default function LeadsPipeline() {
     if (!payload.interestedProgram) delete payload.interestedProgram;
     if (!payload.preferredCampus) delete payload.preferredCampus;
     if (!payload.trialDate) delete payload.trialDate;
-    if (editId) updateMutation.mutate({ id: editId, ...payload });
-    else createMutation.mutate(payload);
+    if (editId) {
+      updateMutation.mutate({ id: editId, ...payload });
+    } else {
+      createMutation.mutate({ ...payload, notifyMarketing, origin: window.location.origin });
+    }
   };
 
   const openEdit = (l: any) => {
@@ -244,6 +251,22 @@ export default function LeadsPipeline() {
             <div className="space-y-1.5"><Label>Assigned to</Label><Input value={form.assignedTo} onChange={(e) => setForm({ ...form, assignedTo: e.target.value })} placeholder="Advisor name" /></div>
             <div className="space-y-1.5"><Label>Trial Date</Label><Input type="date" value={form.trialDate} onChange={(e) => setForm({ ...form, trialDate: e.target.value })} /></div>
             <div className="col-span-2 space-y-1.5"><Label>Notas</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} rows={3} /></div>
+            {/* Notify Marketing checkbox — only visible when creating a new lead, for admin/coordinator roles */}
+            {!editId && (user?.role === "admin" || user?.role === "coordinator" || user?.role === "sales" || user?.role === "ventas") && (
+              <div className="col-span-2 flex items-center gap-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                <Checkbox
+                  id="notifyMarketing"
+                  checked={notifyMarketing}
+                  onCheckedChange={(v) => setNotifyMarketing(!!v)}
+                />
+                <div className="flex items-center gap-2">
+                  <Bell className="w-4 h-4 text-amber-600" />
+                  <Label htmlFor="notifyMarketing" className="text-sm font-medium text-amber-800 cursor-pointer">
+                    Notify Marketing team by email
+                  </Label>
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>

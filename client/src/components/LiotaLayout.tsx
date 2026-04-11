@@ -52,6 +52,12 @@ const ROLE_ALLOWED: Record<string, string[]> = {
     "/", "/students", "/classes", "/contacts",
     "/leads", "/email-templates", "/onboarding-guide",
   ],
+  ventas: [
+    "/", "/leads", "/contacts", "/email-marketing", "/bulk-email",
+    "/meta-leads", "/placement-tests",
+    "/email-templates", "/whatsapp-templates",
+    "/onboarding-guide",
+  ],
 };
 
 const buildNavItems = (t: (k: any) => string) => [

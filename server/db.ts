@@ -1023,7 +1023,7 @@ export async function getAllUsers() {
   return db.select().from(users).orderBy(users.createdAt);
 }
 
-export async function updateUserRole(userId: number, role: "user" | "admin" | "instructor" | "coordinator" | "receptionist" | "sales" | "marketing" | "finance") {
+export async function updateUserRole(userId: number, role: "user" | "admin" | "instructor" | "coordinator" | "receptionist" | "sales" | "marketing" | "finance" | "ventas") {
   const db = await getDb();
   if (!db) return;
   await db.update(users).set({ role: role as any, updatedAt: new Date() }).where(eq(users.id, userId));
