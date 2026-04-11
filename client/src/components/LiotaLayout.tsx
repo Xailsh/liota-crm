@@ -37,6 +37,12 @@ const ROLE_ALLOWED: Record<string, string[]> = {
     "/email-templates", "/whatsapp-templates",
     "/onboarding-guide",
   ],
+  marketing: [
+    "/", "/leads", "/contacts", "/email-marketing", "/bulk-email",
+    "/meta-leads", "/outreach-hub",
+    "/email-templates", "/whatsapp-templates",
+    "/onboarding-guide",
+  ],
   finance: [
     "/", "/accounting", "/bills", "/financial",
     "/scholarships", "/packages",

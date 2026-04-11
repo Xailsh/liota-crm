@@ -363,3 +363,14 @@
 - [ ] Allow Sales role to create and edit language packages
 - [ ] Write tests for new features
 - [ ] Save checkpoint
+
+## Session 13 - Marketing Role
+- [x] Add 'marketing' to users role enum in DB and schema.ts
+- [x] Add 'marketing' to invitations role enum in DB and schema.ts
+- [x] Add 'finance' to users and invitations role enums in DB and schema.ts (migration 0014)
+- [x] Backend: allow marketing role on emailCampaigns, contacts, metaLeads, outreach, bulkEmail, packages.list, leads.list, placementTests.sendToStudent
+- [x] Sidebar: Marketing sees Email Marketing, Bulk Email, Contacts, Meta Leads, Outreach Hub, Leads Pipeline (read), Language Packages (read), Dashboard, Placement Tests (send only)
+- [x] Admin Panel: add Marketing to role SelectItem lists and permissions matrix
+- [x] Onboarding Guide: add Marketing tab with 8 sections and checklist items
+- [x] Write Vitest tests for Marketing RBAC (21 tests passing)
+- [x] Save checkpoint

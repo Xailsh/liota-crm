@@ -23,7 +23,7 @@ const PROGRAMS = ["Children", "Teenagers", "Adults", "Business English", "ESL", 
 
 // ─── Role Permissions Matrix ─────────────────────────────────────────────────
 
-type Role = "admin" | "instructor" | "coordinator" | "sales" | "receptionist" | "user";
+type Role = "admin" | "instructor" | "coordinator" | "sales" | "marketing" | "finance" | "receptionist" | "user";
 
 interface Permission {
   label: string;
@@ -32,63 +32,67 @@ interface Permission {
   instructor: boolean;
   coordinator: boolean;
   sales: boolean;
+  marketing: boolean;
+  finance: boolean;
   receptionist: boolean;
 }
 
 const PERMISSIONS: Permission[] = [
   // Dashboard & General
-  { label: "View Dashboard", category: "General", admin: true, instructor: true, coordinator: true, sales: true, receptionist: true },
-  { label: "View Analytics & Reports", category: "General", admin: true, instructor: false, coordinator: true, sales: false, receptionist: false },
-  { label: "View Audit Log", category: "General", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
+  { label: "View Dashboard", category: "General", admin: true, instructor: true, coordinator: true, sales: true, marketing: true, finance: true, receptionist: true },
+  { label: "View Analytics & Reports", category: "General", admin: true, instructor: false, coordinator: true, sales: false, marketing: true, finance: true, receptionist: false },
+  { label: "View Audit Log", category: "General", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: false, receptionist: false },
 
   // Students
-  { label: "View Students", category: "Students", admin: true, instructor: true, coordinator: true, sales: false, receptionist: true },
-  { label: "Create / Edit Students", category: "Students", admin: true, instructor: false, coordinator: true, sales: false, receptionist: true },
-  { label: "Delete Students", category: "Students", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
+  { label: "View Students", category: "Students", admin: true, instructor: true, coordinator: true, sales: false, marketing: false, finance: false, receptionist: true },
+  { label: "Create / Edit Students", category: "Students", admin: true, instructor: false, coordinator: true, sales: false, marketing: false, finance: false, receptionist: true },
+  { label: "Delete Students", category: "Students", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: false, receptionist: false },
 
   // Classes & Programs
-  { label: "View Classes & Schedule", category: "Classes", admin: true, instructor: true, coordinator: true, sales: false, receptionist: true },
-  { label: "Create / Edit Classes", category: "Classes", admin: true, instructor: false, coordinator: true, sales: false, receptionist: false },
-  { label: "Manage Attendance", category: "Classes", admin: true, instructor: true, coordinator: true, sales: false, receptionist: false },
+  { label: "View Classes & Schedule", category: "Classes", admin: true, instructor: true, coordinator: true, sales: false, marketing: false, finance: false, receptionist: true },
+  { label: "Create / Edit Classes", category: "Classes", admin: true, instructor: false, coordinator: true, sales: false, marketing: false, finance: false, receptionist: false },
+  { label: "Manage Attendance", category: "Classes", admin: true, instructor: true, coordinator: true, sales: false, marketing: false, finance: false, receptionist: false },
 
   // Academic Progress
-  { label: "View Academic Progress", category: "Academic", admin: true, instructor: true, coordinator: true, sales: false, receptionist: false },
-  { label: "Add / Edit Assessments", category: "Academic", admin: true, instructor: true, coordinator: false, sales: false, receptionist: false },
-  { label: "Generate Progress Reports", category: "Academic", admin: true, instructor: true, coordinator: true, sales: false, receptionist: false },
+  { label: "View Academic Progress", category: "Academic", admin: true, instructor: true, coordinator: true, sales: false, marketing: false, finance: false, receptionist: false },
+  { label: "Add / Edit Assessments", category: "Academic", admin: true, instructor: true, coordinator: false, sales: false, marketing: false, finance: false, receptionist: false },
+  { label: "Generate Progress Reports", category: "Academic", admin: true, instructor: true, coordinator: true, sales: false, marketing: false, finance: false, receptionist: false },
 
   // Leads & Marketing
-  { label: "View Leads Pipeline", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, receptionist: true },
-  { label: "Manage Leads", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, receptionist: true },
-  { label: "Email Marketing", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, receptionist: false },
-  { label: "WhatsApp Templates", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, receptionist: true },
-  { label: "Bulk Email / Outreach", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, receptionist: false },
-  { label: "Meta Leads (Facebook/Instagram)", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, receptionist: false },
+  { label: "View Leads Pipeline", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, marketing: true, finance: false, receptionist: true },
+  { label: "Manage Leads", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, marketing: true, finance: false, receptionist: true },
+  { label: "Email Marketing", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, marketing: true, finance: false, receptionist: false },
+  { label: "WhatsApp Templates", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, marketing: true, finance: false, receptionist: true },
+  { label: "Bulk Email / Outreach", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, marketing: true, finance: false, receptionist: false },
+  { label: "Meta Leads (Facebook/Instagram)", category: "Sales & Marketing", admin: true, instructor: false, coordinator: true, sales: true, marketing: true, finance: false, receptionist: false },
+  { label: "Outreach Hub (Social Media)", category: "Sales & Marketing", admin: true, instructor: false, coordinator: false, sales: false, marketing: true, finance: false, receptionist: false },
 
   // Contacts
-  { label: "View Contacts", category: "Contacts", admin: true, instructor: true, coordinator: true, sales: true, receptionist: true },
-  { label: "Create / Edit Contacts", category: "Contacts", admin: true, instructor: false, coordinator: true, sales: true, receptionist: true },
-  { label: "Log Communications", category: "Contacts", admin: true, instructor: true, coordinator: true, sales: true, receptionist: true },
+  { label: "View Contacts", category: "Contacts", admin: true, instructor: true, coordinator: true, sales: true, marketing: true, finance: false, receptionist: true },
+  { label: "Create / Edit Contacts", category: "Contacts", admin: true, instructor: false, coordinator: true, sales: true, marketing: false, finance: false, receptionist: true },
+  { label: "Log Communications", category: "Contacts", admin: true, instructor: true, coordinator: true, sales: true, marketing: true, finance: false, receptionist: true },
 
   // Finance
-  { label: "View Accounting", category: "Finance", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
-  { label: "Record Payments", category: "Finance", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
-  { label: "View Financial Dashboard", category: "Finance", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
-  { label: "Manage Scholarships", category: "Finance", admin: true, instructor: false, coordinator: true, sales: false, receptionist: false },
+  { label: "View Accounting", category: "Finance", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: true, receptionist: false },
+  { label: "Record Payments", category: "Finance", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: true, receptionist: false },
+  { label: "View Financial Dashboard", category: "Finance", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: true, receptionist: false },
+  { label: "Manage Scholarships", category: "Finance", admin: true, instructor: false, coordinator: true, sales: false, marketing: false, finance: true, receptionist: false },
+  { label: "Manage Bills & Expenses", category: "Finance", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: true, receptionist: false },
 
   // Programs & Events
-  { label: "View Language Packages", category: "Programs & Events", admin: true, instructor: true, coordinator: true, sales: true, receptionist: true },
-  { label: "Manage Camps & Events", category: "Programs & Events", admin: true, instructor: false, coordinator: true, sales: false, receptionist: false },
+  { label: "View Language Packages", category: "Programs & Events", admin: true, instructor: true, coordinator: true, sales: true, marketing: true, finance: true, receptionist: true },
+  { label: "Manage Camps & Events", category: "Programs & Events", admin: true, instructor: false, coordinator: true, sales: false, marketing: true, finance: false, receptionist: false },
 
   // Placement Tests
-  { label: "Send Placement Tests", category: "Placement Tests", admin: true, instructor: false, coordinator: true, sales: true, receptionist: false },
-  { label: "View Test Results", category: "Placement Tests", admin: true, instructor: true, coordinator: true, sales: true, receptionist: false },
-  { label: "Manage Test Builder", category: "Placement Tests", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
+  { label: "Send Placement Tests", category: "Placement Tests", admin: true, instructor: false, coordinator: true, sales: true, marketing: false, finance: false, receptionist: false },
+  { label: "View Test Results", category: "Placement Tests", admin: true, instructor: true, coordinator: true, sales: true, marketing: false, finance: false, receptionist: false },
+  { label: "Manage Test Builder", category: "Placement Tests", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: false, receptionist: false },
 
   // Admin
-  { label: "Manage Users & Roles", category: "Administration", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
-  { label: "System Settings", category: "Administration", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
-  { label: "Meta Leads & Webhooks", category: "Administration", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
-  { label: "Integrations", category: "Administration", admin: true, instructor: false, coordinator: false, sales: false, receptionist: false },
+  { label: "Manage Users & Roles", category: "Administration", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: false, receptionist: false },
+  { label: "System Settings", category: "Administration", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: false, receptionist: false },
+  { label: "Meta Leads & Webhooks", category: "Administration", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: false, receptionist: false },
+  { label: "Integrations", category: "Administration", admin: true, instructor: false, coordinator: false, sales: false, marketing: false, finance: false, receptionist: false },
 ];
 
 const ROLE_LABELS: Record<string, string> = {
@@ -96,7 +100,10 @@ const ROLE_LABELS: Record<string, string> = {
   instructor: "Instructor",
   coordinator: "Coordinator",
   sales: "Sales",
+  marketing: "Marketing",
+  finance: "Finance",
   receptionist: "Receptionist",
+  user: "User",
 };
 
 const ROLE_DESCRIPTIONS: Record<string, string> = {
@@ -104,6 +111,8 @@ const ROLE_DESCRIPTIONS: Record<string, string> = {
   instructor: "Access to their classes, student progress, attendance, and communications.",
   coordinator: "Manages students, leads, scheduling, events, and marketing campaigns.",
   sales: "Leads pipeline, contacts, email marketing, bulk outreach, Meta leads, and placement tests.",
+  marketing: "Email marketing, bulk outreach, Meta leads, Outreach Hub, contacts (read), and leads.",
+  finance: "Accounting, bills & expenses, financial dashboard, scholarships, and language packages.",
   receptionist: "Front-desk access: view students, manage leads, log communications.",
   user: "Basic access — no specific role assigned yet.",
 };
@@ -113,6 +122,8 @@ const ROLE_COLORS: Record<string, string> = {
   instructor: "bg-blue-100 text-blue-700 border-blue-200",
   coordinator: "bg-violet-100 text-violet-700 border-violet-200",
   sales: "bg-orange-100 text-orange-700 border-orange-200",
+  marketing: "bg-pink-100 text-pink-700 border-pink-200",
+  finance: "bg-teal-100 text-teal-700 border-teal-200",
   receptionist: "bg-emerald-100 text-emerald-700 border-emerald-200",
   user: "bg-gray-100 text-gray-600 border-gray-200",
 };
@@ -136,7 +147,7 @@ function PermissionsTab() {
     <div className="space-y-6">
       {/* Role Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {(["admin", "instructor", "coordinator", "sales", "receptionist"] as Role[]).map((role) => (
+        {(["admin", "instructor", "coordinator", "sales", "marketing", "finance", "receptionist"] as Role[]).map((role) => (
           <Card key={role} className="border border-border">
             <CardContent className="p-4">
               <Badge className={`text-xs mb-2 ${ROLE_COLORS[role]}`}>{ROLE_LABELS[role]}</Badge>
@@ -161,18 +172,20 @@ function PermissionsTab() {
             <thead>
               <tr className="bg-muted/40 border-b border-border">
                 <th className="px-4 py-3 text-left font-medium text-muted-foreground w-64">Permission</th>
-                <th className="px-4 py-3 text-center font-semibold text-red-700 w-24">Admin</th>
-                <th className="px-4 py-3 text-center font-semibold text-blue-700 w-24">Instructor</th>
-                <th className="px-4 py-3 text-center font-semibold text-violet-700 w-24">Coordinator</th>
-                <th className="px-4 py-3 text-center font-semibold text-orange-700 w-24">Sales</th>
-                <th className="px-4 py-3 text-center font-semibold text-emerald-700 w-24">Receptionist</th>
+                <th className="px-4 py-3 text-center font-semibold text-red-700 w-20">Admin</th>
+                <th className="px-4 py-3 text-center font-semibold text-blue-700 w-20">Instructor</th>
+                <th className="px-4 py-3 text-center font-semibold text-violet-700 w-20">Coordinator</th>
+                <th className="px-4 py-3 text-center font-semibold text-orange-700 w-20">Sales</th>
+                <th className="px-4 py-3 text-center font-semibold text-pink-700 w-20">Marketing</th>
+                <th className="px-4 py-3 text-center font-semibold text-teal-700 w-20">Finance</th>
+                <th className="px-4 py-3 text-center font-semibold text-emerald-700 w-20">Receptionist</th>
               </tr>
             </thead>
             <tbody>
               {categories.map((category) => (
                 <>
                   <tr key={`cat-${category}`} className="bg-muted/20 border-y border-border">
-                      <td colSpan={6} className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      <td colSpan={8} className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
                       {category}
                     </td>
                   </tr>
@@ -182,7 +195,9 @@ function PermissionsTab() {
                       <PermissionCell allowed={perm.admin} />
                       <PermissionCell allowed={perm.instructor} />
                       <PermissionCell allowed={perm.coordinator} />
-                      <PermissionCell allowed={(perm as any).sales ?? false} />
+                      <PermissionCell allowed={perm.sales} />
+                      <PermissionCell allowed={perm.marketing} />
+                      <PermissionCell allowed={perm.finance} />
                       <PermissionCell allowed={perm.receptionist} />
                     </tr>
                   ))}
@@ -258,6 +273,8 @@ function UsersTab() {
                   <SelectItem value="instructor">Instructor — Classes & students</SelectItem>
                   <SelectItem value="coordinator">Coordinator — Students, leads, events</SelectItem>
                   <SelectItem value="sales">Sales — Leads, contacts & outreach</SelectItem>
+                  <SelectItem value="marketing">Marketing — Email, outreach & Meta leads</SelectItem>
+                  <SelectItem value="finance">Finance — Accounting & billing</SelectItem>
                   <SelectItem value="receptionist">Receptionist — Front desk</SelectItem>
                   <SelectItem value="user">User — Basic access</SelectItem>
                 </SelectContent>
@@ -331,6 +348,8 @@ function UsersTab() {
                   <SelectItem value="instructor">Instructor — Classes & students</SelectItem>
                   <SelectItem value="coordinator">Coordinator — Students, leads, events</SelectItem>
                   <SelectItem value="sales">Sales — Leads, contacts & outreach</SelectItem>
+                  <SelectItem value="marketing">Marketing — Email, outreach & Meta leads</SelectItem>
+                  <SelectItem value="finance">Finance — Accounting & billing</SelectItem>
                   <SelectItem value="receptionist">Receptionist — Front desk access</SelectItem>
                   <SelectItem value="user">User — Basic access</SelectItem>
                 </SelectContent>
@@ -394,6 +413,8 @@ function UsersTab() {
                         <SelectItem value="instructor">Instructor</SelectItem>
                         <SelectItem value="coordinator">Coordinator</SelectItem>
                         <SelectItem value="sales">Sales</SelectItem>
+                        <SelectItem value="marketing">Marketing</SelectItem>
+                        <SelectItem value="finance">Finance</SelectItem>
                         <SelectItem value="receptionist">Receptionist</SelectItem>
                         <SelectItem value="user">User (No Role)</SelectItem>
                       </SelectContent>
@@ -488,7 +509,7 @@ function UsersTab() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-border">
-            {(["admin", "instructor", "coordinator", "receptionist", "user"] as Role[]).map((role) => {
+            {(["admin", "instructor", "coordinator", "sales", "marketing", "finance", "receptionist", "user"] as Role[]).map((role) => {
               const count = (users as any[]).filter((u: any) => u.role === role).length;
               return (
                 <div key={role} className="flex items-center justify-between px-4 py-3">

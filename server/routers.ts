@@ -119,10 +119,19 @@ import {
   getOutreachMessages,
   updateOutreachMessageStatus,
 } from "./db";
-// Admin guard middlewaree
+// Admin guard middleware
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
   if (ctx.user.role !== "admin") {
     throw new TRPCError({ code: "FORBIDDEN", message: "Admin access required" });
+  }
+  return next({ ctx });
+});
+
+// Marketing, Sales, or Admin procedure (write access for marketing-related features)
+const marketingOrAdminProcedure = protectedProcedure.use(({ ctx, next }) => {
+  const allowed = ["admin", "sales", "marketing"];
+  if (!allowed.includes(ctx.user.role)) {
+    throw new TRPCError({ code: "FORBIDDEN", message: "Marketing, Sales, or Admin access required" });
   }
   return next({ ctx });
 });
@@ -1129,7 +1138,7 @@ GUIDELINES:
   admin: router({
     listUsers: adminProcedure.query(async () => getAllUsers()),
     updateUserRole: adminProcedure
-      .input(z.object({ userId: z.number(), role: z.enum(["user", "admin", "instructor", "coordinator", "receptionist"]) }))
+      .input(z.object({ userId: z.number(), role: z.enum(["user", "admin", "instructor", "coordinator", "receptionist", "sales", "marketing", "finance"]) }))
       .mutation(async ({ input }) => { await updateUserRole(input.userId, input.role); return { success: true }; }),
     systemStats: adminProcedure.query(async () => getSystemStats()),
     updateFinancialPin: adminProcedure
@@ -1146,7 +1155,7 @@ GUIDELINES:
     createInvitation: adminProcedure
       .input(z.object({
         email: z.string().email(),
-        role: z.enum(["admin", "user", "instructor", "coordinator", "receptionist"]).default("user"),
+        role: z.enum(["admin", "user", "instructor", "coordinator", "receptionist", "sales", "marketing", "finance"]).default("user"),
         message: z.string().optional(),
         origin: z.string(),
       }))

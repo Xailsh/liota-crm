@@ -20,7 +20,7 @@ export const users = mysqlTable("users", {
   passwordHash: varchar("passwordHash", { length: 256 }),
   googleId: varchar("googleId", { length: 128 }),
   avatarUrl: text("avatarUrl"),
-  role: mysqlEnum("role", ["user", "admin", "instructor", "coordinator", "receptionist", "sales"]).default("user").notNull(),
+  role: mysqlEnum("role", ["user", "admin", "instructor", "coordinator", "receptionist", "sales", "marketing", "finance"]).default("user").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   lastSignedIn: timestamp("lastSignedIn").defaultNow().notNull(),
@@ -500,7 +500,7 @@ export type InsertRecurringBill = typeof recurringBills.$inferInsert;
 export const invitations = mysqlTable("invitations", {
   id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 256 }).notNull(),
-  role: mysqlEnum("role", ["admin", "user", "instructor", "coordinator", "receptionist", "sales"]).notNull().default("user"),
+  role: mysqlEnum("role", ["admin", "user", "instructor", "coordinator", "receptionist", "sales", "marketing", "finance"]).notNull().default("user"),
   token: varchar("token", { length: 128 }).notNull().unique(),
   status: mysqlEnum("status", ["pending", "accepted", "revoked", "expired"]).notNull().default("pending"),
   invitedByName: varchar("invitedByName", { length: 256 }),
