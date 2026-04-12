@@ -454,3 +454,7 @@
 - [x] Frontend: MetaLeads page — "Pull Leads" button with form selector dropdown
 - [x] Frontend: Show import progress (imported X / skipped Y / total Z)
 - [x] Frontend: Display pulled leads in a table with name, email, phone, program, date
+
+## Session 17 - Bug Fixes
+
+- [x] Fix crash: Select.Item components with empty string value="" across all pages (must use non-empty sentinel like "all" or "__all__")
