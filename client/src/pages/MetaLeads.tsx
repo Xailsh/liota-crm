@@ -18,26 +18,31 @@ import { useLanguage } from "@/contexts/LanguageContext";
 function LiveLeadsTab() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [syncFormId, setSyncFormId] = useState("1652859402713081");
-  const [syncToken, setSyncToken] = useState("");
-  const [showSyncDialog, setShowSyncDialog] = useState(false);
+  const [selectedFormId, setSelectedFormId] = useState("1652859402713081");
+  const [selectedFormName, setSelectedFormName] = useState("Liota Institute Book Ad Liota.new-new1");
+  const [pullResult, setPullResult] = useState<{ total: number; imported: number; skipped: number; crmCreated: number } | null>(null);
 
   const { data: leads = [], refetch, isLoading } = trpc.metaLeads.list.useQuery(
     { search: search || undefined, status: statusFilter || undefined },
     { refetchInterval: 30000 }
   );
   const { data: stats } = trpc.metaLeads.stats.useQuery();
+  const { data: formsData, isLoading: formsLoading } = trpc.metaLeads.listForms.useQuery();
+  const forms = formsData?.forms ?? [];
+  const formsError = formsData?.error;
+
   const updateStatusMutation = trpc.metaLeads.updateStatus.useMutation({
     onSuccess: () => refetch(),
     onError: (e) => toast.error(e.message),
   });
-  const syncMutation = trpc.metaLeads.syncFromMeta.useMutation({
+
+  const pullMutation = trpc.metaLeads.pullLeads.useMutation({
     onSuccess: (data) => {
       refetch();
-      setShowSyncDialog(false);
-      toast.success(`Synced ${data.synced} leads from Meta (Form ID: ${syncFormId})`);
+      setPullResult(data);
+      toast.success(`Pull complete: ${data.imported} new leads imported, ${data.skipped} already existed, ${data.crmCreated} CRM leads created.`);
     },
-    onError: (e) => toast.error(`Sync failed: ${e.message}`),
+    onError: (e) => toast.error(`Pull failed: ${e.message}`),
   });
 
   const STATUS_COLORS: Record<string, string> = {
@@ -49,6 +54,91 @@ function LiveLeadsTab() {
 
   return (
     <div className="space-y-4">
+      {/* Pull Leads Panel */}
+      <Card className="border-blue-200 bg-blue-50/30">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Zap className="w-4 h-4 text-blue-600" /> Pull Leads from Meta
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {formsError && (
+            <div className="flex items-center gap-2 text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{formsError}</span>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-3 items-end">
+            <div className="flex-1 min-w-[260px]">
+              <Label className="text-xs mb-1 block">Select Lead Ad Form</Label>
+              {formsLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading forms from Meta...
+                </div>
+              ) : forms.length > 0 ? (
+                <Select
+                  value={selectedFormId}
+                  onValueChange={(v) => {
+                    setSelectedFormId(v);
+                    const f = forms.find((f: any) => f.id === v);
+                    setSelectedFormName(f?.name ?? v);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a form..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {forms.map((f: any) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.name} {f.leads_count != null ? `(${f.leads_count} leads)` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <div className="space-y-1">
+                  <Input
+                    value={selectedFormId}
+                    onChange={e => setSelectedFormId(e.target.value)}
+                    placeholder="Form ID (e.g. 1652859402713081)"
+                  />
+                  <p className="text-xs text-muted-foreground">Could not load forms automatically. Enter the Form ID manually.</p>
+                </div>
+              )}
+            </div>
+            <Button
+              onClick={() => { setPullResult(null); pullMutation.mutate({ formId: selectedFormId, formName: selectedFormName }); }}
+              disabled={!selectedFormId || pullMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {pullMutation.isPending
+                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Pulling leads...</>
+                : <><Zap className="w-3.5 h-3.5 mr-1.5" /> Pull All Leads</>}
+            </Button>
+          </div>
+          {pullResult && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
+              <div className="bg-white border rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-foreground">{pullResult.total}</div>
+                <div className="text-xs text-muted-foreground">Total on Meta</div>
+              </div>
+              <div className="bg-white border rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-green-600">{pullResult.imported}</div>
+                <div className="text-xs text-muted-foreground">Newly Imported</div>
+              </div>
+              <div className="bg-white border rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-amber-600">{pullResult.skipped}</div>
+                <div className="text-xs text-muted-foreground">Already Existed</div>
+              </div>
+              <div className="bg-white border rounded-lg p-3 text-center">
+                <div className="text-2xl font-bold text-blue-600">{pullResult.crmCreated}</div>
+                <div className="text-xs text-muted-foreground">CRM Leads Created</div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         {[
@@ -90,9 +180,6 @@ function LiveLeadsTab() {
         <div className="ml-auto flex gap-2">
           <Button variant="outline" size="sm" onClick={() => refetch()}>
             <RefreshCw className="w-3.5 h-3.5 mr-1" /> Refresh
-          </Button>
-          <Button size="sm" onClick={() => setShowSyncDialog(true)}>
-            <Zap className="w-3.5 h-3.5 mr-1" /> Sync from Meta
           </Button>
         </div>
       </div>
@@ -155,37 +242,7 @@ function LiveLeadsTab() {
         </Card>
       )}
 
-      {/* Sync Dialog */}
-      <Dialog open={showSyncDialog} onOpenChange={setShowSyncDialog}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-blue-600" /> Sync Leads from Meta
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div>
-              <Label>Form ID</Label>
-              <Input value={syncFormId} onChange={e => setSyncFormId(e.target.value)} placeholder="1652859402713081" />
-              <p className="text-xs text-muted-foreground mt-1">Your Meta Lead Form ID. Default: 1652859402713081</p>
-            </div>
-            <div>
-              <Label>Page Access Token</Label>
-              <Input type="password" value={syncToken} onChange={e => setSyncToken(e.target.value)} placeholder="EAABx..." />
-              <p className="text-xs text-muted-foreground mt-1">Get this from Meta Business Suite → Settings → Page Access Tokens. Requires leads_retrieval permission.</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowSyncDialog(false)}>Cancel</Button>
-            <Button
-              onClick={() => syncMutation.mutate({ formId: syncFormId, accessToken: syncToken })}
-              disabled={!syncToken || syncMutation.isPending}
-            >
-              {syncMutation.isPending ? <><Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> Syncing...</> : <><Zap className="w-3.5 h-3.5 mr-1" /> Sync Now</>}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }

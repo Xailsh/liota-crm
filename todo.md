@@ -443,3 +443,14 @@
 - [ ] Update placement test emails from address
 - [ ] Update drip sequence emails from address
 - [ ] Update lead notification emails from address
+
+## Session 16 - Pull Meta Leads into CRM
+
+- [x] Backend: tRPC procedure metaLeads.pullLeads(formId) — calls Meta Graph API /formId/leads
+- [x] Backend: paginate through all leads (handle cursor-based pagination)
+- [x] Backend: map Meta lead fields to CRM leads table (firstName, lastName, email, phone, source="meta_form")
+- [x] Backend: skip duplicates (check by email or meta lead ID)
+- [x] Backend: metaLeads.listForms — fetch all lead ad forms for the connected page
+- [x] Frontend: MetaLeads page — "Pull Leads" button with form selector dropdown
+- [x] Frontend: Show import progress (imported X / skipped Y / total Z)
+- [x] Frontend: Display pulled leads in a table with name, email, phone, program, date

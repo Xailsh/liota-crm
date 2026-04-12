@@ -1263,34 +1263,149 @@ GUIDELINES:
     updateStatus: protectedProcedure
       .input(z.object({ id: z.number(), status: z.enum(["new", "contacted", "enrolled", "lost"]) }))
       .mutation(async ({ input }) => { await updateMetaLeadStatus(input.id, input.status); return { success: true }; }),
-    // Manual sync from Meta Graph API
-    syncFromMeta: adminProcedure
-      .input(z.object({ formId: z.string(), accessToken: z.string() }))
+    // List all lead ad forms for the connected Meta page
+    listForms: protectedProcedure.query(async () => {
+      try {
+        const db = await getDb();
+        if (!db) throw new Error("DB not available");
+        const { eq } = await import("drizzle-orm");
+        const { socialCredentials } = await import("../drizzle/schema");
+        const creds = await db.select().from(socialCredentials).where(eq(socialCredentials.platform, "meta"));
+        if (!creds.length || !creds[0].accessToken) {
+          return { forms: [], error: "No Meta credentials found. Please connect Meta in Integrations." };
+        }
+        const { accessToken, pageId } = creds[0];
+        if (!pageId) return { forms: [], error: "No Page ID configured. Please set pageId in Meta credentials." };
+        const url = `https://graph.facebook.com/v19.0/${pageId}/leadgen_forms?access_token=${accessToken}&fields=id,name,status,leads_count,created_time`;
+        const resp = await fetch(url);
+        const json = await resp.json() as any;
+        if (json.error) return { forms: [], error: json.error.message };
+        return { forms: json.data ?? [], error: null };
+      } catch (e: any) {
+        return { forms: [], error: e.message };
+      }
+    }),
+
+    // Pull all leads from a specific form — paginated, auto-token, creates CRM leads
+    pullLeads: protectedProcedure
+      .input(z.object({ formId: z.string(), formName: z.string().optional() }))
       .mutation(async ({ input }) => {
         try {
-          const url = `https://graph.facebook.com/v19.0/${input.formId}/leads?access_token=${input.accessToken}&fields=id,full_name,email,phone_number,created_time`;
-          const resp = await fetch(url);
-          const json = await resp.json() as any;
-          if (json.error) throw new Error(json.error.message);
-          const leads = json.data ?? [];
-          let synced = 0;
-          for (const lead of leads) {
+          const db = await getDb();
+          if (!db) throw new Error("DB not available");
+          const { eq } = await import("drizzle-orm");
+          const { socialCredentials } = await import("../drizzle/schema");
+          const creds = await db.select().from(socialCredentials).where(eq(socialCredentials.platform, "meta"));
+          if (!creds.length || !creds[0].accessToken) {
+            throw new TRPCError({ code: "PRECONDITION_FAILED", message: "No Meta access token found. Please connect Meta in Integrations first." });
+          }
+          const accessToken = creds[0].accessToken;
+
+          // Paginate through ALL leads
+          let allLeads: any[] = [];
+          let nextUrl: string | null =
+            `https://graph.facebook.com/v19.0/${input.formId}/leads?access_token=${accessToken}&fields=id,full_name,email,phone_number,created_time,field_data&limit=100`;
+
+          while (nextUrl) {
+            const resp = await fetch(nextUrl);
+            const json = await resp.json() as any;
+            if (json.error) throw new Error(json.error.message);
+            allLeads = allLeads.concat(json.data ?? []);
+            nextUrl = json.paging?.next ?? null;
+          }
+
+          let imported = 0;
+          let skipped = 0;
+          let crmCreated = 0;
+
+          for (const lead of allLeads) {
+            // Parse field_data into a flat map
             const fields: Record<string, string> = {};
             for (const f of (lead.field_data ?? [])) {
-              fields[f.name] = f.values?.[0] ?? "";
+              fields[f.name] = Array.isArray(f.values) ? f.values[0] ?? "" : f.values ?? "";
             }
+            const fullName = fields.full_name ?? fields.name ?? lead.full_name ?? "";
+            const email = fields.email ?? null;
+            const phone = fields.phone_number ?? fields.phone ?? null;
+            const nameParts = fullName.trim().split(/\s+/);
+            const firstName = nameParts[0] ?? "";
+            const lastName = nameParts.slice(1).join(" ") || "";
+
+            // Check if already in metaLeads
+            const existing = await db.select({ id: (await import("../drizzle/schema")).metaLeads.id })
+              .from((await import("../drizzle/schema")).metaLeads)
+              .where(eq((await import("../drizzle/schema")).metaLeads.leadId, lead.id));
+
+            if (existing.length > 0) {
+              skipped++;
+              continue;
+            }
+
+            // Insert into metaLeads
             await upsertMetaLead({
               formId: input.formId,
               leadId: lead.id,
-              fullName: fields.full_name ?? lead.full_name ?? null,
-              email: fields.email ?? null,
-              phone: fields.phone_number ?? null,
+              fullName: fullName || null,
+              email,
+              phone,
+              source: input.formName ?? "meta_lead_form",
               rawData: JSON.stringify(lead),
               syncedAt: new Date(),
             });
+            imported++;
+
+            // Also create a CRM lead (skip if email already exists)
+            try {
+              if (email) {
+                const { leads: leadsTable } = await import("../drizzle/schema");
+                const existingCrmLead = await db.select({ id: leadsTable.id })
+                  .from(leadsTable)
+                  .where(eq(leadsTable.email, email));
+                if (existingCrmLead.length === 0) {
+                  await createLead({
+                    firstName,
+                    lastName,
+                    email,
+                    phone,
+                    source: "meta_lead_form",
+                    stage: "new_lead",
+                    notes: `Imported from Meta Lead Ad form: ${input.formName ?? input.formId}`,
+                  });
+                  crmCreated++;
+                }
+              }
+            } catch (_) { /* skip CRM creation errors */ }
+          }
+
+          return { success: true, total: allLeads.length, imported, skipped, crmCreated };
+        } catch (e: any) {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: e.message });
+        }
+      }),
+
+    // Legacy: manual sync (kept for backward compat)
+    syncFromMeta: protectedProcedure
+      .input(z.object({ formId: z.string(), accessToken: z.string() }))
+      .mutation(async ({ input }) => {
+        try {
+          const url = `https://graph.facebook.com/v19.0/${input.formId}/leads?access_token=${input.accessToken}&fields=id,full_name,email,phone_number,created_time,field_data&limit=100`;
+          const resp = await fetch(url);
+          const json = await resp.json() as any;
+          if (json.error) throw new Error(json.error.message);
+          const metaLeadsList = json.data ?? [];
+          let synced = 0;
+          for (const lead of metaLeadsList) {
+            const fields: Record<string, string> = {};
+            for (const f of (lead.field_data ?? [])) { fields[f.name] = f.values?.[0] ?? ""; }
+            await upsertMetaLead({
+              formId: input.formId, leadId: lead.id,
+              fullName: fields.full_name ?? lead.full_name ?? null,
+              email: fields.email ?? null, phone: fields.phone_number ?? null,
+              rawData: JSON.stringify(lead), syncedAt: new Date(),
+            });
             synced++;
           }
-          return { success: true, synced, total: leads.length };
+          return { success: true, synced, total: metaLeadsList.length };
         } catch (e: any) {
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: e.message });
         }
