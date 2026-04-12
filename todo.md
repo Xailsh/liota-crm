@@ -404,3 +404,42 @@
 - [x] Add EN/ES language toggle button to OnboardingGuide page header
 - [x] Add Spanish translations for all role tabs: Admin, Instructor, Coordinator, Finance, Sales, Marketing
 - [x] Persist language selection in localStorage so it survives page navigation (via LanguageContext)
+
+## Session 15 - Lead Automation (3 Features)
+
+### Feature 1: Drip Email Sequence
+- [x] Add drip_sequences table (name, description, isActive, createdAt)
+- [x] Add drip_steps table (sequenceId, dayOffset, subject, bodyHtml, createdAt)
+- [x] Add drip_enrollments table (leadId, sequenceId, enrolledAt, currentStep, status, nextSendAt)
+- [x] Backend: drip.listSequences, createSequence, updateSequence, deleteSequence
+- [x] Backend: drip.listSteps, createStep, updateStep, deleteStep
+- [x] Backend: drip.enroll (enroll a lead into a sequence)
+- [x] Backend: drip.runDue (send emails for steps that are due, called on a schedule)
+- [x] Auto-enroll new Meta leads into default drip sequence on creation
+- [x] Auto-enroll new CRM leads into default drip sequence when notifyMarketing=true
+- [x] Frontend: Drip Sequences management page with sequence list + step editor
+- [x] Seed default LIOTA drip sequence (Day 0: Welcome, Day 3: Programs, Day 7: Free Trial, Day 14: Enroll CTA)
+- [x] Add Drip Sequences to sidebar navigation
+
+### Feature 2: Auto-Assign Leads to Marketing + Instant Notification
+- [x] Backend: auto-assign new Meta leads to first available marketing user
+- [x] Backend: send instant email notification to assigned marketing user on lead creation
+- [x] Backend: send in-app notification (notifyOwner) when lead is assigned
+- [x] Frontend: show assigned marketing user on lead card in Leads Pipeline
+
+### Feature 3: Embeddable Lead Capture Form
+- [x] Build public page /lead-form (no auth required)
+- [x] Form fields: First Name, Last Name, Email, Phone, Program of Interest, Campus, How did you hear about us
+- [x] On submit: create lead in CRM + auto-enroll in drip sequence + notify marketing team
+- [x] Success page after submission
+- [x] Generate embed snippet (2-line script tag + div) for external websites
+- [x] Add Lead Form management page in CRM (customize fields, view submissions)
+- [x] Add to sidebar navigation
+
+## Session 15b - Email Sender Address
+- [ ] Update all outgoing emails to send FROM contact@liota.institute
+- [ ] Update email.ts default from address
+- [ ] Update invitation emails from address
+- [ ] Update placement test emails from address
+- [ ] Update drip sequence emails from address
+- [ ] Update lead notification emails from address

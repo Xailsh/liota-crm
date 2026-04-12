@@ -1,5 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { placementTestsRouter } from "./routers/placementTests";
+import { dripRouter } from "./routers/drip";
+import { leadCaptureRouter } from "./routers/leadCapture";
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
@@ -1403,6 +1405,8 @@ GUIDELINES:
       }),
   }),
   placementTests: placementTestsRouter,
+  drip: dripRouter,
+  leadCapture: leadCaptureRouter,
   guide: router({
     listVideos: publicProcedure.query(async () => {
       const db = await getDb();

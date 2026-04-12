@@ -29,6 +29,7 @@ const ROLE_ALLOWED: Record<string, string[]> = {
     "/", "/students", "/classes", "/academic-progress", "/placement-tests",
     "/leads", "/email-marketing", "/contacts", "/bulk-email", "/meta-leads",
     "/email-templates", "/whatsapp-templates", "/voice-templates",
+    "/drip-campaigns", "/lead-form-manager",
     "/onboarding-guide",
   ],
   sales: [
@@ -39,7 +40,7 @@ const ROLE_ALLOWED: Record<string, string[]> = {
   ],
   marketing: [
     "/", "/leads", "/contacts", "/email-marketing", "/bulk-email",
-    "/meta-leads", "/outreach-hub",
+    "/meta-leads", "/outreach-hub", "/drip-campaigns", "/lead-form-manager",
     "/email-templates", "/whatsapp-templates",
     "/onboarding-guide",
   ],
@@ -115,6 +116,8 @@ const buildNavItems = (t: (k: any) => string) => [
     group: t("metaLeads"),
     items: [
       { href: "/meta-leads", icon: Zap, label: t("metaLeads"), description: "Facebook & Instagram leads" },
+      { href: "/drip-campaigns", icon: Mail, label: "Drip Sequences", description: "Automated email nurture" },
+      { href: "/lead-form-manager", icon: Globe, label: "Lead Capture Form", description: "Embeddable web form" },
     ],
   },
   {

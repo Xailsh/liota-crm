@@ -3,12 +3,16 @@
  *
  * GET  /api/meta/webhook  → hub.challenge verification (required by Meta)
  * POST /api/meta/webhook  → receives leadgen events, fetches lead details,
- *                           saves to meta_leads table, auto-creates CRM lead
+ *                           saves to meta_leads table, auto-creates CRM lead,
+ *                           auto-assigns to marketing user, enrolls in drip sequence,
+ *                           and sends email notification to marketing team.
  */
 import { Router, Request, Response } from "express";
 import { getDb } from "./db";
-import { metaLeads, leads, socialCredentials } from "../drizzle/schema";
-import { eq } from "drizzle-orm";
+import { metaLeads, leads, socialCredentials, users } from "../drizzle/schema";
+import { eq, inArray } from "drizzle-orm";
+import { sendEmail, buildLeadAssignmentEmail } from "./email";
+import { enrollLeadInDrip } from "./routers/drip";
 
 const router = Router();
 
@@ -167,16 +171,97 @@ router.post("/", async (req: Request, res: Response) => {
           const lastName = nameParts.slice(1).join(" ") || "Lead";
 
           try {
-            await db.insert(leads).values({
+            // ── Auto-assign to first available marketing user ──────────────
+            let assignedTo: string | null = null;
+            try {
+              const marketingUsers = await db
+                .select({ id: users.id, name: users.name, email: users.email })
+                .from(users)
+                .where(inArray(users.role, ["marketing"]))
+                .limit(5);
+
+              if (marketingUsers.length > 0) {
+                // Round-robin: pick based on current timestamp modulo count
+                const idx = Date.now() % marketingUsers.length;
+                const assignee = marketingUsers[idx];
+                assignedTo = assignee.name ?? assignee.email ?? null;
+              }
+            } catch (e) {
+              console.warn("[Meta Webhook] Could not find marketing users:", e);
+            }
+
+            const [newLead] = await db.insert(leads).values({
               firstName,
               lastName,
               email: email || null,
               phone: phone || null,
               source: "meta_ads",
               stage: "new_lead",
+              assignedTo,
               notes: `Auto-created from Meta Lead Form ID: ${formId}\nLead ID: ${leadgenId}`,
-            });
-            console.log(`[Meta Webhook] Auto-created CRM lead for ${fullName}`);
+            }).$returningId();
+
+            console.log(`[Meta Webhook] Auto-created CRM lead id=${newLead.id} for ${fullName}, assigned to ${assignedTo ?? "unassigned"}`);
+
+            // ── Auto-enroll in drip sequence ───────────────────────────────
+            if (email) {
+              try {
+                await enrollLeadInDrip({
+                  leadId: newLead.id,
+                  leadEmail: email,
+                  leadName: `${firstName} ${lastName}`.trim(),
+                });
+                console.log(`[Meta Webhook] Enrolled lead ${newLead.id} in drip sequence`);
+              } catch (e) {
+                console.warn("[Meta Webhook] Could not enroll in drip:", e);
+              }
+            }
+
+            // ── Notify marketing team by email ─────────────────────────────
+            try {
+              const marketingEmails = await db
+                .select({ email: users.email })
+                .from(users)
+                .where(inArray(users.role, ["marketing", "admin"]));
+
+              const emailList = marketingEmails
+                .map((u) => u.email)
+                .filter((e): e is string => !!e);
+
+              if (emailList.length > 0) {
+                const html = buildLeadAssignmentEmail({
+                  leadName: `${firstName} ${lastName}`,
+                  leadEmail: email || undefined,
+                  leadPhone: phone || undefined,
+                  stage: "new_lead",
+                  source: "Meta Ads / Facebook Lead Form",
+                  notes: `Form ID: ${formId}\nLead ID: ${leadgenId}`,
+                  assignedToName: assignedTo ?? undefined,
+                  assignerName: "Meta Ads Webhook",
+                  crmUrl: "https://liotacrm-yzzjutco.manus.space",
+                });
+                await sendEmail({
+                  to: emailList,
+                  subject: `📱 New Meta Lead: ${firstName} ${lastName}`,
+                  html,
+                });
+                console.log(`[Meta Webhook] Notified ${emailList.length} marketing users`);
+              }
+            } catch (e) {
+              console.warn("[Meta Webhook] Could not send marketing notification:", e);
+            }
+
+            // ── In-app notification to owner ───────────────────────────────
+            try {
+              const { notifyOwner } = await import("./_core/notification");
+              await notifyOwner({
+                title: `📱 New Meta Lead: ${firstName} ${lastName}`,
+                content: `A new lead arrived from Meta Ads.\nEmail: ${email || "N/A"}\nPhone: ${phone || "N/A"}\nAssigned to: ${assignedTo ?? "unassigned"}`,
+              });
+            } catch (e) {
+              console.warn("[Meta Webhook] Could not send owner notification:", e);
+            }
+
           } catch (e) {
             console.warn("[Meta Webhook] Could not auto-create CRM lead:", e);
           }

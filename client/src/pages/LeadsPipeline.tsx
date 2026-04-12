@@ -156,8 +156,13 @@ export default function LeadsPipeline() {
                           </div>
                         )}
                         {lead.preferredCampus && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                             <MapPin className="w-3 h-3 flex-shrink-0" /><span>{campusLabels[lead.preferredCampus]}</span>
+                          </div>
+                        )}
+                        {lead.assignedTo && (
+                          <div className="flex items-center gap-1.5 text-xs text-blue-500 mb-1">
+                            <span className="truncate">👤 {lead.assignedTo}</span>
                           </div>
                         )}
                         {stage.key !== "enrolled" && stage.key !== "lost" && (

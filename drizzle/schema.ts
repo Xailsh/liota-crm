@@ -676,3 +676,61 @@ export const onboardingProgress = mysqlTable("onboardingProgress", {
 });
 export type OnboardingProgress = typeof onboardingProgress.$inferSelect;
 export type InsertOnboardingProgress = typeof onboardingProgress.$inferInsert;
+
+// ─── Drip Email Sequences ─────────────────────────────────────────────────────
+export const dripSequences = mysqlTable("dripSequences", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description"),
+  isActive: boolean("isActive").default(true).notNull(),
+  isDefault: boolean("isDefault").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DripSequence = typeof dripSequences.$inferSelect;
+export type InsertDripSequence = typeof dripSequences.$inferInsert;
+
+export const dripSteps = mysqlTable("dripSteps", {
+  id: int("id").autoincrement().primaryKey(),
+  sequenceId: int("sequenceId").notNull().references(() => dripSequences.id, { onDelete: "cascade" }),
+  dayOffset: int("dayOffset").notNull().default(0),
+  subject: varchar("subject", { length: 500 }).notNull(),
+  bodyHtml: text("bodyHtml").notNull(),
+  orderIndex: int("orderIndex").notNull().default(0),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type DripStep = typeof dripSteps.$inferSelect;
+export type InsertDripStep = typeof dripSteps.$inferInsert;
+
+export const dripEnrollments = mysqlTable("dripEnrollments", {
+  id: int("id").autoincrement().primaryKey(),
+  leadId: int("leadId").notNull().references(() => leads.id, { onDelete: "cascade" }),
+  sequenceId: int("sequenceId").notNull().references(() => dripSequences.id, { onDelete: "cascade" }),
+  enrolledAt: timestamp("enrolledAt").defaultNow().notNull(),
+  currentStepIndex: int("currentStepIndex").notNull().default(0),
+  status: mysqlEnum("status", ["active", "completed", "paused", "unsubscribed"]).default("active").notNull(),
+  nextSendAt: timestamp("nextSendAt"),
+  completedAt: timestamp("completedAt"),
+  leadEmail: varchar("leadEmail", { length: 255 }).notNull(),
+  leadName: varchar("leadName", { length: 255 }).notNull(),
+});
+export type DripEnrollment = typeof dripEnrollments.$inferSelect;
+export type InsertDripEnrollment = typeof dripEnrollments.$inferInsert;
+
+// ─── Lead Capture Form Submissions ───────────────────────────────────────────
+export const leadFormSubmissions = mysqlTable("leadFormSubmissions", {
+  id: int("id").autoincrement().primaryKey(),
+  firstName: varchar("firstName", { length: 100 }).notNull(),
+  lastName: varchar("lastName", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 50 }),
+  interestedProgram: varchar("interestedProgram", { length: 100 }),
+  preferredCampus: varchar("preferredCampus", { length: 100 }),
+  hearAboutUs: varchar("hearAboutUs", { length: 200 }),
+  source: varchar("source", { length: 100 }).default("website_form"),
+  ipAddress: varchar("ipAddress", { length: 50 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+export type LeadFormSubmission = typeof leadFormSubmissions.$inferSelect;
+export type InsertLeadFormSubmission = typeof leadFormSubmissions.$inferInsert;
