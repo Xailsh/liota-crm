@@ -10,6 +10,7 @@ import { z } from "zod";
 import { protectedProcedure, publicProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { sendEmail, buildLeadAssignmentEmail } from "../email";
+import { ENV } from "../_core/env";
 import {
   leadFormSubmissions,
   leads,
@@ -112,7 +113,7 @@ export const leadCaptureRouter = router({
             source: input.source,
             notes: notes || undefined,
             assignerName: "Website Lead Form",
-            crmUrl: "https://liotacrm-yzzjutco.manus.space",
+            crmUrl: ENV.appUrl,
           });
           await sendEmail({
             to: emails,

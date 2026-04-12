@@ -9,6 +9,7 @@ import { z } from "zod";
 import { protectedProcedure, router } from "../_core/trpc";
 import { getDb } from "../db";
 import { sendEmail } from "../email";
+import { ENV } from "../_core/env";
 import {
   dripSequences,
   dripSteps,
@@ -53,7 +54,7 @@ function buildDripEmailHtml(opts: {
         <a href="mailto:contact@liota.institute" style="color: #f59e0b;">contact@liota.institute</a>
       </p>
       ${opts.unsubscribeToken ? `<p style="margin: 8px 0 0; font-size: 11px; color: #9ca3af;">
-        <a href="https://liotacrm-yzzjutco.manus.space/api/drip/unsubscribe?token=${opts.unsubscribeToken}" style="color: #9ca3af;">Unsubscribe</a>
+        <a href="${ENV.appUrl}/api/drip/unsubscribe?token=${opts.unsubscribeToken}" style="color: #9ca3af;">Unsubscribe</a>
       </p>` : ""}
     </div>
   </div>

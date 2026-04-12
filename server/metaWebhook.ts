@@ -13,6 +13,7 @@ import { metaLeads, leads, socialCredentials, users } from "../drizzle/schema";
 import { eq, inArray } from "drizzle-orm";
 import { sendEmail, buildLeadAssignmentEmail } from "./email";
 import { enrollLeadInDrip } from "./routers/drip";
+import { ENV } from "./_core/env";
 
 const router = Router();
 
@@ -238,7 +239,7 @@ router.post("/", async (req: Request, res: Response) => {
                   notes: `Form ID: ${formId}\nLead ID: ${leadgenId}`,
                   assignedToName: assignedTo ?? undefined,
                   assignerName: "Meta Ads Webhook",
-                  crmUrl: "https://liotacrm-yzzjutco.manus.space",
+                  crmUrl: ENV.appUrl,
                 });
                 await sendEmail({
                   to: emailList,
