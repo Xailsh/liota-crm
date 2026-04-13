@@ -36,7 +36,25 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // Health check endpoint for Railway and other hosting platforms
-  app.get("/api/health", (_req, res) => res.json({ status: "ok", ts: Date.now() }));
+  app.get("/api/health", async (_req, res) => {
+    const dbUrl = process.env.DATABASE_URL;
+    let dbStatus = "not_configured";
+    if (dbUrl) {
+      try {
+        const { getDb } = await import("../db");
+        const db = await getDb();
+        if (db) {
+          await db.execute("SELECT 1");
+          dbStatus = "connected";
+        } else {
+          dbStatus = "init_failed";
+        }
+      } catch (e: any) {
+        dbStatus = `error: ${e?.message}`;
+      }
+    }
+    res.json({ status: "ok", ts: Date.now(), db: dbStatus, dbUrlSet: !!dbUrl });
+  });
 
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);

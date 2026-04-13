@@ -248,7 +248,10 @@ router.get("/google/callback", async (req: Request, res: Response) => {
     }
 
     const db = await getDb();
-    if (!db) return res.redirect(`${origin}/?error=db_unavailable`);
+    if (!db) {
+      console.error("[Google OAuth] Database unavailable - DATABASE_URL:", process.env.DATABASE_URL ? "SET" : "NOT SET");
+      return res.redirect(`${origin}/?error=db_unavailable`);
+    }
 
     // Find existing user by email
     const [existingUser] = await db

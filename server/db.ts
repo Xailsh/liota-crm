@@ -40,18 +40,28 @@ import { ENV } from "./_core/env";
 let _db: ReturnType<typeof drizzle> | null = null;
 
 function createDb() {
-  if (process.env.DATABASE_URL) {
-    return drizzle(process.env.DATABASE_URL);
-  }
-  return null;
+  const url = process.env.DATABASE_URL;
+  if (!url) return null;
+  // Normalize mysql2:// or mysql:// prefix — drizzle-orm/mysql2 handles both
+  const normalizedUrl = url.replace(/^mysql2:\/\//, 'mysql://');
+  console.log("[Database] Connecting with URL protocol:", normalizedUrl.split('://')[0] + '://');
+  return drizzle(normalizedUrl);
 }
 
 export async function getDb() {
-  if (!_db && process.env.DATABASE_URL) {
+  if (!_db) {
+    const url = process.env.DATABASE_URL;
+    if (!url) {
+      console.error("[Database] DATABASE_URL is not set!");
+      return null;
+    }
     try {
       _db = createDb();
+      if (_db) {
+        console.log("[Database] Connection initialized successfully");
+      }
     } catch (error) {
-      console.warn("[Database] Failed to connect:", error);
+      console.error("[Database] Failed to initialize connection:", error);
       _db = null;
     }
   }
