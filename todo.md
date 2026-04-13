@@ -458,3 +458,11 @@
 ## Session 17 - Bug Fixes
 
 - [x] Fix crash: Select.Item components with empty string value="" across all pages (must use non-empty sentinel like "all" or "__all__")
+
+## Session 18 - Meta Leads Pull Fix
+- [x] Update Meta Graph API version from v19.0 to v21.0 in all API calls (routers.ts, metaWebhook.ts)
+- [x] Improve error messages to include Meta error code and type for better diagnosis
+- [x] Add testToken diagnostic procedure to metaLeads router (tests token, page info, and lists forms)
+- [x] Add "Test Connection" button to Meta Leads Live Leads tab
+- [x] Add diagnostic dialog showing token info, page info, and all lead forms
+- [x] Always show manual Form ID input field (even when dropdown loads) so user can override

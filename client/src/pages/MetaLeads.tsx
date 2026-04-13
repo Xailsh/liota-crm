@@ -21,15 +21,22 @@ function LiveLeadsTab() {
   const [selectedFormId, setSelectedFormId] = useState("1652859402713081");
   const [selectedFormName, setSelectedFormName] = useState("Liota Institute Book Ad Liota.new-new1");
   const [pullResult, setPullResult] = useState<{ total: number; imported: number; skipped: number; crmCreated: number } | null>(null);
+  const [showDiag, setShowDiag] = useState(false);
+  const [diagEnabled, setDiagEnabled] = useState(false);
 
   const { data: leads = [], refetch, isLoading } = trpc.metaLeads.list.useQuery(
     { search: search || undefined, status: statusFilter || undefined },
     { refetchInterval: 30000 }
   );
   const { data: stats } = trpc.metaLeads.stats.useQuery();
-  const { data: formsData, isLoading: formsLoading } = trpc.metaLeads.listForms.useQuery();
+  const { data: formsData, isLoading: formsLoading, refetch: refetchForms } = trpc.metaLeads.listForms.useQuery();
   const forms = formsData?.forms ?? [];
   const formsError = formsData?.error;
+
+  const { data: diagData, isLoading: diagLoading, refetch: refetchDiag } = trpc.metaLeads.testToken.useQuery(
+    undefined,
+    { enabled: diagEnabled, refetchOnWindowFocus: false }
+  );
 
   const updateStatusMutation = trpc.metaLeads.updateStatus.useMutation({
     onSuccess: () => refetch(),
@@ -70,51 +77,69 @@ function LiveLeadsTab() {
           )}
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-[260px]">
-              <Label className="text-xs mb-1 block">Select Lead Ad Form</Label>
+              <Label className="text-xs mb-1 block">Lead Ad Form ID</Label>
               {formsLoading ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading forms from Meta...
                 </div>
               ) : forms.length > 0 ? (
-                <Select
-                  value={selectedFormId}
-                  onValueChange={(v) => {
-                    setSelectedFormId(v);
-                    const f = forms.find((f: any) => f.id === v);
-                    setSelectedFormName(f?.name ?? v);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a form..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {forms.map((f: any) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.name} {f.leads_count != null ? `(${f.leads_count} leads)` : ""}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  <Select
+                    value={selectedFormId}
+                    onValueChange={(v) => {
+                      setSelectedFormId(v);
+                      const f = forms.find((f: any) => f.id === v);
+                      setSelectedFormName(f?.name ?? v);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a form..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {forms.map((f: any) => (
+                        <SelectItem key={f.id} value={f.id}>
+                          {f.name} {f.leads_count != null ? `(${f.leads_count} leads)` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={selectedFormId}
+                    onChange={e => { setSelectedFormId(e.target.value); setSelectedFormName(e.target.value); }}
+                    placeholder="Or type Form ID manually"
+                    className="text-xs h-8"
+                  />
+                </div>
               ) : (
                 <div className="space-y-1">
                   <Input
                     value={selectedFormId}
-                    onChange={e => setSelectedFormId(e.target.value)}
+                    onChange={e => { setSelectedFormId(e.target.value); setSelectedFormName(e.target.value); }}
                     placeholder="Form ID (e.g. 1652859402713081)"
                   />
                   <p className="text-xs text-muted-foreground">Could not load forms automatically. Enter the Form ID manually.</p>
                 </div>
               )}
             </div>
-            <Button
-              onClick={() => { setPullResult(null); pullMutation.mutate({ formId: selectedFormId, formName: selectedFormName }); }}
-              disabled={!selectedFormId || pullMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {pullMutation.isPending
-                ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Pulling leads...</>
-                : <><Zap className="w-3.5 h-3.5 mr-1.5" /> Pull All Leads</>}
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => { setPullResult(null); pullMutation.mutate({ formId: selectedFormId, formName: selectedFormName }); }}
+                disabled={!selectedFormId || pullMutation.isPending}
+                className="bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                {pullMutation.isPending
+                  ? <><Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> Pulling leads...</>
+                  : <><Zap className="w-3.5 h-3.5 mr-1.5" /> Pull All Leads</>}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => { setShowDiag(true); setDiagEnabled(true); setTimeout(() => refetchDiag(), 100); }}
+                className="text-xs"
+              >
+                <Info className="w-3 h-3 mr-1" /> Test Connection
+              </Button>
+            </div>
           </div>
           {pullResult && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-2">
@@ -242,6 +267,70 @@ function LiveLeadsTab() {
         </Card>
       )}
 
+
+      {/* Diagnostic Dialog */}
+      <Dialog open={showDiag} onOpenChange={setShowDiag}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Info className="w-4 h-4 text-blue-600" /> Meta Connection Diagnostics
+            </DialogTitle>
+          </DialogHeader>
+          {diagLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <span className="ml-2 text-sm">Testing connection to Meta API...</span>
+            </div>
+          ) : diagData ? (
+            <div className="space-y-4 text-sm">
+              {!diagData.ok ? (
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700">
+                  <p className="font-medium">Error: {diagData.error}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-muted/30 rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground mb-1">Token Preview</p>
+                      <p className="font-mono text-xs break-all">{(diagData as any).tokenPreview}</p>
+                    </div>
+                    <div className="bg-muted/30 rounded-lg p-3">
+                      <p className="text-xs text-muted-foreground mb-1">Page ID</p>
+                      <p className="font-mono text-xs">{(diagData as any).pageId}</p>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Token Debug Info</p>
+                    <pre className="text-xs bg-muted rounded-lg p-3 overflow-auto whitespace-pre-wrap max-h-32">
+                      {JSON.stringify((diagData as any).debugToken, null, 2)}
+                    </pre>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Page Info</p>
+                    <pre className="text-xs bg-muted rounded-lg p-3 overflow-auto whitespace-pre-wrap max-h-32">
+                      {JSON.stringify((diagData as any).pageInfo, null, 2)}
+                    </pre>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="font-medium text-xs text-muted-foreground uppercase tracking-wide">Lead Forms on This Page</p>
+                    <pre className="text-xs bg-muted rounded-lg p-3 overflow-auto whitespace-pre-wrap max-h-48">
+                      {JSON.stringify((diagData as any).formsInfo, null, 2)}
+                    </pre>
+                  </div>
+                </>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">Click "Test Connection" to run diagnostics.</p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setDiagEnabled(true); refetchDiag(); }} size="sm">
+              <RefreshCw className="w-3.5 h-3.5 mr-1" /> Re-run Test
+            </Button>
+            <Button onClick={() => setShowDiag(false)} size="sm">Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );

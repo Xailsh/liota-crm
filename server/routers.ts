@@ -1276,10 +1276,10 @@ GUIDELINES:
         }
         const { accessToken, pageId } = creds[0];
         if (!pageId) return { forms: [], error: "No Page ID configured. Please set pageId in Meta credentials." };
-        const url = `https://graph.facebook.com/v19.0/${pageId}/leadgen_forms?access_token=${accessToken}&fields=id,name,status,leads_count,created_time`;
+        const url = `https://graph.facebook.com/v21.0/${pageId}/leadgen_forms?access_token=${accessToken}&fields=id,name,status,leads_count,created_time`;
         const resp = await fetch(url);
         const json = await resp.json() as any;
-        if (json.error) return { forms: [], error: json.error.message };
+        if (json.error) return { forms: [], error: `Meta API error (code ${json.error.code}): ${json.error.message}` };
         return { forms: json.data ?? [], error: null };
       } catch (e: any) {
         return { forms: [], error: e.message };
@@ -1304,12 +1304,12 @@ GUIDELINES:
           // Paginate through ALL leads
           let allLeads: any[] = [];
           let nextUrl: string | null =
-            `https://graph.facebook.com/v19.0/${input.formId}/leads?access_token=${accessToken}&fields=id,full_name,email,phone_number,created_time,field_data&limit=100`;
+            `https://graph.facebook.com/v21.0/${input.formId}/leads?access_token=${accessToken}&fields=id,full_name,email,phone_number,created_time,field_data&limit=100`;
 
           while (nextUrl) {
             const resp = await fetch(nextUrl);
             const json = await resp.json() as any;
-            if (json.error) throw new Error(json.error.message);
+            if (json.error) throw new Error(`Meta API error (code ${json.error.code}, type ${json.error.type}): ${json.error.message}`);
             allLeads = allLeads.concat(json.data ?? []);
             nextUrl = json.paging?.next ?? null;
           }
@@ -1388,10 +1388,10 @@ GUIDELINES:
       .input(z.object({ formId: z.string(), accessToken: z.string() }))
       .mutation(async ({ input }) => {
         try {
-          const url = `https://graph.facebook.com/v19.0/${input.formId}/leads?access_token=${input.accessToken}&fields=id,full_name,email,phone_number,created_time,field_data&limit=100`;
+          const url = `https://graph.facebook.com/v21.0/${input.formId}/leads?access_token=${input.accessToken}&fields=id,full_name,email,phone_number,created_time,field_data&limit=100`;
           const resp = await fetch(url);
           const json = await resp.json() as any;
-          if (json.error) throw new Error(json.error.message);
+          if (json.error) throw new Error(`Meta API error (code ${json.error.code}): ${json.error.message}`);
           const metaLeadsList = json.data ?? [];
           let synced = 0;
           for (const lead of metaLeadsList) {
@@ -1410,6 +1410,54 @@ GUIDELINES:
           throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: e.message });
         }
       }),
+
+    // Diagnostic: test Meta token and return detailed info
+    testToken: protectedProcedure.query(async () => {
+      try {
+        const db = await getDb();
+        if (!db) return { ok: false, error: "DB not available", details: null };
+        const { eq } = await import("drizzle-orm");
+        const { socialCredentials } = await import("../drizzle/schema");
+        const creds = await db.select().from(socialCredentials).where(eq(socialCredentials.platform, "meta"));
+        if (!creds.length || !creds[0].accessToken) {
+          return { ok: false, error: "No Meta credentials found in database", details: null };
+        }
+        const { accessToken, pageId } = creds[0];
+        const tokenPreview = accessToken ? accessToken.substring(0, 20) + "..." : "(none)";
+
+        // Test 1: Verify token
+        const debugUrl = `https://graph.facebook.com/debug_token?input_token=${accessToken}&access_token=${accessToken}`;
+        const debugResp = await fetch(debugUrl);
+        const debugJson = await debugResp.json() as any;
+
+        // Test 2: Get page info
+        let pageInfo: any = null;
+        if (pageId) {
+          const pageUrl = `https://graph.facebook.com/v21.0/${pageId}?fields=id,name,access_token&access_token=${accessToken}`;
+          const pageResp = await fetch(pageUrl);
+          pageInfo = await pageResp.json();
+        }
+
+        // Test 3: List forms
+        let formsInfo: any = null;
+        if (pageId) {
+          const formsUrl = `https://graph.facebook.com/v21.0/${pageId}/leadgen_forms?access_token=${accessToken}&fields=id,name,leads_count`;
+          const formsResp = await fetch(formsUrl);
+          formsInfo = await formsResp.json();
+        }
+
+        return {
+          ok: true,
+          tokenPreview,
+          pageId: pageId ?? "(not set)",
+          debugToken: debugJson,
+          pageInfo,
+          formsInfo,
+        };
+      } catch (e: any) {
+        return { ok: false, error: e.message, details: null };
+      }
+    }),
   }),
 
   // ─── Social Credentials ────────────────────────────────────────────────────────

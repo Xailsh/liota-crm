@@ -18,12 +18,33 @@ import { ENV } from "./_core/env";
 const router = Router();
 
 // ─── GET: Hub Challenge Verification ─────────────────────────────────────────
-router.get("/", (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   const mode = req.query["hub.mode"] as string;
   const token = req.query["hub.verify_token"] as string;
   const challenge = req.query["hub.challenge"] as string;
 
-  const verifyToken = process.env.META_WEBHOOK_VERIFY_TOKEN ?? "liota_meta_verify_2024";
+  // Check env variable first, then DB-stored token, then hardcoded default
+  let verifyToken = process.env.META_WEBHOOK_VERIFY_TOKEN ?? "liota_meta_verify_2024";
+
+  // Also check the webhookVerifyToken stored in social_credentials for "meta"
+  try {
+    const db = await getDb();
+    if (db) {
+      const creds = await db
+        .select({ webhookVerifyToken: socialCredentials.webhookVerifyToken })
+        .from(socialCredentials)
+        .where(eq(socialCredentials.platform, "meta"))
+        .limit(1);
+      if (creds.length > 0 && creds[0].webhookVerifyToken) {
+        verifyToken = creds[0].webhookVerifyToken;
+        console.log("[Meta Webhook] Using DB-stored verify token");
+      }
+    }
+  } catch (e) {
+    console.warn("[Meta Webhook] Could not fetch verify token from DB, using default");
+  }
+
+  console.log(`[Meta Webhook] Verification attempt — mode=${mode} token=${token} expected=${verifyToken}`);
 
   if (mode === "subscribe" && token === verifyToken) {
     console.log("[Meta Webhook] Verification successful");
@@ -34,11 +55,8 @@ router.get("/", (req: Request, res: Response) => {
   }
 });
 
-// ─── POST: Receive Leadgen Events ─────────────────────────────────────────────
-router.post("/", async (req: Request, res: Response) => {
-  // Always respond 200 immediately so Meta doesn't retry
-  res.status(200).json({ status: "ok" });
-
+// ─── Shared lead event processor (also used by inbound webhook handler) ────────
+export async function processMetaLeadEvent(body: any): Promise<void> {
   const db = await getDb();
   if (!db) {
     console.error("[Meta Webhook] No DB connection available");
@@ -46,7 +64,7 @@ router.post("/", async (req: Request, res: Response) => {
   }
 
   try {
-    const body = req.body as {
+    const typedBody = body as {
       object?: string;
       entry?: Array<{
         changes?: Array<{
@@ -116,7 +134,7 @@ router.post("/", async (req: Request, res: Response) => {
 
         if (accessToken) {
           try {
-            const url = `https://graph.facebook.com/v19.0/${leadgenId}?access_token=${accessToken}`;
+            const url = `https://graph.facebook.com/v21.0/${leadgenId}?access_token=${accessToken}`;
             const resp = await fetch(url);
             const leadData = await resp.json() as {
               field_data?: Array<{ name: string; values: string[] }>;
@@ -272,6 +290,13 @@ router.post("/", async (req: Request, res: Response) => {
   } catch (err) {
     console.error("[Meta Webhook] Error processing event:", err);
   }
+}
+
+// ─── POST: Receive Leadgen Events ─────────────────────────────────────────────
+router.post("/", async (req: Request, res: Response) => {
+  // Always respond 200 immediately so Meta doesn't retry
+  res.status(200).json({ status: "ok" });
+  await processMetaLeadEvent(req.body);
 });
 
 export { router as metaWebhookRouter };

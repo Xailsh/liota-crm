@@ -1025,6 +1025,19 @@ export async function deleteInboundWebhook(id: number) {
   if (!db) return;
   await db.delete(inboundWebhooks).where(eq(inboundWebhooks.id, id));
 }
+export async function getInboundWebhookByToken(token: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(inboundWebhooks).where(eq(inboundWebhooks.endpointToken, token)).limit(1);
+  return rows[0] ?? null;
+}
+export async function incrementWebhookReceived(id: number) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(inboundWebhooks)
+    .set({ lastReceivedAt: new Date(), totalReceived: sql`totalReceived + 1`, updatedAt: new Date() })
+    .where(eq(inboundWebhooks.id, id));
+}
 
 // ─── Admin Helpers ────────────────────────────────────────────────────────────
 export async function getAllUsers() {

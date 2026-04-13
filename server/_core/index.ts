@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { metaWebhookRouter } from "../metaWebhook";
 import { staffAuthRouter } from "../staffAuth";
+import { getInboundWebhookByToken, incrementWebhookReceived } from "../db";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
@@ -61,6 +62,29 @@ async function startServer() {
 
   // Meta Leads Webhook (GET = hub.challenge verification, POST = receive leadgen events)
   app.use("/api/meta/webhook", metaWebhookRouter);
+
+  // Inbound Webhook receiver — handles POST /api/webhook/:token
+  // Used by Outreach Hub configured webhooks (Meta, Zapier, etc.)
+  app.post("/api/webhook/:token", async (req, res) => {
+    res.status(200).json({ status: "ok" }); // Always respond 200 immediately
+    try {
+      const webhookConfig = await getInboundWebhookByToken(req.params.token);
+      if (!webhookConfig || !webhookConfig.isActive) {
+        console.warn(`[Inbound Webhook] Unknown or inactive token: ${req.params.token}`);
+        return;
+      }
+      await incrementWebhookReceived(webhookConfig.id);
+      console.log(`[Inbound Webhook] Received payload for webhook: ${webhookConfig.name} (source: ${webhookConfig.source})`);
+
+      // If it's a Meta source, forward to the same lead processing logic
+      if (webhookConfig.source === "meta") {
+        const { processMetaLeadEvent } = await import("../metaWebhook");
+        await processMetaLeadEvent(req.body);
+      }
+    } catch (err) {
+      console.error("[Inbound Webhook] Error processing payload:", err);
+    }
+  });
 
   // Staff Auth: email/password login + Google OAuth for invited staff
   app.use("/api/staff-auth", staffAuthRouter);
