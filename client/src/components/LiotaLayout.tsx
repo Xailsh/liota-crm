@@ -422,13 +422,15 @@ function LoginScreen({
                 {en ? "Sign in to access the administration panel" : "Inicia sesión para acceder al panel de administración"}
               </p>
 
-              {/* Primary: Manus OAuth */}
-              <Button
-                className="w-full bg-[oklch(0.72_0.14_75)] hover:bg-[oklch(0.65_0.14_75)] text-[oklch(0.15_0.02_240)] font-semibold h-11"
-                onClick={() => (window.location.href = getLoginUrl())}
-              >
-                {en ? "Sign In with Manus" : "Iniciar Sesión con Manus"}
-              </Button>
+              {/* Primary: Manus OAuth - only shown when configured */}
+              {getLoginUrl() && (
+                <Button
+                  className="w-full bg-[oklch(0.72_0.14_75)] hover:bg-[oklch(0.65_0.14_75)] text-[oklch(0.15_0.02_240)] font-semibold h-11"
+                  onClick={() => { const u = getLoginUrl(); if (u) window.location.href = u; }}
+                >
+                  {en ? "Sign In with Manus" : "Iniciar Sesión con Manus"}
+                </Button>
+              )}
 
               <div className="relative">
                 <Separator className="bg-white/10" />
